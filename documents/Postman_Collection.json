@@ -1,13 +1,58 @@
 {
   "info": {
-    "name": "Project Management API",
-    "description": "Collection untuk testing API Authentication dan Order Management",
+    "name": "Project Management & Quotation System API",
+    "description": "Complete API collection for Project Management and Quotation System with all modules including Authentication, Organizations, Users, Clients, Projects, Quotations, Orders, Tickets, Invoices, Services, Cost Calculations, Email/PDF Management, Subscriptions, and Data Migration",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     {
       "key": "base_url",
       "value": "http://localhost:3000/api",
+      "type": "string"
+    },
+    {
+      "key": "organization_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "client_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "project_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "quotation_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "order_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ticket_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "invoice_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "service_id",
+      "value": "",
       "type": "string"
     }
   ],
@@ -24,6 +69,7 @@
   "item": [
     {
       "name": "🔐 Authentication",
+      "description": "User authentication and authorization endpoints",
       "item": [
         {
           "name": "Register User",
@@ -359,6 +405,7 @@
     },
     {
       "name": "📦 Order Management",
+      "description": "Order management endpoints",
       "item": [
         {
           "name": "Get All Orders",
@@ -623,6 +670,475 @@
               "raw": "{{base_url}}/orders/statistics",
               "host": ["{{base_url}}"],
               "path": ["orders", "statistics"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🎫 Tickets",
+      "description": "Support ticket management endpoints",
+      "item": [
+        {
+          "name": "Get Tickets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/tickets",
+              "host": ["{{base_url}}"],
+              "path": ["tickets"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Ticket by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/tickets/{{ticket_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["tickets", "{{ticket_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Ticket",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subject\": \"Website Bug Report\",\n  \"description\": \"The checkout page is not working properly\",\n  \"clientId\": \"{{client_id}}\",\n  \"priority\": \"high\",\n  \"status\": \"open\",\n  \"category\": \"bug\",\n  \"assignedTo\": \"{{user_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/tickets",
+              "host": ["{{base_url}}"],
+              "path": ["tickets"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Ticket",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subject\": \"Updated Website Bug Report\",\n  \"status\": \"in-progress\",\n  \"priority\": \"medium\",\n  \"assignedTo\": \"{{user_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/tickets/{{ticket_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["tickets", "{{ticket_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Ticket",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/tickets/{{ticket_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["tickets", "{{ticket_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🧾 Invoices",
+      "description": "Invoice management endpoints",
+      "item": [
+        {
+          "name": "Get Invoices",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/invoices",
+              "host": ["{{base_url}}"],
+              "path": ["invoices"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Invoice by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/invoices/{{invoice_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["invoices", "{{invoice_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Invoice",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": \"{{client_id}}\",\n  \"orderId\": \"{{order_id}}\",\n  \"invoiceNumber\": \"INV-2024-001\",\n  \"status\": \"draft\",\n  \"issueDate\": \"2024-01-15\",\n  \"dueDate\": \"2024-02-15\",\n  \"subtotal\": 50000,\n  \"taxAmount\": 5000,\n  \"discountAmount\": 2500,\n  \"totalAmount\": 52500,\n  \"currency\": \"USD\",\n  \"paymentTerms\": \"Net 30\",\n  \"notes\": \"Thank you for your business\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/invoices",
+              "host": ["{{base_url}}"],
+              "path": ["invoices"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Invoice",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"sent\",\n  \"totalAmount\": 55000,\n  \"notes\": \"Updated invoice with additional charges\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/invoices/{{invoice_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["invoices", "{{invoice_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Invoice",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/invoices/{{invoice_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["invoices", "{{invoice_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🛠️ Services",
+      "description": "Service management endpoints",
+      "item": [
+        {
+          "name": "Get Services",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/services",
+              "host": ["{{base_url}}"],
+              "path": ["services"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Service by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/services/{{service_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["services", "{{service_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Service",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Web Development\",\n  \"description\": \"Custom web application development\",\n  \"categoryId\": \"web-dev-category\",\n  \"basePrice\": 5000,\n  \"currency\": \"USD\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/services",
+              "host": ["{{base_url}}"],
+              "path": ["services"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Service",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Web Development\",\n  \"description\": \"Updated web development service\",\n  \"basePrice\": 6000,\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/services/{{service_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["services", "{{service_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Service",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/services/{{service_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["services", "{{service_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "💰 Cost Calculations",
+      "description": "Project cost calculation endpoints",
+      "item": [
+        {
+          "name": "Get Cost Calculations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/cost-calculations",
+              "host": ["{{base_url}}"],
+              "path": ["cost-calculations"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Cost Calculation by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/cost-calculations/{{calculation_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["cost-calculations", "{{calculation_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Cost Calculation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": \"{{project_id}}\",\n  \"calculationDate\": \"2024-01-15\",\n  \"laborCost\": 30000,\n  \"materialCost\": 10000,\n  \"overheadCost\": 5000,\n  \"profitMargin\": 20,\n  \"profitAmount\": 9000,\n  \"taxRate\": 10,\n  \"taxAmount\": 5400,\n  \"discountRate\": 5,\n  \"discountAmount\": 2700,\n  \"totalCost\": 45000,\n  \"finalPrice\": 56700,\n  \"currency\": \"USD\",\n  \"notes\": \"Detailed cost breakdown for the project\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/cost-calculations",
+              "host": ["{{base_url}}"],
+              "path": ["cost-calculations"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Cost Calculation",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"laborCost\": 35000,\n  \"materialCost\": 12000,\n  \"totalCost\": 52000,\n  \"finalPrice\": 62400,\n  \"notes\": \"Updated cost calculation with revised estimates\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/cost-calculations/{{calculation_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["cost-calculations", "{{calculation_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Cost Calculation",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/cost-calculations/{{calculation_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["cost-calculations", "{{calculation_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📧 Email & PDF",
+      "description": "Email and PDF generation endpoints",
+      "item": [
+        {
+          "name": "Send Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"client@example.com\",\n  \"subject\": \"Project Update\",\n  \"template\": \"project-update\",\n  \"data\": {\n    \"projectName\": \"E-commerce Website\",\n    \"status\": \"In Progress\",\n    \"progress\": 50\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/email/send",
+              "host": ["{{base_url}}"],
+              "path": ["email", "send"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Generate PDF",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"quotation\",\n  \"referenceId\": \"{{quotation_id}}\",\n  \"template\": \"quotation-template\",\n  \"data\": {\n    \"quotationNumber\": \"QT-2024-001\",\n    \"clientName\": \"Acme Corporation\",\n    \"totalAmount\": 47250\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/pdf/generate",
+              "host": ["{{base_url}}"],
+              "path": ["pdf", "generate"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📊 Data Migration",
+      "description": "Database migration and seeding endpoints",
+      "item": [
+        {
+          "name": "Get Migrations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/migrations",
+              "host": ["{{base_url}}"],
+              "path": ["migrations"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Migration",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"add_new_table\",\n  \"description\": \"Add new table for feature\",\n  \"version\": \"1.0.1\",\n  \"type\": \"schema\",\n  \"sqlUp\": \"CREATE TABLE new_table (id UUID PRIMARY KEY, name VARCHAR(255));\",\n  \"sqlDown\": \"DROP TABLE new_table;\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/migrations",
+              "host": ["{{base_url}}"],
+              "path": ["migrations"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Execute Migration",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"migrationId\": \"migration-id\",\n  \"dryRun\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/migrations/execute",
+              "host": ["{{base_url}}"],
+              "path": ["migrations", "execute"]
             }
           },
           "response": []
