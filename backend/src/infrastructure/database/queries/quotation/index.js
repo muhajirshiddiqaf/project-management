@@ -189,6 +189,78 @@ const getQuotationItemsStatistics = `
   WHERE q.organization_id = $1
 `;
 
+// Quotation templates queries
+const getQuotationTemplates = `
+  SELECT * FROM quotation_templates
+  WHERE organization_id = $1
+  ORDER BY created_at DESC
+  LIMIT $2 OFFSET $3
+`;
+
+const countQuotationTemplates = `
+  SELECT COUNT(*) as count
+  FROM quotation_templates
+  WHERE organization_id = $1
+`;
+
+const findQuotationTemplateById = `
+  SELECT * FROM quotation_templates
+  WHERE id = $1 AND organization_id = $2
+`;
+
+const createQuotationTemplate = `
+  INSERT INTO quotation_templates (
+    organization_id, name, description, content, header_template,
+    footer_template, terms_conditions, is_default, created_by
+  ) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9
+  ) RETURNING *
+`;
+
+const deleteQuotationTemplate = `
+  DELETE FROM quotation_templates
+  WHERE id = $1 AND organization_id = $2
+  RETURNING *
+`;
+
+// Quotation approval workflow queries
+const createApprovalRequest = `
+  INSERT INTO quotation_approval_requests (
+    quotation_id, requester_id, approver_id, comments, organization_id
+  ) VALUES (
+    $1, $2, $3, $4, $5
+  ) RETURNING *
+`;
+
+const getApprovalRequests = `
+  SELECT
+    ar.*,
+    q.quotation_number,
+    q.title as quotation_title,
+    requester.name as requester_name,
+    approver.name as approver_name
+  FROM quotation_approval_requests ar
+  LEFT JOIN quotations q ON ar.quotation_id = q.id
+  LEFT JOIN users requester ON ar.requester_id = requester.id
+  LEFT JOIN users approver ON ar.approver_id = approver.id
+  WHERE ar.organization_id = $1
+  ORDER BY ar.created_at DESC
+  LIMIT $2 OFFSET $3
+`;
+
+const countApprovalRequests = `
+  SELECT COUNT(*) as count
+  FROM quotation_approval_requests
+  WHERE organization_id = $1
+`;
+
+const processApprovalRequest = `
+  UPDATE quotation_approval_requests
+  SET status = $1, comments = $2, processed_by = $3, processed_at = NOW(), updated_at = NOW()
+  WHERE id = $4 AND organization_id = $5
+  RETURNING *
+`;
+
 module.exports = {
   findAll,
   countQuotations,
@@ -207,5 +279,14 @@ module.exports = {
   calculateQuotationTotals,
   generateQuotationNumber,
   getQuotationStatistics,
-  getQuotationItemsStatistics
+  getQuotationItemsStatistics,
+  getQuotationTemplates,
+  countQuotationTemplates,
+  findQuotationTemplateById,
+  createQuotationTemplate,
+  deleteQuotationTemplate,
+  createApprovalRequest,
+  getApprovalRequests,
+  countApprovalRequests,
+  processApprovalRequest
 };

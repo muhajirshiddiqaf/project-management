@@ -301,8 +301,8 @@ const routes = [
   },
   {
     method: 'GET',
-    path: '/quotations/conversion-statistics',
-    handler: quotationHandler.getQuotationConversionStatistics,
+    path: '/quotations/items-statistics',
+    handler: quotationHandler.getQuotationItemsStatistics,
     options: {
       auth: 'jwt',
       pre: [
@@ -310,9 +310,173 @@ const routes = [
         { method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: quotationValidator.getQuotationConversionStatistics
+        query: quotationValidator.getQuotationItemsStatistics
       },
       tags: ['quotation-statistics']
+    }
+  },
+
+  // === QUOTATION CALCULATION ROUTES ===
+  {
+    method: 'GET',
+    path: '/quotations/calculate-totals',
+    handler: quotationHandler.calculateQuotationTotals,
+    options: {
+      auth: 'jwt',
+      pre: [
+        { method: tenantIsolation },
+        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+      ],
+      validate: {
+        query: quotationValidator.calculateQuotationTotals
+      },
+      tags: ['quotations']
+    }
+  },
+
+  // === QUOTATION GENERATION FROM PROJECT ROUTES ===
+  {
+    method: 'POST',
+    path: '/quotations/generate-from-project',
+    handler: quotationHandler.generateQuotationFromProject,
+    options: {
+      auth: 'jwt',
+      pre: [
+        { method: tenantIsolation },
+        { method: roleBasedAccess(['admin', 'manager']) },
+        { method: permissionBasedAccess(['quotation:generate']) }
+      ],
+      validate: {
+        payload: quotationValidator.generateQuotationFromProject
+      },
+      tags: ['quotations']
+    }
+  },
+
+  // === QUOTATION TEMPLATES ROUTES ===
+  {
+    method: 'GET',
+    path: '/quotation-templates',
+    handler: quotationHandler.getQuotationTemplates,
+    options: {
+      auth: 'jwt',
+      pre: [
+        { method: tenantIsolation },
+        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+      ],
+      validate: {
+        query: quotationValidator.getQuotationTemplates
+      },
+      tags: ['quotation-templates']
+    }
+  },
+
+  {
+    method: 'POST',
+    path: '/quotation-templates',
+    handler: quotationHandler.createQuotationTemplate,
+    options: {
+      auth: 'jwt',
+      pre: [
+        { method: tenantIsolation },
+        { method: roleBasedAccess(['admin', 'manager']) },
+        { method: permissionBasedAccess(['quotation:create_template']) }
+      ],
+      validate: {
+        payload: quotationValidator.createQuotationTemplate
+      },
+      tags: ['quotation-templates']
+    }
+  },
+
+  {
+    method: 'GET',
+    path: '/quotation-templates/{id}',
+    handler: quotationHandler.getQuotationTemplateById,
+    options: {
+      auth: 'jwt',
+      pre: [
+        { method: tenantIsolation },
+        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+      ],
+      validate: {
+        params: quotationValidator.getQuotationTemplateById
+      },
+      tags: ['quotation-templates']
+    }
+  },
+
+  {
+    method: 'PUT',
+    path: '/quotation-templates/{id}',
+    handler: quotationHandler.updateQuotationTemplate,
+    options: {
+      auth: 'jwt',
+      pre: [
+        { method: tenantIsolation },
+        { method: roleBasedAccess(['admin', 'manager']) },
+        { method: permissionBasedAccess(['quotation:update_template']) }
+      ],
+      validate: {
+        params: quotationValidator.getQuotationTemplateById,
+        payload: quotationValidator.updateQuotationTemplate
+      },
+      tags: ['quotation-templates']
+    }
+  },
+
+  {
+    method: 'DELETE',
+    path: '/quotation-templates/{id}',
+    handler: quotationHandler.deleteQuotationTemplate,
+    options: {
+      auth: 'jwt',
+      pre: [
+        { method: tenantIsolation },
+        { method: roleBasedAccess(['admin', 'manager']) },
+        { method: permissionBasedAccess(['quotation:delete_template']) }
+      ],
+      validate: {
+        params: quotationValidator.deleteQuotationTemplate
+      },
+      tags: ['quotation-templates']
+    }
+  },
+
+  // === QUOTATION APPROVAL WORKFLOW ROUTES ===
+  {
+    method: 'POST',
+    path: '/quotations/{id}/submit-for-approval',
+    handler: quotationHandler.submitQuotationForApproval,
+    options: {
+      auth: 'jwt',
+      pre: [
+        { method: tenantIsolation },
+        { method: roleBasedAccess(['admin', 'manager']) },
+        { method: permissionBasedAccess(['quotation:submit_approval']) }
+      ],
+      validate: {
+        params: quotationValidator.getQuotationById,
+        payload: quotationValidator.submitQuotationForApproval
+      },
+      tags: ['quotation-approval']
+    }
+  },
+
+  {
+    method: 'GET',
+    path: '/approval-requests',
+    handler: quotationHandler.getApprovalRequests,
+    options: {
+      auth: 'jwt',
+      pre: [
+        { method: tenantIsolation },
+        { method: roleBasedAccess(['admin', 'manager']) }
+      ],
+      validate: {
+        query: quotationValidator.getApprovalRequests
+      },
+      tags: ['quotation-approval']
     }
   }
 ];

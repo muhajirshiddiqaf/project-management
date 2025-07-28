@@ -249,9 +249,137 @@ class QuotationRepository {
     return result.rows[0] || null;
   }
 
-  async getQuotationItemsStatistics(organizationId, filters = {}) {
+    async getQuotationItemsStatistics(organizationId, filters = {}) {
     const query = this.queries.getQuotationItemsStatistics;
     const values = [organizationId];
+
+    const result = await this.db.query(query, values);
+    return result.rows[0] || null;
+  }
+
+  // === QUOTATION TEMPLATES METHODS ===
+  async getQuotationTemplates(organizationId, pagination = {}) {
+    const { page = 1, limit = 10 } = pagination;
+    const offset = (page - 1) * limit;
+
+    const query = this.queries.getQuotationTemplates;
+    const values = [organizationId, limit, offset];
+
+    const result = await this.db.query(query, values);
+    return result.rows;
+  }
+
+  async countQuotationTemplates(organizationId) {
+    const query = this.queries.countQuotationTemplates;
+    const values = [organizationId];
+
+    const result = await this.db.query(query, values);
+    return parseInt(result.rows[0].count, 10);
+  }
+
+  async getQuotationTemplateById(id, organizationId) {
+    const query = this.queries.findQuotationTemplateById;
+    const values = [id, organizationId];
+
+    const result = await this.db.query(query, values);
+    return result.rows[0] || null;
+  }
+
+  async createQuotationTemplate(templateData) {
+    const query = this.queries.createQuotationTemplate;
+    const values = [
+      templateData.organization_id,
+      templateData.name,
+      templateData.description,
+      templateData.content,
+      templateData.header_template,
+      templateData.footer_template,
+      templateData.terms_conditions,
+      templateData.is_default,
+      templateData.created_by
+    ];
+
+    const result = await this.db.query(query, values);
+    return result.rows[0];
+  }
+
+  async updateQuotationTemplate(id, organizationId, updateData) {
+    const setClause = [];
+    const values = [];
+    let paramIndex = 1;
+
+    // Build dynamic update query
+    Object.keys(updateData).forEach(key => {
+      if (updateData[key] !== undefined) {
+        setClause.push(`${key} = $${paramIndex}`);
+        values.push(updateData[key]);
+        paramIndex++;
+      }
+    });
+
+    if (setClause.length === 0) {
+      throw new Error('No fields to update');
+    }
+
+    setClause.push(`updated_at = NOW()`);
+    values.push(id, organizationId);
+
+    const query = `
+      UPDATE quotation_templates
+      SET ${setClause.join(', ')}
+      WHERE id = $${paramIndex} AND organization_id = $${paramIndex + 1}
+      RETURNING *
+    `;
+
+    const result = await this.db.query(query, values);
+    return result.rows[0] || null;
+  }
+
+  async deleteQuotationTemplate(id, organizationId) {
+    const query = this.queries.deleteQuotationTemplate;
+    const values = [id, organizationId];
+
+    const result = await this.db.query(query, values);
+    return result.rows[0] || null;
+  }
+
+  // === QUOTATION APPROVAL WORKFLOW METHODS ===
+  async createApprovalRequest(approvalData) {
+    const query = this.queries.createApprovalRequest;
+    const values = [
+      approvalData.quotation_id,
+      approvalData.requester_id,
+      approvalData.approver_id,
+      approvalData.comments,
+      approvalData.organization_id
+    ];
+
+    const result = await this.db.query(query, values);
+    return result.rows[0];
+  }
+
+  async getApprovalRequests(organizationId, filters = {}, pagination = {}) {
+    const { page = 1, limit = 10 } = pagination;
+    const offset = (page - 1) * limit;
+
+    const query = this.queries.getApprovalRequests;
+    const values = [organizationId, limit, offset];
+
+    const result = await this.db.query(query, values);
+    return result.rows;
+  }
+
+  async countApprovalRequests(organizationId, filters = {}) {
+    const query = this.queries.countApprovalRequests;
+    const values = [organizationId];
+
+    const result = await this.db.query(query, values);
+    return parseInt(result.rows[0].count, 10);
+  }
+
+  async processApprovalRequest(requestId, organizationId, status, comments, processedBy) {
+    const query = this.queries.processApprovalRequest;
+    const values = [status, comments, processedBy, requestId, organizationId];
 
     const result = await this.db.query(query, values);
     return result.rows[0] || null;

@@ -179,12 +179,83 @@ const quotationSchemas = {
 
   // Get quotation statistics schema
   getQuotationStatistics: Joi.object({
-    organization_id: Joi.string().required().uuid()
+    period: Joi.string().valid('day', 'week', 'month', 'quarter', 'year').default('month'),
+    start_date: Joi.date().optional(),
+    end_date: Joi.date().optional()
   }),
 
-  // Get quotation conversion statistics schema
-  getQuotationConversionStatistics: Joi.object({
-    organization_id: Joi.string().required().uuid()
+  // Get quotation items statistics schema
+  getQuotationItemsStatistics: Joi.object({
+    period: Joi.string().valid('day', 'week', 'month', 'quarter', 'year').default('month'),
+    start_date: Joi.date().optional(),
+    end_date: Joi.date().optional()
+  }),
+
+  // === QUOTATION TEMPLATES SCHEMAS ===
+
+  // Generate quotation from project schema
+  generateQuotationFromProject: Joi.object({
+    project_id: Joi.string().required().uuid(),
+    template_id: Joi.string().optional().uuid()
+  }),
+
+  // Get quotation templates schema
+  getQuotationTemplates: Joi.object({
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(10)
+  }),
+
+  // Create quotation template schema
+  createQuotationTemplate: Joi.object({
+    name: Joi.string().required().min(3).max(100),
+    description: Joi.string().optional().max(500),
+    content: Joi.string().required().max(5000),
+    header_template: Joi.string().optional().max(1000),
+    footer_template: Joi.string().optional().max(1000),
+    terms_conditions: Joi.string().optional().max(2000),
+    is_default: Joi.boolean().default(false)
+  }),
+
+  // Update quotation template schema
+  updateQuotationTemplate: Joi.object({
+    name: Joi.string().optional().min(3).max(100),
+    description: Joi.string().optional().max(500),
+    content: Joi.string().optional().max(5000),
+    header_template: Joi.string().optional().max(1000),
+    footer_template: Joi.string().optional().max(1000),
+    terms_conditions: Joi.string().optional().max(2000),
+    is_default: Joi.boolean().optional()
+  }),
+
+  // Get quotation template by ID schema
+  getQuotationTemplateById: Joi.object({
+    id: Joi.string().required().uuid()
+  }),
+
+  // Delete quotation template schema
+  deleteQuotationTemplate: Joi.object({
+    id: Joi.string().required().uuid()
+  }),
+
+  // === QUOTATION APPROVAL WORKFLOW SCHEMAS ===
+
+  // Submit quotation for approval schema
+  submitQuotationForApproval: Joi.object({
+    approver_id: Joi.string().required().uuid(),
+    comments: Joi.string().optional().max(1000)
+  }),
+
+  // Get approval requests schema
+  getApprovalRequests: Joi.object({
+    status: Joi.string().valid('pending', 'approved', 'rejected').optional(),
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(10)
+  }),
+
+  // Process approval request schema
+  processApprovalRequest: Joi.object({
+    status: Joi.string().valid('approved', 'rejected').required(),
+    comments: Joi.string().optional().max(1000)
   })
 };
 
