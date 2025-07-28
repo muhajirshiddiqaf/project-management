@@ -6,7 +6,8 @@ const order = require('./order');
 const ticket = require('./ticket');
 const project = require('./project');
 const invoice = require('./invoice');
-const quotation = require('./quotation'); // New import
+const quotation = require('./quotation');
+const service = require('./service'); // New import
 
 const queries = {
   auth,
@@ -16,7 +17,8 @@ const queries = {
   ticket,
   project,
   invoice,
-  quotation // New export
+  quotation,
+  service // New export
 };
 
 module.exports = { queries };

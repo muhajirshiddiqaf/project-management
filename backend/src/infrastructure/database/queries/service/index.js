@@ -1,345 +1,277 @@
-// Service module database queries
-const serviceQueries = {
-  // Find service by ID
-  findServiceById: `
-    SELECT * FROM services
-    WHERE id = $1 AND organization_id = $2 AND is_active = true
-  `,
+// Service CRUD queries
+const findAll = `
+  SELECT
+    s.*,
+    sc.name as category_name,
+    u.name as created_by_name,
+    COALESCE(COUNT(sp.id), 0) as pricing_count
+  FROM services s
+  LEFT JOIN service_categories sc ON s.category_id = sc.id
+  LEFT JOIN users u ON s.created_by = u.id
+  LEFT JOIN service_pricing sp ON s.id = sp.service_id
+  WHERE s.organization_id = $1
+  GROUP BY s.id, sc.name, u.name
+  ORDER BY s.created_at DESC
+  LIMIT $2 OFFSET $3
+`;
 
-  // Find services by organization
-  findServicesByOrganization: `
-    SELECT * FROM services
-    WHERE organization_id = $1 AND is_active = true
-    ORDER BY created_at DESC
-  `,
+const countServices = `
+  SELECT COUNT(*) as count
+  FROM services
+  WHERE organization_id = $1
+`;
 
-  // Create service
-  createService: `
-    INSERT INTO services (id, organization_id, name, description, category,
-                        unit_price, unit_type, is_active)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-    RETURNING *
-  `,
+const findServiceById = `
+  SELECT
+    s.*,
+    sc.name as category_name,
+    u.name as created_by_name
+  FROM services s
+  LEFT JOIN service_categories sc ON s.category_id = sc.id
+  LEFT JOIN users u ON s.created_by = u.id
+  WHERE s.id = $1 AND s.organization_id = $2
+`;
 
-  // Update service
-  updateService: `
-    UPDATE services
-    SET name = COALESCE($1, name),
-        description = COALESCE($2, description),
-        category = COALESCE($3, category),
-        unit_price = COALESCE($4, unit_price),
-        unit_type = COALESCE($5, unit_type),
-        is_active = COALESCE($6, is_active),
-        updated_at = NOW()
-    WHERE id = $7 AND organization_id = $8
-    RETURNING *
-  `,
+const createService = `
+  INSERT INTO services (
+    organization_id, name, description, category_id, code, unit_type,
+    base_price, currency, is_active, tags, specifications, notes, created_by
+  ) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
+  ) RETURNING *
+`;
 
-  // Delete service (soft delete)
-  deleteService: `
-    UPDATE services
-    SET is_active = false, updated_at = NOW()
-    WHERE id = $1 AND organization_id = $2
-  `,
+const deleteService = `
+  DELETE FROM services
+  WHERE id = $1 AND organization_id = $2
+  RETURNING *
+`;
 
-  // Get service statistics
-  getServiceStatistics: `
-    SELECT
-      COUNT(*) as total_services,
-      COUNT(CASE WHEN is_active = true THEN 1 END) as active_services,
-      COUNT(CASE WHEN is_active = false THEN 1 END) as inactive_services,
-      AVG(unit_price) as avg_unit_price,
-      MIN(unit_price) as min_unit_price,
-      MAX(unit_price) as max_unit_price
-    FROM services
-    WHERE organization_id = $1
-  `,
+const searchServices = `
+  SELECT
+    s.*,
+    sc.name as category_name,
+    u.name as created_by_name
+  FROM services s
+  LEFT JOIN service_categories sc ON s.category_id = sc.id
+  LEFT JOIN users u ON s.created_by = u.id
+  WHERE s.organization_id = $1
+    AND (s.name ILIKE $2 OR s.description ILIKE $2 OR s.code ILIKE $2)
+  ORDER BY s.created_at DESC
+  LIMIT $3 OFFSET $4
+`;
 
-  // Search services
-  searchServices: `
-    SELECT * FROM services
-    WHERE organization_id = $1 AND is_active = true
-    AND (
-      LOWER(name) LIKE LOWER($2) OR
-      LOWER(description) LIKE LOWER($2) OR
-      LOWER(category) LIKE LOWER($2)
-    )
-    ORDER BY created_at DESC
-  `,
+const countSearchServices = `
+  SELECT COUNT(*) as count
+  FROM services
+  WHERE organization_id = $1
+    AND (name ILIKE $2 OR description ILIKE $2 OR code ILIKE $2)
+`;
 
-  // Get services by category
-  getServicesByCategory: `
-    SELECT * FROM services
-    WHERE organization_id = $1 AND category = $2 AND is_active = true
-    ORDER BY name ASC
-  `,
+const updateServiceStatus = `
+  UPDATE services
+  SET is_active = $1, updated_at = NOW()
+  WHERE id = $2 AND organization_id = $3
+  RETURNING *
+`;
 
-  // Get service categories
-  getServiceCategories: `
-    SELECT
-      category,
-      COUNT(*) as service_count,
-      AVG(unit_price) as avg_price
-    FROM services
-    WHERE organization_id = $1 AND is_active = true
-    GROUP BY category
-    ORDER BY service_count DESC
-  `,
+// Service categories queries
+const getServiceCategories = `
+  SELECT
+    sc.*,
+    parent.name as parent_name,
+    u.name as created_by_name,
+    COALESCE(COUNT(s.id), 0) as service_count
+  FROM service_categories sc
+  LEFT JOIN service_categories parent ON sc.parent_id = parent.id
+  LEFT JOIN users u ON sc.created_by = u.id
+  LEFT JOIN services s ON sc.id = s.category_id
+  WHERE sc.organization_id = $1
+  GROUP BY sc.id, parent.name, u.name
+  ORDER BY sc.name ASC
+  LIMIT $2 OFFSET $3
+`;
 
-  // Get service usage statistics
-  getServiceUsageStatistics: `
-    SELECT
-      s.id,
-      s.name,
-      s.category,
-      s.unit_price,
-      COUNT(qi.id) as quotation_usage,
-      COUNT(ii.id) as invoice_usage,
-      COUNT(oi.id) as order_usage,
-      SUM(qi.total_price) as quotation_revenue,
-      SUM(ii.total_price) as invoice_revenue,
-      SUM(oi.total_price) as order_revenue
-    FROM services s
-    LEFT JOIN quotation_items qi ON s.id = qi.service_id AND qi.is_active = true
-    LEFT JOIN invoice_items ii ON s.id = ii.service_id AND ii.is_active = true
-    LEFT JOIN order_items oi ON s.id = oi.service_id AND oi.is_active = true
-    WHERE s.organization_id = $1 AND s.is_active = true
-    GROUP BY s.id, s.name, s.category, s.unit_price
-    ORDER BY (quotation_usage + invoice_usage + order_usage) DESC
-  `,
+const countServiceCategories = `
+  SELECT COUNT(*) as count
+  FROM service_categories
+  WHERE organization_id = $1
+`;
 
-  // Get service dashboard data
-  getServiceDashboardData: `
-    SELECT
-      s.id,
-      s.name,
-      s.description,
-      s.category,
-      s.unit_price,
-      s.unit_type,
-      s.is_active,
-      s.created_at,
-      COUNT(qi.id) as total_quotations,
-      COUNT(ii.id) as total_invoices,
-      COUNT(oi.id) as total_orders,
-      SUM(qi.total_price) as quotation_revenue,
-      SUM(ii.total_price) as invoice_revenue,
-      SUM(oi.total_price) as order_revenue
-    FROM services s
-    LEFT JOIN quotation_items qi ON s.id = qi.service_id AND qi.is_active = true
-    LEFT JOIN invoice_items ii ON s.id = ii.service_id AND ii.is_active = true
-    LEFT JOIN order_items oi ON s.id = oi.service_id AND oi.is_active = true
-    WHERE s.organization_id = $1 AND s.is_active = true
-    GROUP BY s.id, s.name, s.description, s.category, s.unit_price, s.unit_type, s.is_active, s.created_at
-    ORDER BY s.created_at DESC
-  `,
+const findServiceCategoryById = `
+  SELECT
+    sc.*,
+    parent.name as parent_name,
+    u.name as created_by_name
+  FROM service_categories sc
+  LEFT JOIN service_categories parent ON sc.parent_id = parent.id
+  LEFT JOIN users u ON sc.created_by = u.id
+  WHERE sc.id = $1 AND sc.organization_id = $2
+`;
 
-  // Get service pricing history
-  getServicePricingHistory: `
-    SELECT * FROM service_pricing_history
-    WHERE service_id = $1 AND organization_id = $2 AND is_active = true
-    ORDER BY created_at DESC
-  `,
+const createServiceCategory = `
+  INSERT INTO service_categories (
+    organization_id, name, description, parent_id, is_active, icon, color, created_by
+  ) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8
+  ) RETURNING *
+`;
 
-  // Create service pricing history
-  createServicePricingHistory: `
-    INSERT INTO service_pricing_history (id, organization_id, service_id, old_price,
-                                       new_price, reason, changed_by)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
-    RETURNING *
-  `,
+const deleteServiceCategory = `
+  DELETE FROM service_categories
+  WHERE id = $1 AND organization_id = $2
+  RETURNING *
+`;
 
-  // Get service templates
-  getServiceTemplates: `
-    SELECT * FROM service_templates
-    WHERE organization_id = $1 AND is_active = true
-    ORDER BY created_at DESC
-  `,
+// Service pricing queries
+const getServicePricing = `
+  SELECT
+    sp.*,
+    s.name as service_name,
+    u.name as created_by_name
+  FROM service_pricing sp
+  LEFT JOIN services s ON sp.service_id = s.id
+  LEFT JOIN users u ON sp.created_by = u.id
+  WHERE sp.service_id = $1 AND sp.organization_id = $2
+  ORDER BY sp.created_at DESC
+`;
 
-  // Create service template
-  createServiceTemplate: `
-    INSERT INTO service_templates (id, organization_id, name, description,
-                                 services, pricing_strategy)
-    VALUES ($1, $2, $3, $4, $5, $6)
-    RETURNING *
-  `,
+const countServicePricing = `
+  SELECT COUNT(*) as count
+  FROM service_pricing sp
+  JOIN services s ON sp.service_id = s.id
+  WHERE sp.service_id = $1 AND sp.organization_id = $2
+`;
 
-  // Update service template
-  updateServiceTemplate: `
-    UPDATE service_templates
-    SET name = COALESCE($1, name),
-        description = COALESCE($2, description),
-        services = COALESCE($3, services),
-        pricing_strategy = COALESCE($4, pricing_strategy),
-        updated_at = NOW()
-    WHERE id = $5 AND organization_id = $6
-    RETURNING *
-  `,
+const findServicePricingById = `
+  SELECT
+    sp.*,
+    s.name as service_name,
+    u.name as created_by_name
+  FROM service_pricing sp
+  LEFT JOIN services s ON sp.service_id = s.id
+  LEFT JOIN users u ON sp.created_by = u.id
+  WHERE sp.id = $1 AND sp.organization_id = $2
+`;
 
-  // Delete service template
-  deleteServiceTemplate: `
-    UPDATE service_templates
-    SET is_active = false, updated_at = NOW()
-    WHERE id = $1 AND organization_id = $2
-  `,
+const createServicePricing = `
+  INSERT INTO service_pricing (
+    service_id, pricing_type, base_price, currency, min_quantity, max_quantity,
+    discount_percentage, is_active, valid_from, valid_until, notes, organization_id, created_by
+  ) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
+  ) RETURNING *
+`;
 
-  // Get service bundles
-  getServiceBundles: `
-    SELECT * FROM service_bundles
-    WHERE organization_id = $1 AND is_active = true
-    ORDER BY created_at DESC
-  `,
+const deleteServicePricing = `
+  DELETE FROM service_pricing
+  WHERE id = $1 AND organization_id = $2
+  RETURNING *
+`;
 
-  // Create service bundle
-  createServiceBundle: `
-    INSERT INTO service_bundles (id, organization_id, name, description,
-                               services, bundle_price, discount_percentage)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
-    RETURNING *
-  `,
+// Service templates queries
+const getServiceTemplates = `
+  SELECT
+    st.*,
+    sc.name as category_name,
+    u.name as created_by_name,
+    COALESCE(COUNT(sts.id), 0) as service_count
+  FROM service_templates st
+  LEFT JOIN service_categories sc ON st.category_id = sc.id
+  LEFT JOIN users u ON st.created_by = u.id
+  LEFT JOIN service_template_services sts ON st.id = sts.template_id
+  WHERE st.organization_id = $1
+  GROUP BY st.id, sc.name, u.name
+  ORDER BY st.name ASC
+  LIMIT $2 OFFSET $3
+`;
 
-  // Update service bundle
-  updateServiceBundle: `
-    UPDATE service_bundles
-    SET name = COALESCE($1, name),
-        description = COALESCE($2, description),
-        services = COALESCE($3, services),
-        bundle_price = COALESCE($4, bundle_price),
-        discount_percentage = COALESCE($5, discount_percentage),
-        updated_at = NOW()
-    WHERE id = $6 AND organization_id = $7
-    RETURNING *
-  `,
+const countServiceTemplates = `
+  SELECT COUNT(*) as count
+  FROM service_templates
+  WHERE organization_id = $1
+`;
 
-  // Delete service bundle
-  deleteServiceBundle: `
-    UPDATE service_bundles
-    SET is_active = false, updated_at = NOW()
-    WHERE id = $1 AND organization_id = $2
-  `,
+const findServiceTemplateById = `
+  SELECT
+    st.*,
+    sc.name as category_name,
+    u.name as created_by_name
+  FROM service_templates st
+  LEFT JOIN service_categories sc ON st.category_id = sc.id
+  LEFT JOIN users u ON st.created_by = u.id
+  WHERE st.id = $1 AND st.organization_id = $2
+`;
 
-  // Get service performance metrics
-  getServicePerformanceMetrics: `
-    SELECT
-      s.id,
-      s.name,
-      s.category,
-      COUNT(qi.id) as quotation_count,
-      COUNT(ii.id) as invoice_count,
-      COUNT(oi.id) as order_count,
-      SUM(qi.total_price) as total_revenue,
-      AVG(qi.unit_price) as avg_unit_price,
-      AVG(qi.quantity) as avg_quantity
-    FROM services s
-    LEFT JOIN quotation_items qi ON s.id = qi.service_id AND qi.is_active = true
-    LEFT JOIN invoice_items ii ON s.id = ii.service_id AND ii.is_active = true
-    LEFT JOIN order_items oi ON s.id = oi.service_id AND oi.is_active = true
-    WHERE s.organization_id = $1 AND s.is_active = true
-    GROUP BY s.id, s.name, s.category
-    ORDER BY total_revenue DESC
-  `,
+const createServiceTemplate = `
+  INSERT INTO service_templates (
+    organization_id, name, description, category_id, is_active, notes, created_by
+  ) VALUES (
+    $1, $2, $3, $4, $5, $6, $7
+  ) RETURNING *
+`;
 
-  // Get service revenue by period
-  getServiceRevenueByPeriod: `
-    SELECT
-      s.id,
-      s.name,
-      DATE_TRUNC('month', qi.created_at) as period,
-      COUNT(qi.id) as quotation_count,
-      SUM(qi.total_price) as quotation_revenue
-    FROM services s
-    LEFT JOIN quotation_items qi ON s.id = qi.service_id AND qi.is_active = true
-    WHERE s.organization_id = $1 AND s.is_active = true
-    AND qi.created_at >= $2 AND qi.created_at <= $3
-    GROUP BY s.id, s.name, DATE_TRUNC('month', qi.created_at)
-    ORDER BY period DESC, quotation_revenue DESC
-  `,
+const deleteServiceTemplate = `
+  DELETE FROM service_templates
+  WHERE id = $1 AND organization_id = $2
+  RETURNING *
+`;
 
-  // Get popular services
-  getPopularServices: `
-    SELECT
-      s.id,
-      s.name,
-      s.category,
-      s.unit_price,
-      COUNT(qi.id) + COUNT(ii.id) + COUNT(oi.id) as total_usage,
-      SUM(qi.total_price) + SUM(ii.total_price) + SUM(oi.total_price) as total_revenue
-    FROM services s
-    LEFT JOIN quotation_items qi ON s.id = qi.service_id AND qi.is_active = true
-    LEFT JOIN invoice_items ii ON s.id = ii.service_id AND ii.is_active = true
-    LEFT JOIN order_items oi ON s.id = oi.service_id AND oi.is_active = true
-    WHERE s.organization_id = $1 AND s.is_active = true
-    GROUP BY s.id, s.name, s.category, s.unit_price
-    ORDER BY total_usage DESC
-    LIMIT 10
-  `,
+// Service statistics queries
+const getServiceStatistics = `
+  SELECT
+    COUNT(*) as total_services,
+    COUNT(CASE WHEN is_active = true THEN 1 END) as active_services,
+    COUNT(CASE WHEN is_active = false THEN 1 END) as inactive_services,
+    COUNT(DISTINCT category_id) as unique_categories,
+    COALESCE(AVG(base_price), 0) as average_price,
+    COALESCE(MIN(base_price), 0) as min_price,
+    COALESCE(MAX(base_price), 0) as max_price,
+    COUNT(CASE WHEN unit_type = 'hour' THEN 1 END) as hourly_services,
+    COUNT(CASE WHEN unit_type = 'day' THEN 1 END) as daily_services,
+    COUNT(CASE WHEN unit_type = 'piece' THEN 1 END) as piece_services
+  FROM services
+  WHERE organization_id = $1
+`;
 
-  // Get service categories with revenue
-  getServiceCategoriesWithRevenue: `
-    SELECT
-      s.category,
-      COUNT(DISTINCT s.id) as service_count,
-      AVG(s.unit_price) as avg_price,
-      SUM(qi.total_price) + SUM(ii.total_price) + SUM(oi.total_price) as total_revenue
-    FROM services s
-    LEFT JOIN quotation_items qi ON s.id = qi.service_id AND qi.is_active = true
-    LEFT JOIN invoice_items ii ON s.id = ii.service_id AND ii.is_active = true
-    LEFT JOIN order_items oi ON s.id = oi.service_id AND oi.is_active = true
-    WHERE s.organization_id = $1 AND s.is_active = true
-    GROUP BY s.category
-    ORDER BY total_revenue DESC
-  `,
+const getServiceCategoryStatistics = `
+  SELECT
+    sc.name as category_name,
+    COUNT(s.id) as service_count,
+    COALESCE(AVG(s.base_price), 0) as average_price,
+    COUNT(CASE WHEN s.is_active = true THEN 1 END) as active_services,
+    COUNT(CASE WHEN s.is_active = false THEN 1 END) as inactive_services
+  FROM service_categories sc
+  LEFT JOIN services s ON sc.id = s.category_id
+  WHERE sc.organization_id = $1
+  GROUP BY sc.id, sc.name
+  ORDER BY service_count DESC
+`;
 
-  // Get service inventory (if applicable)
-  getServiceInventory: `
-    SELECT
-      s.id,
-      s.name,
-      s.category,
-      si.quantity,
-      si.min_quantity,
-      si.max_quantity,
-      si.reorder_point
-    FROM services s
-    LEFT JOIN service_inventory si ON s.id = si.service_id AND si.is_active = true
-    WHERE s.organization_id = $1 AND s.is_active = true
-    ORDER BY s.name ASC
-  `,
-
-  // Update service inventory
-  updateServiceInventory: `
-    UPDATE service_inventory
-    SET quantity = COALESCE($1, quantity),
-        min_quantity = COALESCE($2, min_quantity),
-        max_quantity = COALESCE($3, max_quantity),
-        reorder_point = COALESCE($4, reorder_point),
-        updated_at = NOW()
-    WHERE service_id = $5 AND organization_id = $6
-    RETURNING *
-  `,
-
-  // Create service inventory
-  createServiceInventory: `
-    INSERT INTO service_inventory (id, organization_id, service_id, quantity,
-                                 min_quantity, max_quantity, reorder_point)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
-    RETURNING *
-  `,
-
-  // Get low stock services
-  getLowStockServices: `
-    SELECT
-      s.id,
-      s.name,
-      s.category,
-      si.quantity,
-      si.reorder_point
-    FROM services s
-    JOIN service_inventory si ON s.id = si.service_id AND si.is_active = true
-    WHERE s.organization_id = $1 AND s.is_active = true
-    AND si.quantity <= si.reorder_point
-    ORDER BY si.quantity ASC
-  `
+module.exports = {
+  findAll,
+  countServices,
+  findServiceById,
+  createService,
+  deleteService,
+  searchServices,
+  countSearchServices,
+  updateServiceStatus,
+  getServiceCategories,
+  countServiceCategories,
+  findServiceCategoryById,
+  createServiceCategory,
+  deleteServiceCategory,
+  getServicePricing,
+  countServicePricing,
+  findServicePricingById,
+  createServicePricing,
+  deleteServicePricing,
+  getServiceTemplates,
+  countServiceTemplates,
+  findServiceTemplateById,
+  createServiceTemplate,
+  deleteServiceTemplate,
+  getServiceStatistics,
+  getServiceCategoryStatistics
 };
-
-module.exports = serviceQueries;
