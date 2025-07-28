@@ -26,6 +26,7 @@ const docsModule = require('./modules/docs');
 const userModule = require('./modules/user');
 const organizationModule = require('./modules/organization'); // New import
 const systemModule = require('./modules/system'); // New import
+const migrationModule = require('./modules/migration'); // New import
 
 // Import plugins
 const plugins = [
@@ -119,6 +120,7 @@ const createServer = async () => {
   await server.register(userModule);
   await server.register(organizationModule); // New registration
   await server.register(systemModule); // New registration
+  await server.register(migrationModule); // New registration
 
   // Health check route
   server.route({

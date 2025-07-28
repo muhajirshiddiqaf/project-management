@@ -15,6 +15,7 @@ const reports = require('./reports');
 const docs = require('./docs');
 const organization = require('./organization'); // New import
 const system = require('./system'); // New import
+const migration = require('./migration'); // New import
 
 const queries = {
   auth,
@@ -32,7 +33,8 @@ const queries = {
   reports,
   docs,
   organization, // New export
-  system // New export
+  system, // New export
+  migration // New export
 };
 
 module.exports = { queries };
