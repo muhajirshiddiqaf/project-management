@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # PostgreSQL Database
   postgres:
@@ -71,6 +69,7 @@ services:
 volumes:
   postgres_data:
 
+
 networks:
   project_network:
-    driver: bridge 
+    driver: bridge

@@ -1,0 +1,78 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: project_management_staging_db
+    environment:
+      POSTGRES_DB: project_management_staging
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_staging_data:/var/lib/postgresql/data
+    networks:
+      - project_staging_network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: project_management_staging_backend
+    environment:
+      NODE_ENV: staging
+      PORT: 3002
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/project_management_staging
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: 24h
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "3002:3002"
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - project_staging_network
+    command: npm run start:staging
+
+  # Frontend React App
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: project_management_staging_frontend
+    environment:
+      VITE_API_URL: http://localhost:3002/api
+      VITE_APP_NAME: Project Management System (Staging)
+      VITE_ENV: staging
+    ports:
+      - "3003:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - project_staging_network
+    command: npm run build && npm run preview
+
+  # Redis for caching and sessions
+  redis:
+    image: redis:7-alpine
+    container_name: project_management_staging_redis
+    ports:
+      - "6380:6379"
+    networks:
+      - project_staging_network
+
+volumes:
+  postgres_staging_data:
+
+
+networks:
+  project_staging_network:
+    driver: bridge
