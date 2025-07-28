@@ -10,6 +10,9 @@ const authValidator = require('./validator');
 // Import routes
 const authRoutes = require('./routes');
 
+// Import repositories
+const { UserRepository } = require('../../infrastructure/repositories');
+
 // Auth module registration
 const register = async (server, options) => {
   // Register routes
@@ -23,22 +26,13 @@ const register = async (server, options) => {
         // Verify token and return credentials
         const { userId, email, role, organizationId } = artifacts.decoded;
 
-        // Check if user exists and is active
-        const { db } = request.server.app;
-        const userQuery = `
-          SELECT u.*, o.name as organization_name, o.slug as organization_slug
-          FROM users u
-          JOIN organizations o ON u.organization_id = o.id
-          WHERE u.id = $1 AND u.is_active = true AND o.is_active = true
-        `;
+        // Use repository to validate user
+        const userRepository = new UserRepository(request.server.app.db);
+        const user = await userRepository.findById(userId);
 
-        const userResult = await db.query(userQuery, [userId]);
-
-        if (userResult.rows.length === 0) {
+        if (!user || !user.is_active) {
           return { credentials: null, isValid: false };
         }
-
-        const user = userResult.rows[0];
 
         return {
           isValid: true,
@@ -70,12 +64,11 @@ const register = async (server, options) => {
       try {
         const { userId, organizationId } = artifacts.decoded;
 
-        // Verify organization exists and is active
-        const { db } = request.server.app;
-        const orgQuery = 'SELECT id, name, slug FROM organizations WHERE id = $1 AND is_active = true';
-        const orgResult = await db.query(orgQuery, [organizationId]);
+        // Use repository to validate organization
+        const userRepository = new UserRepository(request.server.app.db);
+        const organization = await userRepository.findOrganizationById(organizationId);
 
-        if (orgResult.rows.length === 0) {
+        if (!organization || !organization.is_active) {
           return { credentials: null, isValid: false };
         }
 
@@ -84,7 +77,11 @@ const register = async (server, options) => {
           credentials: {
             userId,
             organizationId,
-            organization: orgResult.rows[0]
+            organization: {
+              id: organization.id,
+              name: organization.name,
+              slug: organization.slug
+            }
           }
         };
       } catch (error) {
@@ -96,8 +93,7 @@ const register = async (server, options) => {
     }
   });
 
-         // Inject database into repositories
-       const UserRepository = require('../../infrastructure/repositories').UserRepository;
+       // Inject database into repositories
        const userRepository = new UserRepository(server.app.db);
 
        // Inject repository into handler
