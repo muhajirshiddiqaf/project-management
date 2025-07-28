@@ -14,19 +14,21 @@ class ClientHandler {
   async getClients(request, h) {
     try {
       const { organizationId } = request;
-      const { page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'desc' } = request.query;
+      const {
+        page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'desc',
+      } = request.query;
 
       const clients = await this.clientRepository.findAll(organizationId, {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
         sortBy,
-        sortOrder
+        sortOrder,
       });
 
       return h.response({
         success: true,
         message: 'Clients retrieved successfully',
-        data: clients
+        data: clients,
       });
     } catch (error) {
       throw Boom.internal('Failed to retrieve clients');
@@ -48,7 +50,7 @@ class ClientHandler {
       return h.response({
         success: true,
         message: 'Client retrieved successfully',
-        data: client
+        data: client,
       });
     } catch (error) {
       if (error.isBoom) throw error;
@@ -64,13 +66,13 @@ class ClientHandler {
 
       const client = await this.clientRepository.create({
         ...clientData,
-        organization_id: organizationId
+        organization_id: organizationId,
       });
 
       return h.response({
         success: true,
         message: 'Client created successfully',
-        data: client
+        data: client,
       }).code(201);
     } catch (error) {
       throw Boom.internal('Failed to create client');
@@ -93,7 +95,7 @@ class ClientHandler {
       return h.response({
         success: true,
         message: 'Client updated successfully',
-        data: client
+        data: client,
       });
     } catch (error) {
       if (error.isBoom) throw error;
@@ -115,7 +117,7 @@ class ClientHandler {
 
       return h.response({
         success: true,
-        message: 'Client deleted successfully'
+        message: 'Client deleted successfully',
       });
     } catch (error) {
       if (error.isBoom) throw error;
@@ -127,19 +129,21 @@ class ClientHandler {
   async searchClients(request, h) {
     try {
       const { organizationId } = request;
-      const { q, page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'desc' } = request.query;
+      const {
+        q, page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'desc',
+      } = request.query;
 
       const clients = await this.clientRepository.search(organizationId, q, {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
         sortBy,
-        sortOrder
+        sortOrder,
       });
 
       return h.response({
         success: true,
         message: 'Clients search completed',
-        data: clients
+        data: clients,
       });
     } catch (error) {
       throw Boom.internal('Failed to search clients');

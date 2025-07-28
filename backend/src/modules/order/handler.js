@@ -14,23 +14,25 @@ class OrderHandler {
   async getOrders(request, h) {
     try {
       const { organizationId } = request;
-      const { page = 1, limit = 10, status, priority, client_id, assigned_to, sortBy = 'created_at', sortOrder = 'desc' } = request.query;
+      const {
+        page = 1, limit = 10, status, priority, client_id, assigned_to, sortBy = 'created_at', sortOrder = 'desc',
+      } = request.query;
 
       const orders = await this.orderRepository.findAll(organizationId, {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
         status,
         priority,
         client_id,
         assigned_to,
         sortBy,
-        sortOrder
+        sortOrder,
       });
 
       return h.response({
         success: true,
         message: 'Orders retrieved successfully',
-        data: orders
+        data: orders,
       });
     } catch (error) {
       throw Boom.internal('Failed to retrieve orders');
@@ -52,7 +54,7 @@ class OrderHandler {
       return h.response({
         success: true,
         message: 'Order retrieved successfully',
-        data: order
+        data: order,
       });
     } catch (error) {
       if (error.isBoom) throw error;
@@ -69,13 +71,13 @@ class OrderHandler {
       const order = await this.orderRepository.create({
         ...orderData,
         organization_id: organizationId,
-        created_by: userId
+        created_by: userId,
       });
 
       return h.response({
         success: true,
         message: 'Order created successfully',
-        data: order
+        data: order,
       }).code(201);
     } catch (error) {
       throw Boom.internal('Failed to create order');
@@ -98,7 +100,7 @@ class OrderHandler {
       return h.response({
         success: true,
         message: 'Order updated successfully',
-        data: order
+        data: order,
       });
     } catch (error) {
       if (error.isBoom) throw error;
@@ -120,7 +122,7 @@ class OrderHandler {
 
       return h.response({
         success: true,
-        message: 'Order deleted successfully'
+        message: 'Order deleted successfully',
       });
     } catch (error) {
       if (error.isBoom) throw error;
@@ -132,21 +134,23 @@ class OrderHandler {
   async searchOrders(request, h) {
     try {
       const { organizationId } = request;
-      const { q, page = 1, limit = 10, status, priority, sortBy = 'created_at', sortOrder = 'desc' } = request.query;
+      const {
+        q, page = 1, limit = 10, status, priority, sortBy = 'created_at', sortOrder = 'desc',
+      } = request.query;
 
       const orders = await this.orderRepository.search(organizationId, q, {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
         status,
         priority,
         sortBy,
-        sortOrder
+        sortOrder,
       });
 
       return h.response({
         success: true,
         message: 'Orders search completed',
-        data: orders
+        data: orders,
       });
     } catch (error) {
       throw Boom.internal('Failed to search orders');
@@ -169,7 +173,7 @@ class OrderHandler {
       return h.response({
         success: true,
         message: 'Order status updated successfully',
-        data: order
+        data: order,
       });
     } catch (error) {
       if (error.isBoom) throw error;
@@ -193,7 +197,7 @@ class OrderHandler {
       return h.response({
         success: true,
         message: 'Order assigned successfully',
-        data: order
+        data: order,
       });
     } catch (error) {
       if (error.isBoom) throw error;
@@ -211,7 +215,7 @@ class OrderHandler {
       return h.response({
         success: true,
         message: 'Order statistics retrieved successfully',
-        data: statistics
+        data: statistics,
       });
     } catch (error) {
       throw Boom.internal('Failed to retrieve order statistics');

@@ -7,7 +7,9 @@ class ClientRepository {
 
   // Find all clients for organization
   async findAll(organizationId, options = {}) {
-    const { page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'desc' } = options;
+    const {
+      page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'desc',
+    } = options;
     const offset = (page - 1) * limit;
 
     try {
@@ -16,11 +18,11 @@ class ClientRepository {
         limit,
         offset,
         sortBy,
-        sortOrder
+        sortOrder,
       ]);
 
       const countResult = await this.db.query(queries.client.countClients, [organizationId]);
-      const total = parseInt(countResult.rows[0].count);
+      const total = parseInt(countResult.rows[0].count, 10);
 
       return {
         clients: result.rows,
@@ -28,8 +30,8 @@ class ClientRepository {
           page,
           limit,
           total,
-          totalPages: Math.ceil(total / limit)
-        }
+          totalPages: Math.ceil(total / limit),
+        },
       };
     } catch (error) {
       throw new Error('Failed to retrieve clients');
@@ -57,7 +59,7 @@ class ClientRepository {
         clientData.company,
         clientData.website,
         clientData.notes,
-        clientData.organization_id
+        clientData.organization_id,
       ]);
 
       return result.rows[0];
@@ -78,7 +80,7 @@ class ClientRepository {
         updateData.address,
         updateData.company,
         updateData.website,
-        updateData.notes
+        updateData.notes,
       ]);
 
       return result.rows[0] || null;
@@ -99,7 +101,9 @@ class ClientRepository {
 
   // Search clients
   async search(organizationId, searchTerm, options = {}) {
-    const { page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'desc' } = options;
+    const {
+      page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'desc',
+    } = options;
     const offset = (page - 1) * limit;
 
     try {
@@ -109,11 +113,14 @@ class ClientRepository {
         limit,
         offset,
         sortBy,
-        sortOrder
+        sortOrder,
       ]);
 
-      const countResult = await this.db.query(queries.client.countSearchClients, [organizationId, searchTerm]);
-      const total = parseInt(countResult.rows[0].count);
+      const countResult = await this.db.query(queries.client.countSearchClients, [
+        organizationId,
+        searchTerm,
+      ]);
+      const total = parseInt(countResult.rows[0].count, 10);
 
       return {
         clients: result.rows,
@@ -121,8 +128,8 @@ class ClientRepository {
           page,
           limit,
           total,
-          totalPages: Math.ceil(total / limit)
-        }
+          totalPages: Math.ceil(total / limit),
+        },
       };
     } catch (error) {
       throw new Error('Failed to search clients');

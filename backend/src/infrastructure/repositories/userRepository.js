@@ -41,7 +41,7 @@ class UserRepository {
     try {
       const result = await this.db.query(queries.auth.createOrganization, [
         organizationData.name,
-        organizationData.slug
+        organizationData.slug,
       ]);
       return result.rows[0];
     } catch (error) {
@@ -58,7 +58,7 @@ class UserRepository {
         userData.first_name,
         userData.last_name,
         userData.organization_id,
-        userData.role
+        userData.role,
       ]);
       return result.rows[0];
     } catch (error) {
@@ -74,7 +74,7 @@ class UserRepository {
       let paramCount = 1;
 
       // Build dynamic update query
-      Object.keys(updateData).forEach(key => {
+      Object.keys(updateData).forEach((key) => {
         if (updateData[key] !== undefined) {
           fields.push(`${key} = $${paramCount}`);
           values.push(updateData[key]);
@@ -106,7 +106,9 @@ class UserRepository {
 
   // Find users by organization
   async findByOrganization(organizationId, options = {}) {
-    const { page = 1, limit = 10, role, isActive = true } = options;
+    const {
+      page = 1, limit = 10, role, isActive = true,
+    } = options;
     const offset = (page - 1) * limit;
 
     try {
@@ -115,15 +117,15 @@ class UserRepository {
         role,
         isActive,
         limit,
-        offset
+        offset,
       ]);
 
       const countResult = await this.db.query(queries.user.countUsersByOrganization, [
         organizationId,
         role,
-        isActive
+        isActive,
       ]);
-      const total = parseInt(countResult.rows[0].count);
+      const total = parseInt(countResult.rows[0].count, 10);
 
       return {
         users: result.rows,
@@ -131,8 +133,8 @@ class UserRepository {
           page,
           limit,
           total,
-          totalPages: Math.ceil(total / limit)
-        }
+          totalPages: Math.ceil(total / limit),
+        },
       };
     } catch (error) {
       throw new Error('Failed to find users by organization');
@@ -150,15 +152,15 @@ class UserRepository {
         searchTerm,
         role,
         limit,
-        offset
+        offset,
       ]);
 
       const countResult = await this.db.query(queries.user.countSearchUsers, [
         organizationId,
         searchTerm,
-        role
+        role,
       ]);
-      const total = parseInt(countResult.rows[0].count);
+      const total = parseInt(countResult.rows[0].count, 10);
 
       return {
         users: result.rows,
@@ -166,8 +168,8 @@ class UserRepository {
           page,
           limit,
           total,
-          totalPages: Math.ceil(total / limit)
-        }
+          totalPages: Math.ceil(total / limit),
+        },
       };
     } catch (error) {
       throw new Error('Failed to search users');

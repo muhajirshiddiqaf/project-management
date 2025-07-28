@@ -14,11 +14,13 @@ class TicketHandler {
   async getTickets(request, h) {
     try {
       const { organizationId } = request;
-      const { page = 1, limit = 10, status, priority, category, client_id, project_id, assigned_to, created_by, sortBy = 'created_at', sortOrder = 'desc' } = request.query;
+      const {
+        page = 1, limit = 10, status, priority, category, client_id, project_id, assigned_to, created_by, sortBy = 'created_at', sortOrder = 'desc',
+      } = request.query;
 
       const tickets = await this.ticketRepository.findAll(organizationId, {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
         status,
         priority,
         category,
@@ -27,13 +29,13 @@ class TicketHandler {
         assigned_to,
         created_by,
         sortBy,
-        sortOrder
+        sortOrder,
       });
 
       return h.response({
         success: true,
         message: 'Tickets retrieved successfully',
-        data: tickets
+        data: tickets,
       });
     } catch (error) {
       throw Boom.internal('Failed to retrieve tickets');
@@ -55,7 +57,7 @@ class TicketHandler {
       return h.response({
         success: true,
         message: 'Ticket retrieved successfully',
-        data: ticket
+        data: ticket,
       });
     } catch (error) {
       if (error.isBoom) throw error;
@@ -72,13 +74,13 @@ class TicketHandler {
       const ticket = await this.ticketRepository.create({
         ...ticketData,
         organization_id: organizationId,
-        created_by: userId
+        created_by: userId,
       });
 
       return h.response({
         success: true,
         message: 'Ticket created successfully',
-        data: ticket
+        data: ticket,
       }).code(201);
     } catch (error) {
       throw Boom.internal('Failed to create ticket');
@@ -101,7 +103,7 @@ class TicketHandler {
       return h.response({
         success: true,
         message: 'Ticket updated successfully',
-        data: ticket
+        data: ticket,
       });
     } catch (error) {
       if (error.isBoom) throw error;
@@ -123,7 +125,7 @@ class TicketHandler {
 
       return h.response({
         success: true,
-        message: 'Ticket deleted successfully'
+        message: 'Ticket deleted successfully',
       });
     } catch (error) {
       if (error.isBoom) throw error;
@@ -135,22 +137,24 @@ class TicketHandler {
   async searchTickets(request, h) {
     try {
       const { organizationId } = request;
-      const { q, page = 1, limit = 10, status, priority, category, sortBy = 'created_at', sortOrder = 'desc' } = request.query;
+      const {
+        q, page = 1, limit = 10, status, priority, category, sortBy = 'created_at', sortOrder = 'desc',
+      } = request.query;
 
       const tickets = await this.ticketRepository.search(organizationId, q, {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
         status,
         priority,
         category,
         sortBy,
-        sortOrder
+        sortOrder,
       });
 
       return h.response({
         success: true,
         message: 'Tickets search completed',
-        data: tickets
+        data: tickets,
       });
     } catch (error) {
       throw Boom.internal('Failed to search tickets');
@@ -173,7 +177,7 @@ class TicketHandler {
       return h.response({
         success: true,
         message: 'Ticket status updated successfully',
-        data: ticket
+        data: ticket,
       });
     } catch (error) {
       if (error.isBoom) throw error;
@@ -197,7 +201,7 @@ class TicketHandler {
       return h.response({
         success: true,
         message: 'Ticket assigned successfully',
-        data: ticket
+        data: ticket,
       });
     } catch (error) {
       if (error.isBoom) throw error;
@@ -216,13 +220,13 @@ class TicketHandler {
         content,
         is_internal,
         attachments,
-        created_by: userId
+        created_by: userId,
       });
 
       return h.response({
         success: true,
         message: 'Comment added successfully',
-        data: comment
+        data: comment,
       }).code(201);
     } catch (error) {
       if (error.isBoom) throw error;
@@ -238,14 +242,14 @@ class TicketHandler {
       const { page = 1, limit = 10 } = request.query;
 
       const comments = await this.ticketRepository.getComments(id, organizationId, {
-        page: parseInt(page),
-        limit: parseInt(limit)
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
       });
 
       return h.response({
         success: true,
         message: 'Ticket comments retrieved successfully',
-        data: comments
+        data: comments,
       });
     } catch (error) {
       throw Boom.internal('Failed to retrieve ticket comments');
@@ -262,7 +266,7 @@ class TicketHandler {
       return h.response({
         success: true,
         message: 'Ticket statistics retrieved successfully',
-        data: statistics
+        data: statistics,
       });
     } catch (error) {
       throw Boom.internal('Failed to retrieve ticket statistics');

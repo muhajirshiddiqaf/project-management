@@ -7,7 +7,9 @@ class OrderRepository {
 
   // Find all orders for organization
   async findAll(organizationId, options = {}) {
-    const { page = 1, limit = 10, status, priority, client_id, assigned_to, sortBy = 'created_at', sortOrder = 'desc' } = options;
+    const {
+      page = 1, limit = 10, status, priority, client_id, assigned_to, sortBy = 'created_at', sortOrder = 'desc',
+    } = options;
     const offset = (page - 1) * limit;
 
     try {
@@ -20,7 +22,7 @@ class OrderRepository {
         limit,
         offset,
         sortBy,
-        sortOrder
+        sortOrder,
       ]);
 
       const countResult = await this.db.query(queries.order.countOrders, [
@@ -28,9 +30,9 @@ class OrderRepository {
         status,
         priority,
         client_id,
-        assigned_to
+        assigned_to,
       ]);
-      const total = parseInt(countResult.rows[0].count);
+      const total = parseInt(countResult.rows[0].count, 10);
 
       return {
         orders: result.rows,
@@ -38,8 +40,8 @@ class OrderRepository {
           page,
           limit,
           total,
-          totalPages: Math.ceil(total / limit)
-        }
+          totalPages: Math.ceil(total / limit),
+        },
       };
     } catch (error) {
       throw new Error('Failed to retrieve orders');
@@ -73,7 +75,7 @@ class OrderRepository {
         orderData.assigned_to,
         orderData.notes,
         orderData.organization_id,
-        orderData.created_by
+        orderData.created_by,
       ]);
 
       return result.rows[0];
@@ -99,7 +101,7 @@ class OrderRepository {
         updateData.status,
         updateData.priority,
         updateData.assigned_to,
-        updateData.notes
+        updateData.notes,
       ]);
 
       return result.rows[0] || null;
@@ -120,7 +122,9 @@ class OrderRepository {
 
   // Search orders
   async search(organizationId, searchTerm, options = {}) {
-    const { page = 1, limit = 10, status, priority, sortBy = 'created_at', sortOrder = 'desc' } = options;
+    const {
+      page = 1, limit = 10, status, priority, sortBy = 'created_at', sortOrder = 'desc',
+    } = options;
     const offset = (page - 1) * limit;
 
     try {
@@ -132,16 +136,16 @@ class OrderRepository {
         limit,
         offset,
         sortBy,
-        sortOrder
+        sortOrder,
       ]);
 
       const countResult = await this.db.query(queries.order.countSearchOrders, [
         organizationId,
         searchTerm,
         status,
-        priority
+        priority,
       ]);
-      const total = parseInt(countResult.rows[0].count);
+      const total = parseInt(countResult.rows[0].count, 10);
 
       return {
         orders: result.rows,
@@ -149,8 +153,8 @@ class OrderRepository {
           page,
           limit,
           total,
-          totalPages: Math.ceil(total / limit)
-        }
+          totalPages: Math.ceil(total / limit),
+        },
       };
     } catch (error) {
       throw new Error('Failed to search orders');
@@ -164,7 +168,7 @@ class OrderRepository {
         id,
         organizationId,
         status,
-        notes
+        notes,
       ]);
 
       return result.rows[0] || null;
@@ -179,7 +183,7 @@ class OrderRepository {
       const result = await this.db.query(queries.order.assignOrder, [
         id,
         organizationId,
-        assigned_to
+        assigned_to,
       ]);
 
       return result.rows[0] || null;

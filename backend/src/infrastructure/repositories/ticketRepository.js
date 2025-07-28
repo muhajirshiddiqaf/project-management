@@ -7,7 +7,9 @@ class TicketRepository {
 
   // Find all tickets for organization
   async findAll(organizationId, options = {}) {
-    const { page = 1, limit = 10, status, priority, category, client_id, project_id, assigned_to, created_by, sortBy = 'created_at', sortOrder = 'desc' } = options;
+    const {
+      page = 1, limit = 10, status, priority, category, client_id, project_id, assigned_to, created_by, sortBy = 'created_at', sortOrder = 'desc',
+    } = options;
     const offset = (page - 1) * limit;
 
     try {
@@ -23,7 +25,7 @@ class TicketRepository {
         limit,
         offset,
         sortBy,
-        sortOrder
+        sortOrder,
       ]);
 
       const countResult = await this.db.query(queries.ticket.countTickets, [
@@ -34,9 +36,9 @@ class TicketRepository {
         client_id,
         project_id,
         assigned_to,
-        created_by
+        created_by,
       ]);
-      const total = parseInt(countResult.rows[0].count);
+      const total = parseInt(countResult.rows[0].count, 10);
 
       return {
         tickets: result.rows,
@@ -44,8 +46,8 @@ class TicketRepository {
           page,
           limit,
           total,
-          totalPages: Math.ceil(total / limit)
-        }
+          totalPages: Math.ceil(total / limit),
+        },
       };
     } catch (error) {
       throw new Error('Failed to retrieve tickets');
@@ -79,7 +81,7 @@ class TicketRepository {
         ticketData.tags,
         ticketData.attachments,
         ticketData.organization_id,
-        ticketData.created_by
+        ticketData.created_by,
       ]);
 
       return result.rows[0];
@@ -105,7 +107,7 @@ class TicketRepository {
         updateData.assigned_to,
         updateData.due_date,
         updateData.tags,
-        updateData.attachments
+        updateData.attachments,
       ]);
 
       return result.rows[0] || null;
@@ -126,7 +128,9 @@ class TicketRepository {
 
   // Search tickets
   async search(organizationId, searchTerm, options = {}) {
-    const { page = 1, limit = 10, status, priority, category, sortBy = 'created_at', sortOrder = 'desc' } = options;
+    const {
+      page = 1, limit = 10, status, priority, category, sortBy = 'created_at', sortOrder = 'desc',
+    } = options;
     const offset = (page - 1) * limit;
 
     try {
@@ -139,7 +143,7 @@ class TicketRepository {
         limit,
         offset,
         sortBy,
-        sortOrder
+        sortOrder,
       ]);
 
       const countResult = await this.db.query(queries.ticket.countSearchTickets, [
@@ -147,9 +151,9 @@ class TicketRepository {
         searchTerm,
         status,
         priority,
-        category
+        category,
       ]);
-      const total = parseInt(countResult.rows[0].count);
+      const total = parseInt(countResult.rows[0].count, 10);
 
       return {
         tickets: result.rows,
@@ -157,8 +161,8 @@ class TicketRepository {
           page,
           limit,
           total,
-          totalPages: Math.ceil(total / limit)
-        }
+          totalPages: Math.ceil(total / limit),
+        },
       };
     } catch (error) {
       throw new Error('Failed to search tickets');
@@ -172,7 +176,7 @@ class TicketRepository {
         id,
         organizationId,
         status,
-        notes
+        notes,
       ]);
 
       return result.rows[0] || null;
@@ -187,7 +191,7 @@ class TicketRepository {
       const result = await this.db.query(queries.ticket.assignTicket, [
         id,
         organizationId,
-        assigned_to
+        assigned_to,
       ]);
 
       return result.rows[0] || null;
@@ -205,7 +209,7 @@ class TicketRepository {
         commentData.content,
         commentData.is_internal,
         commentData.attachments,
-        commentData.created_by
+        commentData.created_by,
       ]);
 
       return result.rows[0];
@@ -224,11 +228,11 @@ class TicketRepository {
         ticketId,
         organizationId,
         limit,
-        offset
+        offset,
       ]);
 
       const countResult = await this.db.query(queries.ticket.countTicketComments, [ticketId, organizationId]);
-      const total = parseInt(countResult.rows[0].count);
+      const total = parseInt(countResult.rows[0].count, 10);
 
       return {
         comments: result.rows,
@@ -236,8 +240,8 @@ class TicketRepository {
           page,
           limit,
           total,
-          totalPages: Math.ceil(total / limit)
-        }
+          totalPages: Math.ceil(total / limit),
+        },
       };
     } catch (error) {
       throw new Error('Failed to retrieve ticket comments');
