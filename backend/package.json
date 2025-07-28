@@ -1,7 +1,7 @@
 {
   "name": "project-management-backend",
   "version": "1.0.0",
-  "description": "SaaS Project Management & Quotation System Backend",
+  "description": "SaaS Project Management & Quotation System Backend with Clean Architecture",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
@@ -14,10 +14,10 @@
     "test:performance": "jest --testNamePattern='performance'",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
-    "migrate:create": "node src/database/migrate.js create",
-    "migrate:run": "node src/database/migrate.js run",
-    "migrate:rollback": "node src/database/migrate.js rollback",
-    "seed": "node src/database/seed.js",
+    "migrate:create": "node src/infrastructure/database/migrate.js create",
+    "migrate:run": "node src/infrastructure/database/migrate.js run",
+    "migrate:rollback": "node src/infrastructure/database/migrate.js rollback",
+    "seed": "node src/infrastructure/database/seed.js",
     "build": "echo 'No build step required for Node.js'"
   },
   "keywords": [
@@ -25,21 +25,23 @@
     "project-management",
     "quotation",
     "nodejs",
-    "express",
+    "hapi",
+    "clean-architecture",
     "postgresql"
   ],
   "author": "Project Management Team",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "helmet": "^7.1.0",
-    "morgan": "^1.10.0",
-    "dotenv": "^16.3.1",
+    "@hapi/hapi": "^21.3.8",
+    "@hapi/joi": "^17.1.1",
+    "@hapi/boom": "^10.0.1",
+    "@hapi/inert": "^7.1.0",
+    "@hapi/vision": "^6.0.1",
+    "@hapi/good": "^9.0.4",
+    "@hapi/good-console": "^9.0.1",
+    "@hapi/good-file": "^9.0.1",
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.2",
-    "express-rate-limit": "^7.1.5",
-    "express-validator": "^7.0.1",
     "pg": "^8.11.3",
     "redis": "^4.6.10",
     "multer": "^1.4.5-lts.1",
@@ -50,14 +52,10 @@
     "uuid": "^9.0.1",
     "moment": "^2.29.4",
     "lodash": "^4.17.21",
-    "joi": "^17.11.0",
+    "dotenv": "^16.3.1",
     "compression": "^1.7.4",
-    "express-slow-down": "^2.0.1",
-    "express-brute": "^1.0.1",
-    "express-brute-redis": "^0.0.1",
-    "express-session": "^1.17.3",
-    "connect-redis": "^7.1.0",
-    "cookie-parser": "^1.4.6",
+    "helmet": "^7.1.0",
+    "cors": "^2.8.5",
     "express-async-errors": "^3.1.1"
   },
   "devDependencies": {
@@ -81,7 +79,7 @@
     "collectCoverageFrom": [
       "src/**/*.js",
       "!src/server.js",
-      "!src/database/**"
+      "!src/infrastructure/database/**"
     ],
     "coverageThreshold": {
       "global": {
