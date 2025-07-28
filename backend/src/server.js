@@ -19,7 +19,8 @@ const invoiceModule = require('./modules/invoice');
 const quotationModule = require('./modules/quotation');
 const serviceModule = require('./modules/service');
 const emailModule = require('./modules/email');
-const pdfModule = require('./modules/pdf'); // New import
+const pdfModule = require('./modules/pdf');
+const analyticsModule = require('./modules/analytics'); // New import
 
 // Import plugins
 const plugins = [
@@ -106,7 +107,8 @@ const createServer = async () => {
   await server.register(quotationModule);
   await server.register(serviceModule);
   await server.register(emailModule);
-  await server.register(pdfModule); // New registration
+  await server.register(pdfModule);
+  await server.register(analyticsModule); // New registration
 
   // Health check route
   server.route({
