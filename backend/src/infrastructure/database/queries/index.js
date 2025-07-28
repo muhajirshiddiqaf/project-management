@@ -8,7 +8,8 @@ const project = require('./project');
 const invoice = require('./invoice');
 const quotation = require('./quotation');
 const service = require('./service');
-const email = require('./email'); // New import
+const email = require('./email');
+const pdf = require('./pdf'); // New import
 
 const queries = {
   auth,
@@ -20,7 +21,8 @@ const queries = {
   invoice,
   quotation,
   service,
-  email // New export
+  email,
+  pdf // New export
 };
 
 module.exports = { queries };

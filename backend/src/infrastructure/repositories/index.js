@@ -7,7 +7,8 @@ const ProjectRepository = require('./projectRepository');
 const InvoiceRepository = require('./invoiceRepository');
 const QuotationRepository = require('./quotationRepository');
 const ServiceRepository = require('./serviceRepository');
-const EmailRepository = require('./emailRepository'); // New import
+const EmailRepository = require('./emailRepository');
+const PDFRepository = require('./pdfRepository'); // New import
 
 module.exports = {
   UserRepository,
@@ -18,5 +19,6 @@ module.exports = {
   InvoiceRepository,
   QuotationRepository,
   ServiceRepository,
-  EmailRepository // New export
+  EmailRepository,
+  PDFRepository // New export
 };
