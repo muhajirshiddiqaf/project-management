@@ -34,6 +34,11 @@ const register = async (server, options) => {
           return { credentials: null, isValid: false };
         }
 
+        // Validate organization access
+        if (user.organization_id !== organizationId) {
+          return { credentials: null, isValid: false };
+        }
+
         return {
           isValid: true,
           credentials: {
@@ -57,7 +62,7 @@ const register = async (server, options) => {
     }
   });
 
-  // Register multi-tenant strategy
+  // Register multi-tenant strategy with enhanced isolation
   server.auth.strategy('tenant', 'jwt', {
     key: process.env.JWT_SECRET || 'your_jwt_secret_here',
     validate: async (artifacts, request, h) => {
@@ -72,6 +77,12 @@ const register = async (server, options) => {
           return { credentials: null, isValid: false };
         }
 
+        // Validate user belongs to organization
+        const user = await userRepository.findById(userId);
+        if (!user || user.organization_id !== organizationId) {
+          return { credentials: null, isValid: false };
+        }
+
         return {
           isValid: true,
           credentials: {
@@ -80,7 +91,14 @@ const register = async (server, options) => {
             organization: {
               id: organization.id,
               name: organization.name,
-              slug: organization.slug
+              slug: organization.slug,
+              settings: organization.settings || {}
+            },
+            user: {
+              id: user.id,
+              email: user.email,
+              role: user.role,
+              permissions: user.permissions || {}
             }
           }
         };
@@ -93,13 +111,47 @@ const register = async (server, options) => {
     }
   });
 
-       // Inject database into repositories
-       const userRepository = new UserRepository(server.app.db);
+  // Register admin strategy for super admin access
+  server.auth.strategy('admin', 'jwt', {
+    key: process.env.JWT_SECRET || 'your_jwt_secret_here',
+    validate: async (artifacts, request, h) => {
+      try {
+        const { userId, role } = artifacts.decoded;
 
-       // Inject repository into handler
-       authHandler.setUserRepository(userRepository);
+        // Use repository to validate user
+        const userRepository = new UserRepository(request.server.app.db);
+        const user = await userRepository.findById(userId);
 
-       console.log('✅ Auth module registered');
+        if (!user || !user.is_active || user.role !== 'super_admin') {
+          return { credentials: null, isValid: false };
+        }
+
+        return {
+          isValid: true,
+          credentials: {
+            id: user.id,
+            email: user.email,
+            role: user.role,
+            permissions: user.permissions || {},
+            isSuperAdmin: true
+          }
+        };
+      } catch (error) {
+        return { credentials: null, isValid: false };
+      }
+    },
+    verifyOptions: {
+      algorithms: ['HS256']
+    }
+  });
+
+  // Inject database into repositories
+  const userRepository = new UserRepository(server.app.db);
+
+  // Inject repository into handler
+  authHandler.setUserRepository(userRepository);
+
+  console.log('✅ Auth module registered with multi-tenant support');
 };
 
 const name = 'auth';

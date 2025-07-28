@@ -1,6 +1,7 @@
 const Joi = require('@hapi/joi');
 const authHandler = require('./handler');
 const authValidator = require('./validator');
+const { tenantIsolation, roleBasedAccess } = require('../../middleware');
 
 const routes = [
   // Register
@@ -52,6 +53,9 @@ const routes = [
     handler: authHandler.logout,
     options: {
       auth: 'jwt',
+      pre: [
+        { method: tenantIsolation }
+      ],
       tags: ['auth']
     }
   },
@@ -63,6 +67,9 @@ const routes = [
     handler: authHandler.getProfile,
     options: {
       auth: 'jwt',
+      pre: [
+        { method: tenantIsolation }
+      ],
       tags: ['auth']
     }
   },
@@ -74,6 +81,9 @@ const routes = [
     handler: authHandler.updateProfile,
     options: {
       auth: 'jwt',
+      pre: [
+        { method: tenantIsolation }
+      ],
       validate: {
         payload: authValidator.updateProfileSchema
       },
@@ -88,6 +98,9 @@ const routes = [
     handler: authHandler.changePassword,
     options: {
       auth: 'jwt',
+      pre: [
+        { method: tenantIsolation }
+      ],
       validate: {
         payload: authValidator.changePasswordSchema
       },
@@ -102,6 +115,9 @@ const routes = [
     handler: authHandler.verifyToken,
     options: {
       auth: 'jwt',
+      pre: [
+        { method: tenantIsolation }
+      ],
       tags: ['auth']
     }
   },
@@ -141,6 +157,9 @@ const routes = [
     handler: authHandler.setup2FA,
     options: {
       auth: 'jwt',
+      pre: [
+        { method: tenantIsolation }
+      ],
       tags: ['auth']
     }
   },
