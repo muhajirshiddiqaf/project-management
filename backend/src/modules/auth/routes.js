@@ -3,11 +3,7 @@ const authHandler = require('./handler');
 const authValidator = require('./validator');
 
 const routes = [
-  /**
-   * @route   POST /api/auth/register
-   * @desc    Register new user
-   * @access  Public
-   */
+  // Register
   {
     method: 'POST',
     path: '/register',
@@ -15,51 +11,13 @@ const routes = [
     options: {
       auth: false,
       validate: {
-        payload: authValidator.registerSchema,
-        failAction: (request, h, err) => {
-          return h.response({
-            success: false,
-            message: 'Validation failed',
-            errors: err.details.map(detail => ({
-              field: detail.path.join('.'),
-              message: detail.message
-            })),
-            code: 'VALIDATION_ERROR'
-          }).code(400).takeover();
-        }
+        payload: authValidator.registerSchema
       },
-      description: 'Register new user',
-      tags: ['api', 'auth'],
-      notes: 'Register a new user with optional organization creation',
-      response: {
-        schema: Joi.object({
-          success: Joi.boolean().required(),
-          message: Joi.string().required(),
-          data: Joi.object({
-            user: Joi.object({
-              id: Joi.string().required(),
-              email: Joi.string().email().required(),
-              firstName: Joi.string().required(),
-              lastName: Joi.string().required(),
-              role: Joi.string().required(),
-              organizationId: Joi.string().required()
-            }).required(),
-            tokens: Joi.object({
-              accessToken: Joi.string().required(),
-              refreshToken: Joi.string().required(),
-              expiresIn: Joi.string().required()
-            }).required()
-          }).required()
-        }).required()
-      }
+      tags: ['auth']
     }
   },
 
-  /**
-   * @route   POST /api/auth/login
-   * @desc    Login user
-   * @access  Public
-   */
+  // Login
   {
     method: 'POST',
     path: '/login',
@@ -67,53 +25,13 @@ const routes = [
     options: {
       auth: false,
       validate: {
-        payload: authValidator.loginSchema,
-        failAction: (request, h, err) => {
-          return h.response({
-            success: false,
-            message: 'Validation failed',
-            errors: err.details.map(detail => ({
-              field: detail.path.join('.'),
-              message: detail.message
-            })),
-            code: 'VALIDATION_ERROR'
-          }).code(400).takeover();
-        }
+        payload: authValidator.loginSchema
       },
-      description: 'Login user',
-      tags: ['api', 'auth'],
-      notes: 'Authenticate user and return access token',
-      response: {
-        schema: Joi.object({
-          success: Joi.boolean().required(),
-          message: Joi.string().required(),
-          data: Joi.object({
-            user: Joi.object({
-              id: Joi.string().required(),
-              email: Joi.string().email().required(),
-              firstName: Joi.string().required(),
-              lastName: Joi.string().required(),
-              role: Joi.string().required(),
-              organizationId: Joi.string().required(),
-              organizationName: Joi.string().required(),
-              organizationSlug: Joi.string().required()
-            }).required(),
-            tokens: Joi.object({
-              accessToken: Joi.string().required(),
-              refreshToken: Joi.string().required(),
-              expiresIn: Joi.string().required()
-            }).required()
-          }).required()
-        }).required()
-      }
+      tags: ['auth']
     }
   },
 
-  /**
-   * @route   POST /api/auth/refresh
-   * @desc    Refresh access token
-   * @access  Public
-   */
+  // Refresh token
   {
     method: 'POST',
     path: '/refresh',
@@ -121,64 +39,35 @@ const routes = [
     options: {
       auth: false,
       validate: {
-        payload: authValidator.refreshTokenSchema,
-        failAction: (request, h, err) => {
-          return h.response({
-            success: false,
-            message: 'Validation failed',
-            errors: err.details.map(detail => ({
-              field: detail.path.join('.'),
-              message: detail.message
-            })),
-            code: 'VALIDATION_ERROR'
-          }).code(400).takeover();
-        }
+        payload: authValidator.refreshTokenSchema
       },
-      description: 'Refresh access token',
-      tags: ['api', 'auth'],
-      notes: 'Refresh access token using refresh token'
+      tags: ['auth']
     }
   },
 
-  /**
-   * @route   POST /api/auth/logout
-   * @desc    Logout user
-   * @access  Private
-   */
+  // Logout
   {
     method: 'POST',
     path: '/logout',
     handler: authHandler.logout,
     options: {
       auth: 'jwt',
-      description: 'Logout user',
-      tags: ['api', 'auth'],
-      notes: 'Logout current user'
+      tags: ['auth']
     }
   },
 
-  /**
-   * @route   GET /api/auth/profile
-   * @desc    Get current user profile
-   * @access  Private
-   */
+  // Get profile
   {
     method: 'GET',
     path: '/profile',
     handler: authHandler.getProfile,
     options: {
       auth: 'jwt',
-      description: 'Get current user profile',
-      tags: ['api', 'auth'],
-      notes: 'Get profile of authenticated user'
+      tags: ['auth']
     }
   },
 
-  /**
-   * @route   PUT /api/auth/profile
-   * @desc    Update current user profile
-   * @access  Private
-   */
+  // Update profile
   {
     method: 'PUT',
     path: '/profile',
@@ -186,30 +75,13 @@ const routes = [
     options: {
       auth: 'jwt',
       validate: {
-        payload: authValidator.updateProfileSchema,
-        failAction: (request, h, err) => {
-          return h.response({
-            success: false,
-            message: 'Validation failed',
-            errors: err.details.map(detail => ({
-              field: detail.path.join('.'),
-              message: detail.message
-            })),
-            code: 'VALIDATION_ERROR'
-          }).code(400).takeover();
-        }
+        payload: authValidator.updateProfileSchema
       },
-      description: 'Update current user profile',
-      tags: ['api', 'auth'],
-      notes: 'Update profile of authenticated user'
+      tags: ['auth']
     }
   },
 
-  /**
-   * @route   POST /api/auth/change-password
-   * @desc    Change user password
-   * @access  Private
-   */
+  // Change password
   {
     method: 'POST',
     path: '/change-password',
@@ -217,47 +89,24 @@ const routes = [
     options: {
       auth: 'jwt',
       validate: {
-        payload: authValidator.changePasswordSchema,
-        failAction: (request, h, err) => {
-          return h.response({
-            success: false,
-            message: 'Validation failed',
-            errors: err.details.map(detail => ({
-              field: detail.path.join('.'),
-              message: detail.message
-            })),
-            code: 'VALIDATION_ERROR'
-          }).code(400).takeover();
-        }
+        payload: authValidator.changePasswordSchema
       },
-      description: 'Change user password',
-      tags: ['api', 'auth'],
-      notes: 'Change password of authenticated user'
+      tags: ['auth']
     }
   },
 
-  /**
-   * @route   GET /api/auth/verify
-   * @desc    Verify access token
-   * @access  Private
-   */
+  // Verify token
   {
     method: 'GET',
     path: '/verify',
     handler: authHandler.verifyToken,
     options: {
       auth: 'jwt',
-      description: 'Verify access token',
-      tags: ['api', 'auth'],
-      notes: 'Verify if current token is valid'
+      tags: ['auth']
     }
   },
 
-  /**
-   * @route   POST /api/auth/forgot-password
-   * @desc    Send password reset email
-   * @access  Public
-   */
+  // Forgot password
   {
     method: 'POST',
     path: '/forgot-password',
@@ -265,30 +114,13 @@ const routes = [
     options: {
       auth: false,
       validate: {
-        payload: authValidator.forgotPasswordSchema,
-        failAction: (request, h, err) => {
-          return h.response({
-            success: false,
-            message: 'Validation failed',
-            errors: err.details.map(detail => ({
-              field: detail.path.join('.'),
-              message: detail.message
-            })),
-            code: 'VALIDATION_ERROR'
-          }).code(400).takeover();
-        }
+        payload: authValidator.forgotPasswordSchema
       },
-      description: 'Send password reset email',
-      tags: ['api', 'auth'],
-      notes: 'Send password reset email to user'
+      tags: ['auth']
     }
   },
 
-  /**
-   * @route   POST /api/auth/reset-password
-   * @desc    Reset password with token
-   * @access  Public
-   */
+  // Reset password
   {
     method: 'POST',
     path: '/reset-password',
@@ -296,47 +128,24 @@ const routes = [
     options: {
       auth: false,
       validate: {
-        payload: authValidator.resetPasswordSchema,
-        failAction: (request, h, err) => {
-          return h.response({
-            success: false,
-            message: 'Validation failed',
-            errors: err.details.map(detail => ({
-              field: detail.path.join('.'),
-              message: detail.message
-            })),
-            code: 'VALIDATION_ERROR'
-          }).code(400).takeover();
-        }
+        payload: authValidator.resetPasswordSchema
       },
-      description: 'Reset password with token',
-      tags: ['api', 'auth'],
-      notes: 'Reset password using reset token'
+      tags: ['auth']
     }
   },
 
-  /**
-   * @route   POST /api/auth/2fa/setup
-   * @desc    Setup two-factor authentication
-   * @access  Private
-   */
+  // Setup 2FA
   {
     method: 'POST',
     path: '/2fa/setup',
     handler: authHandler.setup2FA,
     options: {
       auth: 'jwt',
-      description: 'Setup two-factor authentication',
-      tags: ['api', 'auth'],
-      notes: 'Setup 2FA for authenticated user'
+      tags: ['auth']
     }
   },
 
-  /**
-   * @route   POST /api/auth/2fa/verify
-   * @desc    Verify two-factor authentication code
-   * @access  Public
-   */
+  // Verify 2FA
   {
     method: 'POST',
     path: '/2fa/verify',
@@ -344,22 +153,9 @@ const routes = [
     options: {
       auth: false,
       validate: {
-        payload: authValidator.verify2FASchema,
-        failAction: (request, h, err) => {
-          return h.response({
-            success: false,
-            message: 'Validation failed',
-            errors: err.details.map(detail => ({
-              field: detail.path.join('.'),
-              message: detail.message
-            })),
-            code: 'VALIDATION_ERROR'
-          }).code(400).takeover();
-        }
+        payload: authValidator.verify2FASchema
       },
-      description: 'Verify two-factor authentication code',
-      tags: ['api', 'auth'],
-      notes: 'Verify 2FA code for user'
+      tags: ['auth']
     }
   }
 ];
