@@ -18,7 +18,13 @@ const { UserRepository } = require('../../infrastructure/repositories');
 
 class AuthHandler {
   constructor() {
-    this.userRepository = new UserRepository();
+    // Repository will be injected via dependency injection
+    this.userRepository = null;
+  }
+
+  // Set repository (dependency injection)
+  setUserRepository(userRepository) {
+    this.userRepository = userRepository;
   }
 
   // Register new user

@@ -96,7 +96,14 @@ const register = async (server, options) => {
     }
   });
 
-  console.log('✅ Auth module registered');
+         // Inject database into repositories
+       const UserRepository = require('../../infrastructure/repositories').UserRepository;
+       const userRepository = new UserRepository(server.app.db);
+
+       // Inject repository into handler
+       authHandler.setUserRepository(userRepository);
+
+       console.log('✅ Auth module registered');
 };
 
 const name = 'auth';
