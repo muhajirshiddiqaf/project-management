@@ -562,6 +562,397 @@ class AuthHandler {
       throw Boom.internal('Logout failed');
     }
   }
+
+  // === 2FA ADDITIONAL METHODS ===
+
+  // Generate QR Code for 2FA setup
+  async generateQRCode(request, h) {
+    try {
+      const userId = request.auth.credentials.userId;
+      const user = await this.userRepository.findById(userId);
+
+      if (!user) {
+        throw Boom.notFound('User not found');
+      }
+
+      if (user.two_factor_enabled) {
+        throw Boom.badRequest('2FA is already enabled');
+      }
+
+      // Generate new secret if not exists
+      if (!user.two_factor_secret) {
+        const secret = speakeasy.generateSecret({
+          name: `${user.email} (${process.env.APP_NAME || 'Project Management'})`,
+          issuer: process.env.APP_NAME || 'Project Management'
+        });
+
+        await this.userRepository.updateUser(userId, {
+          two_factor_secret: secret.base32
+        });
+
+        user.two_factor_secret = secret.base32;
+      }
+
+      // Generate QR code
+      const qrCodeUrl = await QRCode.toDataURL(user.two_factor_secret);
+
+      return h.response({
+        success: true,
+        message: 'QR code generated successfully',
+        data: {
+          qr_code: qrCodeUrl,
+          secret: user.two_factor_secret,
+          backup_codes: user.backup_codes || []
+        }
+      });
+    } catch (error) {
+      if (error.isBoom) throw error;
+      throw Boom.internal('QR code generation failed');
+    }
+  }
+
+  // Resend 2FA token
+  async resend2FAToken(request, h) {
+    try {
+      const { email } = request.payload;
+      const user = await this.userRepository.findByEmail(email);
+
+      if (!user) {
+        throw Boom.notFound('User not found');
+      }
+
+      if (!user.two_factor_enabled) {
+        throw Boom.badRequest('2FA is not enabled for this user');
+      }
+
+      // Generate new token
+      const token = speakeasy.totp({
+        secret: user.two_factor_secret,
+        encoding: 'base32'
+      });
+
+      // Send token via email (implement email service integration)
+      // await emailService.send2FAToken(user.email, token);
+
+      return h.response({
+        success: true,
+        message: '2FA token resent successfully'
+      });
+    } catch (error) {
+      if (error.isBoom) throw error;
+      throw Boom.internal('Failed to resend 2FA token');
+    }
+  }
+
+  // Get 2FA status
+  async get2FAStatus(request, h) {
+    try {
+      const userId = request.auth.credentials.userId;
+      const user = await this.userRepository.findById(userId);
+
+      if (!user) {
+        throw Boom.notFound('User not found');
+      }
+
+      return h.response({
+        success: true,
+        data: {
+          two_factor_enabled: user.two_factor_enabled || false,
+          two_factor_setup: !!user.two_factor_secret,
+          backup_codes_count: user.backup_codes ? user.backup_codes.length : 0,
+          last_2fa_used: user.last_2fa_used
+        }
+      });
+    } catch (error) {
+      if (error.isBoom) throw error;
+      throw Boom.internal('Failed to get 2FA status');
+    }
+  }
+
+  // Generate backup codes
+  async backupCodes(request, h) {
+    try {
+      const userId = request.auth.credentials.userId;
+      const user = await this.userRepository.findById(userId);
+
+      if (!user) {
+        throw Boom.notFound('User not found');
+      }
+
+      if (!user.two_factor_enabled) {
+        throw Boom.badRequest('2FA must be enabled to generate backup codes');
+      }
+
+      // Generate 10 backup codes
+      const backupCodes = Array.from({ length: 10 }, () =>
+        Math.random().toString(36).substring(2, 12).toUpperCase()
+      );
+
+      // Hash backup codes before storing
+      const hashedBackupCodes = await Promise.all(
+        backupCodes.map(code => bcrypt.hash(code, 10))
+      );
+
+      await this.userRepository.updateUser(userId, {
+        backup_codes: hashedBackupCodes
+      });
+
+      return h.response({
+        success: true,
+        message: 'Backup codes generated successfully',
+        data: {
+          backup_codes: backupCodes
+        }
+      });
+    } catch (error) {
+      if (error.isBoom) throw error;
+      throw Boom.internal('Failed to generate backup codes');
+    }
+  }
+
+  // Verify backup code
+  async verifyBackupCode(request, h) {
+    try {
+      const { backup_code, email } = request.payload;
+      const user = await this.userRepository.findByEmail(email);
+
+      if (!user) {
+        throw Boom.notFound('User not found');
+      }
+
+      if (!user.backup_codes || user.backup_codes.length === 0) {
+        throw Boom.badRequest('No backup codes available');
+      }
+
+      // Check if backup code matches
+      const isValidCode = await Promise.any(
+        user.backup_codes.map(async (hashedCode, index) => {
+          const isValid = await bcrypt.compare(backup_code, hashedCode);
+          if (isValid) {
+            // Remove used backup code
+            const updatedBackupCodes = user.backup_codes.filter((_, i) => i !== index);
+            await this.userRepository.updateUser(user.id, {
+              backup_codes: updatedBackupCodes
+            });
+          }
+          return isValid;
+        })
+      );
+
+      if (!isValidCode) {
+        throw Boom.unauthorized('Invalid backup code');
+      }
+
+      // Generate temporary access token
+      const accessToken = jwt.sign(
+        { userId: user.id, email: user.email, role: user.role, organizationId: user.organization_id },
+        process.env.JWT_SECRET || 'your_jwt_secret_here',
+        { expiresIn: '1h' }
+      );
+
+      return h.response({
+        success: true,
+        message: 'Backup code verified successfully',
+        data: {
+          access_token: accessToken,
+          expires_in: '1h'
+        }
+      });
+    } catch (error) {
+      if (error.isBoom) throw error;
+      throw Boom.internal('Failed to verify backup code');
+    }
+  }
+
+  // Initiate 2FA recovery
+  async initiate2FARecovery(request, h) {
+    try {
+      const { email } = request.payload;
+      const user = await this.userRepository.findByEmail(email);
+
+      if (!user) {
+        throw Boom.notFound('User not found');
+      }
+
+      if (!user.two_factor_enabled) {
+        throw Boom.badRequest('2FA is not enabled for this user');
+      }
+
+      // Generate recovery token
+      const recoveryToken = jwt.sign(
+        { userId: user.id, email: user.email, type: '2fa_recovery' },
+        process.env.JWT_SECRET || 'your_jwt_secret_here',
+        { expiresIn: '1h' }
+      );
+
+      // Send recovery email (implement email service integration)
+      // await emailService.send2FARecoveryEmail(user.email, recoveryToken);
+
+      return h.response({
+        success: true,
+        message: '2FA recovery initiated. Check your email for instructions.'
+      });
+    } catch (error) {
+      if (error.isBoom) throw error;
+      throw Boom.internal('Failed to initiate 2FA recovery');
+    }
+  }
+
+  // Complete 2FA recovery
+  async complete2FARecovery(request, h) {
+    try {
+      const { recovery_token, new_password } = request.payload;
+
+      // Verify recovery token
+      const decoded = jwt.verify(recovery_token, process.env.JWT_SECRET || 'your_jwt_secret_here');
+
+      if (decoded.type !== '2fa_recovery') {
+        throw Boom.unauthorized('Invalid recovery token');
+      }
+
+      const user = await this.userRepository.findById(decoded.userId);
+      if (!user) {
+        throw Boom.notFound('User not found');
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(new_password, 10);
+
+      // Disable 2FA and update password
+      await this.userRepository.updateUser(user.id, {
+        password: hashedPassword,
+        two_factor_enabled: false,
+        two_factor_secret: null,
+        backup_codes: null
+      });
+
+      return h.response({
+        success: true,
+        message: '2FA recovery completed successfully. You can now login with your new password.'
+      });
+    } catch (error) {
+      if (error.isBoom) throw error;
+      throw Boom.internal('Failed to complete 2FA recovery');
+    }
+  }
+
+  // Get 2FA settings
+  async get2FASettings(request, h) {
+    try {
+      const userId = request.auth.credentials.userId;
+      const user = await this.userRepository.findById(userId);
+
+      if (!user) {
+        throw Boom.notFound('User not found');
+      }
+
+      return h.response({
+        success: true,
+        data: {
+          require_2fa_for_login: user.require_2fa_for_login || false,
+          require_2fa_for_admin: user.require_2fa_for_admin || false,
+          backup_codes_enabled: user.backup_codes_enabled || false,
+          sms_fallback_enabled: user.sms_fallback_enabled || false
+        }
+      });
+    } catch (error) {
+      if (error.isBoom) throw error;
+      throw Boom.internal('Failed to get 2FA settings');
+    }
+  }
+
+  // Update 2FA settings
+  async update2FASettings(request, h) {
+    try {
+      const userId = request.auth.credentials.userId;
+      const updateData = request.payload;
+
+      const user = await this.userRepository.findById(userId);
+      if (!user) {
+        throw Boom.notFound('User not found');
+      }
+
+      await this.userRepository.updateUser(userId, updateData);
+
+      return h.response({
+        success: true,
+        message: '2FA settings updated successfully'
+      });
+    } catch (error) {
+      if (error.isBoom) throw error;
+      throw Boom.internal('Failed to update 2FA settings');
+    }
+  }
+
+  // Get 2FA devices
+  async get2FADevices(request, h) {
+    try {
+      const userId = request.auth.credentials.userId;
+      const devices = await this.userRepository.get2FADevices(userId);
+
+      return h.response({
+        success: true,
+        data: {
+          devices: devices || []
+        }
+      });
+    } catch (error) {
+      if (error.isBoom) throw error;
+      throw Boom.internal('Failed to get 2FA devices');
+    }
+  }
+
+  // Revoke 2FA device
+  async revoke2FADevice(request, h) {
+    try {
+      const userId = request.auth.credentials.userId;
+      const { device_id } = request.params;
+
+      const result = await this.userRepository.revoke2FADevice(userId, device_id);
+
+      if (!result) {
+        throw Boom.notFound('Device not found');
+      }
+
+      return h.response({
+        success: true,
+        message: '2FA device revoked successfully'
+      });
+    } catch (error) {
+      if (error.isBoom) throw error;
+      throw Boom.internal('Failed to revoke 2FA device');
+    }
+  }
+
+  // Get 2FA logs
+  async get2FALogs(request, h) {
+    try {
+      const userId = request.auth.credentials.userId;
+      const { page = 1, limit = 10, start_date, end_date, action } = request.query;
+
+      const logs = await this.userRepository.get2FALogs(userId, {
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
+        start_date,
+        end_date,
+        action
+      });
+
+      return h.response({
+        success: true,
+        data: {
+          logs: logs || [],
+          pagination: {
+            page: parseInt(page, 10),
+            limit: parseInt(limit, 10)
+          }
+        }
+      });
+    } catch (error) {
+      if (error.isBoom) throw error;
+      throw Boom.internal('Failed to get 2FA logs');
+    }
+  }
 }
 
 module.exports = new AuthHandler();
