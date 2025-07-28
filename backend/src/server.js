@@ -17,7 +17,8 @@ const ticketModule = require('./modules/ticket');
 const projectModule = require('./modules/project');
 const invoiceModule = require('./modules/invoice');
 const quotationModule = require('./modules/quotation');
-const serviceModule = require('./modules/service'); // New import
+const serviceModule = require('./modules/service');
+const emailModule = require('./modules/email'); // New import
 
 // Import plugins
 const plugins = [
@@ -102,7 +103,8 @@ const createServer = async () => {
   await server.register(projectModule);
   await server.register(invoiceModule);
   await server.register(quotationModule);
-  await server.register(serviceModule); // New registration
+  await server.register(serviceModule);
+  await server.register(emailModule); // New registration
 
   // Health check route
   server.route({
