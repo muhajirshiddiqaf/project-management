@@ -5,6 +5,7 @@ const OrderRepository = require('./orderRepository');
 const TicketRepository = require('./ticketRepository');
 const ProjectRepository = require('./projectRepository');
 const InvoiceRepository = require('./invoiceRepository');
+const QuotationRepository = require('./quotationRepository'); // New import
 
 module.exports = {
   UserRepository,
@@ -12,5 +13,6 @@ module.exports = {
   OrderRepository,
   TicketRepository,
   ProjectRepository,
-  InvoiceRepository
+  InvoiceRepository,
+  QuotationRepository // New export
 };

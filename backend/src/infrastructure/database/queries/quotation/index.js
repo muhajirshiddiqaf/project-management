@@ -1,281 +1,211 @@
-// Quotation module database queries
-const quotationQueries = {
-  // Find quotation by ID
-  findQuotationById: `
-    SELECT q.*, c.name as client_name, c.email as client_email,
-           u.first_name || ' ' || u.last_name as created_by_name
-    FROM quotations q
-    LEFT JOIN clients c ON q.client_id = c.id
-    LEFT JOIN users u ON q.created_by = u.id
-    WHERE q.id = $1 AND q.organization_id = $2 AND q.is_active = true
-  `,
+// Quotation CRUD queries
+const findAll = `
+  SELECT
+    q.*,
+    p.title as project_title,
+    c.name as client_name,
+    u.name as created_by_name,
+    COALESCE(COUNT(qi.id), 0) as item_count,
+    COALESCE(SUM(qi.total), 0) as calculated_total
+  FROM quotations q
+  LEFT JOIN projects p ON q.project_id = p.id
+  LEFT JOIN clients c ON q.client_id = c.id
+  LEFT JOIN users u ON q.created_by = u.id
+  LEFT JOIN quotation_items qi ON q.id = qi.quotation_id
+  WHERE q.organization_id = $1
+  GROUP BY q.id, p.title, c.name, u.name
+  ORDER BY q.created_at DESC
+  LIMIT $2 OFFSET $3
+`;
 
-  // Find quotations by organization
-  findQuotationsByOrganization: `
-    SELECT q.*, c.name as client_name, c.email as client_email,
-           u.first_name || ' ' || u.last_name as created_by_name
-    FROM quotations q
-    LEFT JOIN clients c ON q.client_id = c.id
-    LEFT JOIN users u ON q.created_by = u.id
-    WHERE q.organization_id = $1 AND q.is_active = true
-    ORDER BY q.created_at DESC
-  `,
+const countQuotations = `
+  SELECT COUNT(*) as count
+  FROM quotations
+  WHERE organization_id = $1
+`;
 
-  // Create quotation
-  createQuotation: `
-    INSERT INTO quotations (id, organization_id, client_id, title, description,
-                          subtotal, tax_amount, discount_amount, total_amount,
-                          status, valid_until, created_by)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-    RETURNING *
-  `,
+const findQuotationById = `
+  SELECT
+    q.*,
+    p.title as project_title,
+    c.name as client_name,
+    u.name as created_by_name,
+    approver.name as approved_by_name
+  FROM quotations q
+  LEFT JOIN projects p ON q.project_id = p.id
+  LEFT JOIN clients c ON q.client_id = c.id
+  LEFT JOIN users u ON q.created_by = u.id
+  LEFT JOIN users approver ON q.approved_by = approver.id
+  WHERE q.id = $1 AND q.organization_id = $2
+`;
 
-  // Update quotation
-  updateQuotation: `
-    UPDATE quotations
-    SET title = COALESCE($1, title),
-        description = COALESCE($2, description),
-        subtotal = COALESCE($3, subtotal),
-        tax_amount = COALESCE($4, tax_amount),
-        discount_amount = COALESCE($5, discount_amount),
-        total_amount = COALESCE($6, total_amount),
-        status = COALESCE($7, status),
-        valid_until = COALESCE($8, valid_until),
-        updated_at = NOW()
-    WHERE id = $9 AND organization_id = $10
-    RETURNING *
-  `,
+const createQuotation = `
+  INSERT INTO quotations (
+    organization_id, project_id, client_id, quotation_number, title,
+    description, status, valid_until, issue_date, subtotal, tax_rate,
+    tax_amount, discount_percentage, discount_amount, total_amount,
+    currency, notes, terms_conditions, approved_by, approved_at, created_by
+  ) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21
+  ) RETURNING *
+`;
 
-  // Delete quotation (soft delete)
-  deleteQuotation: `
-    UPDATE quotations
-    SET is_active = false, updated_at = NOW()
-    WHERE id = $1 AND organization_id = $2
-  `,
+const deleteQuotation = `
+  DELETE FROM quotations
+  WHERE id = $1 AND organization_id = $2
+  RETURNING *
+`;
 
-  // Get quotation statistics
-  getQuotationStatistics: `
-    SELECT
-      COUNT(*) as total_quotations,
-      COUNT(CASE WHEN status = 'draft' THEN 1 END) as draft_quotations,
-      COUNT(CASE WHEN status = 'sent' THEN 1 END) as sent_quotations,
-      COUNT(CASE WHEN status = 'accepted' THEN 1 END) as accepted_quotations,
-      COUNT(CASE WHEN status = 'rejected' THEN 1 END) as rejected_quotations,
-      COUNT(CASE WHEN status = 'expired' THEN 1 END) as expired_quotations,
-      SUM(total_amount) as total_quotation_amount,
-      AVG(total_amount) as avg_quotation_amount,
-      SUM(CASE WHEN status = 'accepted' THEN total_amount ELSE 0 END) as accepted_amount
-    FROM quotations
-    WHERE organization_id = $1 AND is_active = true
-  `,
+const searchQuotations = `
+  SELECT
+    q.*,
+    p.title as project_title,
+    c.name as client_name,
+    u.name as created_by_name,
+    COALESCE(COUNT(qi.id), 0) as item_count,
+    COALESCE(SUM(qi.total), 0) as calculated_total
+  FROM quotations q
+  LEFT JOIN projects p ON q.project_id = p.id
+  LEFT JOIN clients c ON q.client_id = c.id
+  LEFT JOIN users u ON q.created_by = u.id
+  LEFT JOIN quotation_items qi ON q.id = qi.quotation_id
+  WHERE q.organization_id = $1
+    AND (q.quotation_number ILIKE $2 OR q.title ILIKE $2 OR c.name ILIKE $2)
+  GROUP BY q.id, p.title, c.name, u.name
+  ORDER BY q.created_at DESC
+  LIMIT $3 OFFSET $4
+`;
 
-  // Search quotations
-  searchQuotations: `
-    SELECT q.*, c.name as client_name, c.email as client_email,
-           u.first_name || ' ' || u.last_name as created_by_name
-    FROM quotations q
-    LEFT JOIN clients c ON q.client_id = c.id
-    LEFT JOIN users u ON q.created_by = u.id
-    WHERE q.organization_id = $1 AND q.is_active = true
-    AND (
-      LOWER(q.title) LIKE LOWER($2) OR
-      LOWER(q.description) LIKE LOWER($2) OR
-      LOWER(c.name) LIKE LOWER($2)
-    )
-    ORDER BY q.created_at DESC
-  `,
+const countSearchQuotations = `
+  SELECT COUNT(DISTINCT q.id) as count
+  FROM quotations q
+  LEFT JOIN clients c ON q.client_id = c.id
+  WHERE q.organization_id = $1
+    AND (q.quotation_number ILIKE $2 OR q.title ILIKE $2 OR c.name ILIKE $2)
+`;
 
-  // Get quotations by status
-  getQuotationsByStatus: `
-    SELECT q.*, c.name as client_name, c.email as client_email,
-           u.first_name || ' ' || u.last_name as created_by_name
-    FROM quotations q
-    LEFT JOIN clients c ON q.client_id = c.id
-    LEFT JOIN users u ON q.created_by = u.id
-    WHERE q.organization_id = $1 AND q.status = $2 AND q.is_active = true
-    ORDER BY q.created_at DESC
-  `,
+const updateQuotationStatus = `
+  UPDATE quotations
+  SET status = $1, approved_by = $2, approved_at = CASE WHEN $2 IS NOT NULL THEN NOW() ELSE NULL END, updated_at = NOW()
+  WHERE id = $3 AND organization_id = $4
+  RETURNING *
+`;
 
-  // Get quotations by client
-  getQuotationsByClient: `
-    SELECT q.*, c.name as client_name, c.email as client_email,
-           u.first_name || ' ' || u.last_name as created_by_name
-    FROM quotations q
-    LEFT JOIN clients c ON q.client_id = c.id
-    LEFT JOIN users u ON q.created_by = u.id
-    WHERE q.organization_id = $1 AND q.client_id = $2 AND q.is_active = true
-    ORDER BY q.created_at DESC
-  `,
+const approveQuotation = `
+  UPDATE quotations
+  SET status = 'approved', approved_by = $1, approved_at = NOW(), updated_at = NOW()
+  WHERE id = $2 AND organization_id = $3
+  RETURNING *
+`;
 
-  // Get quotation items
-  getQuotationItems: `
-    SELECT qi.*, s.name as service_name, s.description as service_description
-    FROM quotation_items qi
-    LEFT JOIN services s ON qi.service_id = s.id
-    WHERE qi.quotation_id = $1 AND qi.organization_id = $2 AND qi.is_active = true
-    ORDER BY qi.created_at ASC
-  `,
+// Quotation items queries
+const getQuotationItems = `
+  SELECT qi.*
+  FROM quotation_items qi
+  JOIN quotations q ON qi.quotation_id = q.id
+  WHERE qi.quotation_id = $1 AND q.organization_id = $2
+  ORDER BY qi.created_at ASC
+`;
 
-  // Create quotation item
-  createQuotationItem: `
-    INSERT INTO quotation_items (id, organization_id, quotation_id, service_id, description,
-                               quantity, unit_price, total_price)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-    RETURNING *
-  `,
+const countQuotationItems = `
+  SELECT COUNT(*) as count
+  FROM quotation_items qi
+  JOIN quotations q ON qi.quotation_id = q.id
+  WHERE qi.quotation_id = $1 AND q.organization_id = $2
+`;
 
-  // Update quotation item
-  updateQuotationItem: `
-    UPDATE quotation_items
-    SET service_id = COALESCE($1, service_id),
-        description = COALESCE($2, description),
-        quantity = COALESCE($3, quantity),
-        unit_price = COALESCE($4, unit_price),
-        total_price = COALESCE($5, total_price),
-        updated_at = NOW()
-    WHERE id = $6 AND organization_id = $7
-    RETURNING *
-  `,
+const findQuotationItemById = `
+  SELECT qi.*
+  FROM quotation_items qi
+  JOIN quotations q ON qi.quotation_id = q.id
+  WHERE qi.id = $1 AND qi.quotation_id = $2 AND q.organization_id = $3
+`;
 
-  // Delete quotation item
-  deleteQuotationItem: `
-    UPDATE quotation_items
-    SET is_active = false, updated_at = NOW()
-    WHERE id = $1 AND organization_id = $2
-  `,
+const createQuotationItem = `
+  INSERT INTO quotation_items (
+    quotation_id, name, description, quantity, unit_price,
+    unit_type, tax_rate, discount_percentage, total
+  ) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9
+  ) RETURNING *
+`;
 
-  // Get quotation templates
-  getQuotationTemplates: `
-    SELECT * FROM quotation_templates
-    WHERE organization_id = $1 AND is_active = true
-    ORDER BY created_at DESC
-  `,
+const deleteQuotationItem = `
+  DELETE FROM quotation_items qi
+  USING quotations q
+  WHERE qi.quotation_id = q.id
+    AND qi.id = $1
+    AND qi.quotation_id = $2
+    AND q.organization_id = $3
+  RETURNING qi.*
+`;
 
-  // Create quotation template
-  createQuotationTemplate: `
-    INSERT INTO quotation_templates (id, organization_id, name, description, content,
-                                   header_template, footer_template, terms_conditions)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-    RETURNING *
-  `,
+// Quotation calculation queries
+const calculateQuotationTotals = `
+  SELECT
+    COALESCE(SUM(qi.total), 0) as subtotal,
+    COALESCE(SUM(qi.total * qi.tax_rate / 100), 0) as tax_amount,
+    COALESCE(SUM(qi.total * qi.discount_percentage / 100), 0) as discount_amount,
+    COALESCE(SUM(qi.total * (1 + qi.tax_rate / 100 - qi.discount_percentage / 100)), 0) as total_amount
+  FROM quotation_items qi
+  JOIN quotations q ON qi.quotation_id = q.id
+  WHERE qi.quotation_id = $1 AND q.organization_id = $2
+`;
 
-  // Update quotation template
-  updateQuotationTemplate: `
-    UPDATE quotation_templates
-    SET name = COALESCE($1, name),
-        description = COALESCE($2, description),
-        content = COALESCE($3, content),
-        header_template = COALESCE($4, header_template),
-        footer_template = COALESCE($5, footer_template),
-        terms_conditions = COALESCE($6, terms_conditions),
-        updated_at = NOW()
-    WHERE id = $7 AND organization_id = $8
-    RETURNING *
-  `,
+const generateQuotationNumber = `
+  SELECT
+    'QT-' || TO_CHAR(NOW(), 'YYYYMM') || '-' ||
+    LPAD(COALESCE(MAX(SUBSTRING(quotation_number FROM 'QT-\\d{6}-(\\d+)')::integer), 4) + 1, 4, '0') as quotation_number
+  FROM quotations
+  WHERE organization_id = $1
+    AND quotation_number LIKE 'QT-' || TO_CHAR(NOW(), 'YYYYMM') || '-%'
+`;
 
-  // Delete quotation template
-  deleteQuotationTemplate: `
-    UPDATE quotation_templates
-    SET is_active = false, updated_at = NOW()
-    WHERE id = $1 AND organization_id = $2
-  `,
+// Quotation statistics queries
+const getQuotationStatistics = `
+  SELECT
+    COUNT(*) as total_quotations,
+    COUNT(CASE WHEN status = 'draft' THEN 1 END) as draft_quotations,
+    COUNT(CASE WHEN status = 'sent' THEN 1 END) as sent_quotations,
+    COUNT(CASE WHEN status = 'approved' THEN 1 END) as approved_quotations,
+    COUNT(CASE WHEN status = 'rejected' THEN 1 END) as rejected_quotations,
+    COUNT(CASE WHEN status = 'expired' THEN 1 END) as expired_quotations,
+    COALESCE(SUM(total_amount), 0) as total_value,
+    COALESCE(AVG(total_amount), 0) as average_value,
+    COUNT(CASE WHEN valid_until < NOW() AND status IN ('draft', 'sent') THEN 1 END) as expired_count
+  FROM quotations
+  WHERE organization_id = $1
+`;
 
-  // Get quotation history
-  getQuotationHistory: `
-    SELECT * FROM quotation_history
-    WHERE quotation_id = $1 AND organization_id = $2 AND is_active = true
-    ORDER BY created_at DESC
-  `,
+const getQuotationItemsStatistics = `
+  SELECT
+    COUNT(*) as total_items,
+    COALESCE(SUM(quantity), 0) as total_quantity,
+    COALESCE(SUM(total), 0) as total_value,
+    COALESCE(AVG(unit_price), 0) as average_unit_price,
+    COUNT(DISTINCT unit_type) as unique_unit_types
+  FROM quotation_items qi
+  JOIN quotations q ON qi.quotation_id = q.id
+  WHERE q.organization_id = $1
+`;
 
-  // Create quotation history
-  createQuotationHistory: `
-    INSERT INTO quotation_history (id, organization_id, quotation_id, action, description,
-                                 performed_by, old_values, new_values)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-    RETURNING *
-  `,
-
-  // Get quotation dashboard data
-  getQuotationDashboardData: `
-    SELECT
-      q.id,
-      q.title,
-      q.status,
-      q.total_amount,
-      q.created_at,
-      q.valid_until,
-      c.name as client_name,
-      u.first_name || ' ' || u.last_name as created_by_name,
-      COUNT(qi.id) as total_items,
-      SUM(qi.total_price) as items_total
-    FROM quotations q
-    LEFT JOIN clients c ON q.client_id = c.id
-    LEFT JOIN users u ON q.created_by = u.id
-    LEFT JOIN quotation_items qi ON q.id = qi.quotation_id AND qi.is_active = true
-    WHERE q.organization_id = $1 AND q.is_active = true
-    GROUP BY q.id, q.title, q.status, q.total_amount, q.created_at, q.valid_until,
-             c.name, u.first_name, u.last_name
-    ORDER BY q.created_at DESC
-  `,
-
-  // Get quotation timeline
-  getQuotationTimeline: `
-    SELECT
-      'item' as type,
-      qi.id,
-      qi.description as title,
-      qi.created_at as date,
-      'added' as status,
-      NULL as performed_by_name
-    FROM quotation_items qi
-    WHERE qi.quotation_id = $1 AND qi.organization_id = $2 AND qi.is_active = true
-
-    UNION ALL
-
-    SELECT
-      'history' as type,
-      qh.id,
-      qh.action as title,
-      qh.created_at as date,
-      qh.description as status,
-      u.first_name || ' ' || u.last_name as performed_by_name
-    FROM quotation_history qh
-    LEFT JOIN users u ON qh.performed_by = u.id
-    WHERE qh.quotation_id = $1 AND qh.organization_id = $2 AND qh.is_active = true
-
-    ORDER BY date DESC
-  `,
-
-  // Update quotation status
-  updateQuotationStatus: `
-    UPDATE quotations
-    SET status = $1, updated_at = NOW()
-    WHERE id = $2 AND organization_id = $3
-    RETURNING *
-  `,
-
-  // Get expired quotations
-  getExpiredQuotations: `
-    SELECT q.*, c.name as client_name, c.email as client_email
-    FROM quotations q
-    LEFT JOIN clients c ON q.client_id = c.id
-    WHERE q.organization_id = $1 AND q.valid_until < NOW()
-    AND q.status IN ('draft', 'sent') AND q.is_active = true
-    ORDER BY q.valid_until ASC
-  `,
-
-  // Get quotation conversion rate
-  getQuotationConversionRate: `
-    SELECT
-      COUNT(*) as total_sent,
-      COUNT(CASE WHEN status = 'accepted' THEN 1 END) as total_accepted,
-      ROUND(
-        (COUNT(CASE WHEN status = 'accepted' THEN 1 END)::DECIMAL / COUNT(*)::DECIMAL) * 100, 2
-      ) as conversion_rate
-    FROM quotations
-    WHERE organization_id = $1 AND status IN ('sent', 'accepted', 'rejected')
-    AND is_active = true
-  `
+module.exports = {
+  findAll,
+  countQuotations,
+  findQuotationById,
+  createQuotation,
+  deleteQuotation,
+  searchQuotations,
+  countSearchQuotations,
+  updateQuotationStatus,
+  approveQuotation,
+  getQuotationItems,
+  countQuotationItems,
+  findQuotationItemById,
+  createQuotationItem,
+  deleteQuotationItem,
+  calculateQuotationTotals,
+  generateQuotationNumber,
+  getQuotationStatistics,
+  getQuotationItemsStatistics
 };
-
-module.exports = quotationQueries;
