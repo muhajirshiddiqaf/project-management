@@ -1,6 +1,8 @@
 // Ticket module database queries
 const ticketQueries = {
-  // Find all tickets for organization
+  // === TICKET CRUD QUERIES ===
+
+  // Find all tickets
   findAllTickets: `
     SELECT t.*,
            c.name as client_name,
@@ -8,13 +10,14 @@ const ticketQueries = {
            u.first_name || ' ' || u.last_name as assigned_to_name,
            p.name as project_name,
            o.title as order_title,
-           COUNT(tc.id) as comment_count
+           COUNT(tm.id) as message_count,
+           COUNT(CASE WHEN tm.is_internal = true THEN 1 END) as internal_message_count
     FROM tickets t
     LEFT JOIN clients c ON t.client_id = c.id
     LEFT JOIN users u ON t.assigned_to = u.id
     LEFT JOIN projects p ON t.project_id = p.id
     LEFT JOIN orders o ON t.order_id = o.id
-    LEFT JOIN ticket_comments tc ON t.id = tc.ticket_id AND tc.is_active = true
+    LEFT JOIN ticket_messages tm ON t.id = tm.ticket_id AND tm.is_active = true
     WHERE t.organization_id = $1
       AND t.is_active = true
       AND ($2::text IS NULL OR t.status = $2)
@@ -25,16 +28,14 @@ const ticketQueries = {
       AND ($7::uuid IS NULL OR t.assigned_to = $7)
       AND ($8::uuid IS NULL OR t.created_by = $8)
     GROUP BY t.id, c.name, c.email, u.first_name, u.last_name, p.name, o.title
-    ORDER BY t.${sortBy} ${sortOrder}
-    LIMIT $9 OFFSET $10
+    ORDER BY t.$9 $10
+    LIMIT $11 OFFSET $12
   `,
 
-  // Count tickets for organization
+  // Count tickets
   countTickets: `
-    SELECT COUNT(*) as count
-    FROM tickets
-    WHERE organization_id = $1
-      AND is_active = true
+    SELECT COUNT(*) FROM tickets
+    WHERE organization_id = $1 AND is_active = true
       AND ($2::text IS NULL OR status = $2)
       AND ($3::text IS NULL OR priority = $3)
       AND ($4::text IS NULL OR category = $4)
@@ -60,40 +61,22 @@ const ticketQueries = {
     WHERE t.id = $1 AND t.organization_id = $2 AND t.is_active = true
   `,
 
-  // Create new ticket
+  // Create ticket
   createTicket: `
     INSERT INTO tickets (
       title, description, category, priority, status, client_id, project_id,
       order_id, assigned_to, due_date, tags, attachments, organization_id, created_by
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+    )
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
     RETURNING *
   `,
 
-  // Update ticket
-  updateTicket: `
-    UPDATE tickets
-    SET title = COALESCE($3, title),
-        description = COALESCE($4, description),
-        category = COALESCE($5, category),
-        priority = COALESCE($6, priority),
-        status = COALESCE($7, status),
-        client_id = COALESCE($8, client_id),
-        project_id = COALESCE($9, project_id),
-        order_id = COALESCE($10, order_id),
-        assigned_to = COALESCE($11, assigned_to),
-        due_date = COALESCE($12, due_date),
-        tags = COALESCE($13, tags),
-        attachments = COALESCE($14, attachments),
-        updated_at = NOW()
-    WHERE id = $1 AND organization_id = $2 AND is_active = true
-    RETURNING *
-  `,
-
-  // Delete ticket (soft delete)
+  // Delete ticket
   deleteTicket: `
     UPDATE tickets
     SET is_active = false, updated_at = NOW()
     WHERE id = $1 AND organization_id = $2 AND is_active = true
+    RETURNING *
   `,
 
   // Search tickets
@@ -104,43 +87,38 @@ const ticketQueries = {
            u.first_name || ' ' || u.last_name as assigned_to_name,
            p.name as project_name,
            o.title as order_title,
-           COUNT(tc.id) as comment_count
+           COUNT(tm.id) as message_count
     FROM tickets t
     LEFT JOIN clients c ON t.client_id = c.id
     LEFT JOIN users u ON t.assigned_to = u.id
     LEFT JOIN projects p ON t.project_id = p.id
     LEFT JOIN orders o ON t.order_id = o.id
-    LEFT JOIN ticket_comments tc ON t.id = tc.ticket_id AND tc.is_active = true
+    LEFT JOIN ticket_messages tm ON t.id = tm.ticket_id AND tm.is_active = true
     WHERE t.organization_id = $1
       AND t.is_active = true
       AND (
         t.title ILIKE $2 OR
         t.description ILIKE $2 OR
-        c.name ILIKE $2
+        c.name ILIKE $2 OR
+        p.name ILIKE $2
       )
-      AND ($3::text IS NULL OR t.status = $3)
-      AND ($4::text IS NULL OR t.priority = $4)
-      AND ($5::text IS NULL OR t.category = $5)
     GROUP BY t.id, c.name, c.email, u.first_name, u.last_name, p.name, o.title
-    ORDER BY t.${sortBy} ${sortOrder}
-    LIMIT $6 OFFSET $7
+    ORDER BY t.$3 $4
+    LIMIT $5 OFFSET $6
   `,
 
-  // Count search results
+  // Count search tickets
   countSearchTickets: `
-    SELECT COUNT(*) as count
-    FROM tickets t
+    SELECT COUNT(*) FROM tickets t
     LEFT JOIN clients c ON t.client_id = c.id
-    WHERE t.organization_id = $1
-      AND t.is_active = true
+    LEFT JOIN projects p ON t.project_id = p.id
+    WHERE t.organization_id = $1 AND t.is_active = true
       AND (
         t.title ILIKE $2 OR
         t.description ILIKE $2 OR
-        c.name ILIKE $2
+        c.name ILIKE $2 OR
+        p.name ILIKE $2
       )
-      AND ($3::text IS NULL OR t.status = $3)
-      AND ($4::text IS NULL OR t.priority = $4)
-      AND ($5::text IS NULL OR t.category = $5)
   `,
 
   // Update ticket status
@@ -164,28 +142,32 @@ const ticketQueries = {
 
   // Add ticket comment
   addTicketComment: `
-    INSERT INTO ticket_comments (
-      ticket_id, organization_id, content, is_internal, attachments, created_by
-    ) VALUES ($1, $2, $3, $4, $5, $6)
+    INSERT INTO ticket_messages (
+      ticket_id, content, message_type, is_internal, attachments, organization_id, created_by
+    )
+    VALUES ($1, $2, 'comment', $3, $4, $5, $6)
     RETURNING *
   `,
 
   // Get ticket comments
   getTicketComments: `
-    SELECT tc.*,
-           u.first_name || ' ' || u.last_name as created_by_name
-    FROM ticket_comments tc
-    LEFT JOIN users u ON tc.created_by = u.id
-    WHERE tc.ticket_id = $1 AND tc.organization_id = $2 AND tc.is_active = true
-    ORDER BY tc.created_at ASC
+    SELECT tm.*,
+           u.first_name || ' ' || u.last_name as created_by_name,
+           t.title as ticket_title
+    FROM ticket_messages tm
+    JOIN tickets t ON tm.ticket_id = t.id
+    LEFT JOIN users u ON tm.created_by = u.id
+    WHERE tm.ticket_id = $1 AND tm.organization_id = $2 AND tm.is_active = true
+      AND tm.message_type = 'comment'
+    ORDER BY tm.created_at DESC
     LIMIT $3 OFFSET $4
   `,
 
   // Count ticket comments
   countTicketComments: `
-    SELECT COUNT(*) as count
-    FROM ticket_comments
+    SELECT COUNT(*) FROM ticket_messages
     WHERE ticket_id = $1 AND organization_id = $2 AND is_active = true
+      AND message_type = 'comment'
   `,
 
   // Get ticket statistics
@@ -202,11 +184,141 @@ const ticketQueries = {
       COUNT(CASE WHEN category = 'bug' THEN 1 END) as bug_tickets,
       COUNT(CASE WHEN category = 'feature' THEN 1 END) as feature_tickets,
       COUNT(CASE WHEN category = 'support' THEN 1 END) as support_tickets,
-      COUNT(CASE WHEN category = 'question' THEN 1 END) as question_tickets,
-      COUNT(CASE WHEN assigned_to IS NULL THEN 1 END) as unassigned_tickets,
-      AVG(EXTRACT(EPOCH FROM (updated_at - created_at))/3600) as avg_resolution_hours
+      COUNT(CASE WHEN created_at >= NOW() - INTERVAL '30 days' THEN 1 END) as new_tickets_30_days,
+      COUNT(CASE WHEN due_date < NOW() AND status NOT IN ('resolved', 'closed', 'cancelled') THEN 1 END) as overdue_tickets
     FROM tickets
     WHERE organization_id = $1 AND is_active = true
+  `,
+
+  // === TICKET MESSAGING QUERIES ===
+
+  // Find all ticket messages
+  findAllTicketMessages: `
+    SELECT tm.*,
+           u.first_name || ' ' || u.last_name as created_by_name,
+           t.title as ticket_title,
+           pm.content as parent_message_content
+    FROM ticket_messages tm
+    JOIN tickets t ON tm.ticket_id = t.id
+    LEFT JOIN users u ON tm.created_by = u.id
+    LEFT JOIN ticket_messages pm ON tm.parent_message_id = pm.id
+    WHERE tm.ticket_id = $1 AND tm.organization_id = $2 AND tm.is_active = true
+      AND ($3::text IS NULL OR tm.message_type = $3)
+      AND ($4::boolean IS NULL OR tm.is_internal = $4)
+      AND ($5::uuid IS NULL OR tm.parent_message_id = $5)
+    ORDER BY tm.created_at DESC
+    LIMIT $6 OFFSET $7
+  `,
+
+  // Count ticket messages
+  countTicketMessages: `
+    SELECT COUNT(*) FROM ticket_messages
+    WHERE ticket_id = $1 AND organization_id = $2 AND is_active = true
+      AND ($3::text IS NULL OR message_type = $3)
+      AND ($4::boolean IS NULL OR is_internal = $4)
+      AND ($5::uuid IS NULL OR parent_message_id = $5)
+  `,
+
+  // Find ticket message by ID
+  findTicketMessageById: `
+    SELECT tm.*,
+           u.first_name || ' ' || u.last_name as created_by_name,
+           t.title as ticket_title,
+           pm.content as parent_message_content
+    FROM ticket_messages tm
+    JOIN tickets t ON tm.ticket_id = t.id
+    LEFT JOIN users u ON tm.created_by = u.id
+    LEFT JOIN ticket_messages pm ON tm.parent_message_id = pm.id
+    WHERE tm.id = $1 AND tm.organization_id = $2 AND tm.is_active = true
+  `,
+
+  // Create ticket message
+  createTicketMessage: `
+    INSERT INTO ticket_messages (
+      ticket_id, content, message_type, is_internal, parent_message_id,
+      attachments, notify_users, organization_id, created_by
+    )
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    RETURNING *
+  `,
+
+  // Delete ticket message
+  deleteTicketMessage: `
+    UPDATE ticket_messages
+    SET is_active = false, updated_at = NOW()
+    WHERE id = $1 AND organization_id = $2 AND is_active = true
+    RETURNING *
+  `,
+
+  // Reply to ticket message
+  replyToTicketMessage: `
+    INSERT INTO ticket_messages (
+      ticket_id, parent_message_id, content, message_type, is_internal,
+      attachments, organization_id, created_by
+    )
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    RETURNING *
+  `,
+
+  // Mark ticket message as read
+  markTicketMessageAsRead: `
+    INSERT INTO ticket_message_reads (message_id, user_id, organization_id)
+    VALUES ($1, $3, $2)
+    ON CONFLICT (message_id, user_id) DO NOTHING
+    RETURNING *
+  `,
+
+  // Get ticket message thread
+  getTicketMessageThread: `
+    WITH RECURSIVE message_thread AS (
+      -- Get the root message
+      SELECT tm.*, 0 as level
+      FROM ticket_messages tm
+      WHERE tm.id = $1 AND tm.organization_id = $2 AND tm.is_active = true
+
+      UNION ALL
+
+      -- Get all replies
+      SELECT tm.*, mt.level + 1
+      FROM ticket_messages tm
+      JOIN message_thread mt ON tm.parent_message_id = mt.id
+      WHERE tm.organization_id = $2 AND tm.is_active = true
+        AND ($3::boolean IS NULL OR tm.is_internal = $3)
+    )
+    SELECT mt.*,
+           u.first_name || ' ' || u.last_name as created_by_name
+    FROM message_thread mt
+    LEFT JOIN users u ON mt.created_by = u.id
+    ORDER BY mt.level, mt.created_at
+  `,
+
+  // === TICKET MESSAGE STATISTICS QUERIES ===
+
+  // Get ticket message statistics
+  getTicketMessageStatistics: `
+    SELECT
+      COUNT(*) as total_messages,
+      COUNT(CASE WHEN message_type = 'comment' THEN 1 END) as comment_messages,
+      COUNT(CASE WHEN message_type = 'internal_note' THEN 1 END) as internal_note_messages,
+      COUNT(CASE WHEN message_type = 'status_update' THEN 1 END) as status_update_messages,
+      COUNT(CASE WHEN message_type = 'assignment_update' THEN 1 END) as assignment_update_messages,
+      COUNT(CASE WHEN is_internal = true THEN 1 END) as internal_messages,
+      COUNT(CASE WHEN parent_message_id IS NOT NULL THEN 1 END) as reply_messages,
+      AVG(LENGTH(content)) as average_message_length
+    FROM ticket_messages
+    WHERE organization_id = $1 AND is_active = true
+  `,
+
+  // Get ticket message read statistics
+  getTicketMessageReadStatistics: `
+    SELECT
+      COUNT(*) as total_reads,
+      COUNT(DISTINCT message_id) as unique_messages_read,
+      COUNT(DISTINCT user_id) as unique_readers,
+      AVG(read_at - created_at) as average_read_delay
+    FROM ticket_message_reads tmr
+    JOIN ticket_messages tm ON tmr.message_id = tm.id
+    WHERE tmr.organization_id = $1
   `
 };
 

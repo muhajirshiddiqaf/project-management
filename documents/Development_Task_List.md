@@ -189,25 +189,25 @@
   - **Estimated Time**: 3 days
   - **Status**: ✅ COMPLETED
 
-- [ ] **Task 2.3.2**: Order items management
-  - [ ] Create order items endpoints
-  - [ ] Implement item calculation
-  - [ ] Add item validation
+- [x] **Task 2.3.2**: Order items management
+  - [x] Create order items endpoints
+  - [x] Implement item calculation
+  - [x] Add item validation
   - **Priority**: Medium
   - **Estimated Time**: 2 days
-  - **Status**: In Progress
+  - **Status**: ✅ COMPLETED
 
 #### 2.4 Ticket Management API
 
-- [ ] **Task 2.4.1**: Ticket CRUD operations
+- [x] **Task 2.4.1**: Ticket CRUD operations
 
-  - [ ] Create ticket endpoints
-  - [ ] Implement priority management
-  - [ ] Add ticket assignment
-  - [ ] Setup ticket status tracking
+  - [x] Create ticket endpoints
+  - [x] Implement priority management
+  - [x] Add ticket assignment
+  - [x] Setup ticket status tracking
   - **Priority**: High
   - **Estimated Time**: 3 days
-  - **Status**: Not Started
+  - **Status**: ✅ COMPLETED
 
 - [ ] **Task 2.4.2**: Ticket messaging system
   - [ ] Create message endpoints
@@ -215,7 +215,7 @@
   - [ ] Add message threading
   - **Priority**: Medium
   - **Estimated Time**: 2 days
-  - **Status**: Not Started
+  - **Status**: In Progress
 
 #### 2.5 Invoice Management API
 

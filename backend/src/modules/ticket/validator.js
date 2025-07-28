@@ -43,15 +43,15 @@ const ticketSchemas = {
   getTickets: Joi.object({
     page: Joi.number().integer().min(1).default(1),
     limit: Joi.number().integer().min(1).max(100).default(10),
+    sortBy: Joi.string().valid('created_at', 'updated_at', 'title', 'priority', 'status', 'due_date').default('created_at'),
+    sortOrder: Joi.string().valid('asc', 'desc').default('desc'),
     status: Joi.string().valid('open', 'in_progress', 'resolved', 'closed', 'cancelled').optional(),
     priority: Joi.string().valid('low', 'medium', 'high', 'urgent').optional(),
     category: Joi.string().valid('bug', 'feature', 'support', 'question', 'other').optional(),
     client_id: Joi.string().optional().uuid(),
     project_id: Joi.string().optional().uuid(),
     assigned_to: Joi.string().optional().uuid(),
-    created_by: Joi.string().optional().uuid(),
-    sortBy: Joi.string().valid('created_at', 'updated_at', 'priority', 'due_date', 'status').default('created_at'),
-    sortOrder: Joi.string().valid('asc', 'desc').default('desc')
+    created_by: Joi.string().optional().uuid()
   }),
 
   // Search tickets schema
@@ -59,10 +59,7 @@ const ticketSchemas = {
     q: Joi.string().optional().max(100),
     page: Joi.number().integer().min(1).default(1),
     limit: Joi.number().integer().min(1).max(100).default(10),
-    status: Joi.string().valid('open', 'in_progress', 'resolved', 'closed', 'cancelled').optional(),
-    priority: Joi.string().valid('low', 'medium', 'high', 'urgent').optional(),
-    category: Joi.string().valid('bug', 'feature', 'support', 'question', 'other').optional(),
-    sortBy: Joi.string().valid('created_at', 'updated_at', 'priority', 'due_date', 'status').default('created_at'),
+    sortBy: Joi.string().valid('created_at', 'updated_at', 'title', 'priority', 'status', 'due_date').default('created_at'),
     sortOrder: Joi.string().valid('asc', 'desc').default('desc')
   }),
 
@@ -73,30 +70,107 @@ const ticketSchemas = {
 
   // Update ticket status schema
   updateTicketStatus: Joi.object({
-    id: Joi.string().required().uuid(),
     status: Joi.string().valid('open', 'in_progress', 'resolved', 'closed', 'cancelled').required(),
-    notes: Joi.string().optional().max(500)
+    notes: Joi.string().optional().max(1000)
   }),
 
   // Assign ticket schema
   assignTicket: Joi.object({
-    id: Joi.string().required().uuid(),
     assigned_to: Joi.string().required().uuid()
   }),
 
-  // Add ticket comment schema
-  addTicketComment: Joi.object({
-    id: Joi.string().required().uuid(),
-    content: Joi.string().required().max(1000),
+  // === TICKET MESSAGING SCHEMAS ===
+
+  // Create ticket message schema
+  createTicketMessage: Joi.object({
+    ticket_id: Joi.string().required().uuid(),
+    content: Joi.string().required().max(2000),
+    message_type: Joi.string().valid('comment', 'internal_note', 'status_update', 'assignment_update').required(),
+    is_internal: Joi.boolean().default(false),
+    parent_message_id: Joi.string().optional().uuid(),
+    attachments: Joi.array().items(Joi.string()).optional(),
+    notify_users: Joi.array().items(Joi.string().uuid()).optional()
+  }),
+
+  // Update ticket message schema
+  updateTicketMessage: Joi.object({
+    content: Joi.string().optional().max(2000),
+    message_type: Joi.string().valid('comment', 'internal_note', 'status_update', 'assignment_update').optional(),
+    is_internal: Joi.boolean().optional(),
+    attachments: Joi.array().items(Joi.string()).optional()
+  }),
+
+  // Get ticket message by ID schema
+  getTicketMessageById: Joi.object({
+    id: Joi.string().required().uuid()
+  }),
+
+  // Get ticket messages schema
+  getTicketMessages: Joi.object({
+    ticket_id: Joi.string().required().uuid(),
+    message_type: Joi.string().valid('comment', 'internal_note', 'status_update', 'assignment_update').optional(),
+    is_internal: Joi.boolean().optional(),
+    parent_message_id: Joi.string().optional().uuid(),
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(50).default(10)
+  }),
+
+  // Delete ticket message schema
+  deleteTicketMessage: Joi.object({
+    id: Joi.string().required().uuid()
+  }),
+
+  // Reply to ticket message schema
+  replyToTicketMessage: Joi.object({
+    ticket_id: Joi.string().required().uuid(),
+    parent_message_id: Joi.string().required().uuid(),
+    content: Joi.string().required().max(2000),
+    message_type: Joi.string().valid('comment', 'internal_note').required(),
     is_internal: Joi.boolean().default(false),
     attachments: Joi.array().items(Joi.string()).optional()
   }),
 
-  // Get ticket comments schema
-  getTicketComments: Joi.object({
-    id: Joi.string().required().uuid(),
-    page: Joi.number().integer().min(1).default(1),
-    limit: Joi.number().integer().min(1).max(50).default(10)
+  // Mark ticket message as read schema
+  markTicketMessageAsRead: Joi.object({
+    message_id: Joi.string().required().uuid()
+  }),
+
+  // Get ticket message thread schema
+  getTicketMessageThread: Joi.object({
+    message_id: Joi.string().required().uuid(),
+    include_internal: Joi.boolean().default(false)
+  }),
+
+  // Bulk create ticket messages schema
+  bulkCreateTicketMessages: Joi.object({
+    ticket_id: Joi.string().required().uuid(),
+    messages: Joi.array().items(
+      Joi.object({
+        content: Joi.string().required().max(2000),
+        message_type: Joi.string().valid('comment', 'internal_note', 'status_update', 'assignment_update').required(),
+        is_internal: Joi.boolean().default(false),
+        parent_message_id: Joi.string().optional().uuid(),
+        attachments: Joi.array().items(Joi.string()).optional()
+      })
+    ).min(1).max(50).required()
+  }),
+
+  // Import ticket messages schema
+  importTicketMessages: Joi.object({
+    ticket_id: Joi.string().required().uuid(),
+    file: Joi.object({
+      hapi: Joi.object({
+        filename: Joi.string().required(),
+        headers: Joi.object().required()
+      }).required()
+    }).required()
+  }),
+
+  // Export ticket messages schema
+  exportTicketMessages: Joi.object({
+    ticket_id: Joi.string().required().uuid(),
+    format: Joi.string().valid('csv', 'xlsx', 'json').default('csv'),
+    include_internal: Joi.boolean().default(false)
   })
 };
 
