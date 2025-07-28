@@ -1,369 +1,227 @@
-// Invoice module database queries
-const invoiceQueries = {
-  // Find invoice by ID
-  findInvoiceById: `
-    SELECT i.*, c.name as client_name, c.email as client_email,
-           u.first_name || ' ' || u.last_name as created_by_name
-    FROM invoices i
-    LEFT JOIN clients c ON i.client_id = c.id
-    LEFT JOIN users u ON i.created_by = u.id
-    WHERE i.id = $1 AND i.organization_id = $2 AND i.is_active = true
-  `,
+// === INVOICE CRUD QUERIES ===
 
-  // Find invoices by organization
-  findInvoicesByOrganization: `
-    SELECT i.*, c.name as client_name, c.email as client_email,
-           u.first_name || ' ' || u.last_name as created_by_name
-    FROM invoices i
-    LEFT JOIN clients c ON i.client_id = c.id
-    LEFT JOIN users u ON i.created_by = u.id
-    WHERE i.organization_id = $1 AND i.is_active = true
-    ORDER BY i.created_at DESC
-  `,
+const findAll = `
+  SELECT i.*,
+         c.name as client_name,
+         c.email as client_email,
+         p.title as project_title,
+         u.first_name || ' ' || u.last_name as created_by_name
+  FROM invoices i
+  LEFT JOIN clients c ON i.client_id = c.id
+  LEFT JOIN projects p ON i.project_id = p.id
+  LEFT JOIN users u ON i.created_by = u.id
+  WHERE i.organization_id = $1 AND i.is_active = true
+    AND ($2::text IS NULL OR i.status = $2)
+    AND ($3::uuid IS NULL OR i.client_id = $3)
+    AND ($4::uuid IS NULL OR i.project_id = $4)
+    AND ($5::text IS NULL OR i.payment_method = $5)
+    AND ($6::uuid IS NULL OR i.created_by = $6)
+  ORDER BY i.${sortBy} ${sortOrder}
+  LIMIT $7 OFFSET $8
+`;
 
-  // Create invoice
-  createInvoice: `
-    INSERT INTO invoices (id, organization_id, client_id, invoice_number, title,
-                        subtotal, tax_amount, discount_amount, total_amount,
-                        status, due_date, created_by)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-    RETURNING *
-  `,
+const countInvoices = `
+  SELECT COUNT(*) FROM invoices
+  WHERE organization_id = $1 AND is_active = true
+    AND ($2::text IS NULL OR status = $2)
+    AND ($3::uuid IS NULL OR client_id = $3)
+    AND ($4::uuid IS NULL OR project_id = $4)
+    AND ($5::text IS NULL OR payment_method = $5)
+    AND ($6::uuid IS NULL OR created_by = $6)
+`;
 
-  // Update invoice
-  updateInvoice: `
-    UPDATE invoices
-    SET title = COALESCE($1, title),
-        subtotal = COALESCE($2, subtotal),
-        tax_amount = COALESCE($3, tax_amount),
-        discount_amount = COALESCE($4, discount_amount),
-        total_amount = COALESCE($5, total_amount),
-        status = COALESCE($6, status),
-        due_date = COALESCE($7, due_date),
-        updated_at = NOW()
-    WHERE id = $8 AND organization_id = $9
-    RETURNING *
-  `,
+const findInvoiceById = `
+  SELECT i.*,
+         c.name as client_name,
+         c.email as client_email,
+         p.title as project_title,
+         u.first_name || ' ' || u.last_name as created_by_name
+  FROM invoices i
+  LEFT JOIN clients c ON i.client_id = c.id
+  LEFT JOIN projects p ON i.project_id = p.id
+  LEFT JOIN users u ON i.created_by = u.id
+  WHERE i.id = $1 AND i.organization_id = $2 AND i.is_active = true
+`;
 
-  // Delete invoice (soft delete)
-  deleteInvoice: `
-    UPDATE invoices
-    SET is_active = false, updated_at = NOW()
-    WHERE id = $1 AND organization_id = $2
-  `,
+const createInvoice = `
+  INSERT INTO invoices (
+    project_id, client_id, invoice_number, title, description,
+    status, due_date, issue_date, payment_terms, subtotal,
+    tax_rate, tax_amount, discount_percentage, discount_amount,
+    total_amount, currency, notes, payment_method, payment_reference,
+    organization_id, created_by
+  )
+  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+  RETURNING *
+`;
 
-  // Get invoice statistics
-  getInvoiceStatistics: `
-    SELECT
-      COUNT(*) as total_invoices,
-      COUNT(CASE WHEN status = 'draft' THEN 1 END) as draft_invoices,
-      COUNT(CASE WHEN status = 'sent' THEN 1 END) as sent_invoices,
-      COUNT(CASE WHEN status = 'paid' THEN 1 END) as paid_invoices,
-      COUNT(CASE WHEN status = 'overdue' THEN 1 END) as overdue_invoices,
-      COUNT(CASE WHEN status = 'cancelled' THEN 1 END) as cancelled_invoices,
-      SUM(total_amount) as total_invoice_amount,
-      AVG(total_amount) as avg_invoice_amount,
-      SUM(CASE WHEN status = 'paid' THEN total_amount ELSE 0 END) as paid_amount,
-      SUM(CASE WHEN status = 'overdue' THEN total_amount ELSE 0 END) as overdue_amount
-    FROM invoices
-    WHERE organization_id = $1 AND is_active = true
-  `,
+const deleteInvoice = `
+  UPDATE invoices
+  SET is_active = false, updated_at = NOW()
+  WHERE id = $1 AND organization_id = $2 AND is_active = true
+  RETURNING *
+`;
 
-  // Search invoices
-  searchInvoices: `
-    SELECT i.*, c.name as client_name, c.email as client_email,
-           u.first_name || ' ' || u.last_name as created_by_name
-    FROM invoices i
-    LEFT JOIN clients c ON i.client_id = c.id
-    LEFT JOIN users u ON i.created_by = u.id
-    WHERE i.organization_id = $1 AND i.is_active = true
+const searchInvoices = `
+  SELECT i.*,
+         c.name as client_name,
+         c.email as client_email,
+         p.title as project_title,
+         u.first_name || ' ' || u.last_name as created_by_name
+  FROM invoices i
+  LEFT JOIN clients c ON i.client_id = c.id
+  LEFT JOIN projects p ON i.project_id = p.id
+  LEFT JOIN users u ON i.created_by = u.id
+  WHERE i.organization_id = $1 AND i.is_active = true
     AND (
-      LOWER(i.title) LIKE LOWER($2) OR
-      LOWER(i.invoice_number) LIKE LOWER($2) OR
-      LOWER(c.name) LIKE LOWER($2)
+      i.title ILIKE $2 OR
+      i.description ILIKE $2 OR
+      i.invoice_number ILIKE $2 OR
+      c.name ILIKE $2 OR
+      c.email ILIKE $2
     )
-    ORDER BY i.created_at DESC
-  `,
+  ORDER BY i.${sortBy} ${sortOrder}
+  LIMIT $3 OFFSET $4
+`;
 
-  // Get invoices by status
-  getInvoicesByStatus: `
-    SELECT i.*, c.name as client_name, c.email as client_email,
-           u.first_name || ' ' || u.last_name as created_by_name
-    FROM invoices i
-    LEFT JOIN clients c ON i.client_id = c.id
-    LEFT JOIN users u ON i.created_by = u.id
-    WHERE i.organization_id = $1 AND i.status = $2 AND i.is_active = true
-    ORDER BY i.created_at DESC
-  `,
+const countSearchInvoices = `
+  SELECT COUNT(*) FROM invoices i
+  LEFT JOIN clients c ON i.client_id = c.id
+  WHERE i.organization_id = $1 AND i.is_active = true
+    AND (
+      i.title ILIKE $2 OR
+      i.description ILIKE $2 OR
+      i.invoice_number ILIKE $2 OR
+      c.name ILIKE $2 OR
+      c.email ILIKE $2
+    )
+`;
 
-  // Get invoices by client
-  getInvoicesByClient: `
-    SELECT i.*, c.name as client_name, c.email as client_email,
-           u.first_name || ' ' || u.last_name as created_by_name
-    FROM invoices i
-    LEFT JOIN clients c ON i.client_id = c.id
-    LEFT JOIN users u ON i.created_by = u.id
-    WHERE i.organization_id = $1 AND i.client_id = $2 AND i.is_active = true
-    ORDER BY i.created_at DESC
-  `,
+const updateInvoiceStatus = `
+  UPDATE invoices
+  SET status = $3, payment_date = $4, payment_method = $5,
+      payment_reference = $6, notes = $7, updated_at = NOW()
+  WHERE id = $1 AND organization_id = $2 AND is_active = true
+  RETURNING *
+`;
 
-  // Get invoice items
-  getInvoiceItems: `
-    SELECT ii.*, s.name as service_name, s.description as service_description
-    FROM invoice_items ii
-    LEFT JOIN services s ON ii.service_id = s.id
-    WHERE ii.invoice_id = $1 AND ii.organization_id = $2 AND ii.is_active = true
-    ORDER BY ii.created_at ASC
-  `,
+// === INVOICE ITEMS QUERIES ===
 
-  // Create invoice item
-  createInvoiceItem: `
-    INSERT INTO invoice_items (id, organization_id, invoice_id, service_id, description,
-                             quantity, unit_price, total_price)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-    RETURNING *
-  `,
+const getInvoiceItems = `
+  SELECT * FROM invoice_items
+  WHERE invoice_id = $1 AND organization_id = $2 AND is_active = true
+  ORDER BY created_at ASC
+  LIMIT $3 OFFSET $4
+`;
 
-  // Update invoice item
-  updateInvoiceItem: `
-    UPDATE invoice_items
-    SET service_id = COALESCE($1, service_id),
-        description = COALESCE($2, description),
-        quantity = COALESCE($3, quantity),
-        unit_price = COALESCE($4, unit_price),
-        total_price = COALESCE($5, total_price),
-        updated_at = NOW()
-    WHERE id = $6 AND organization_id = $7
-    RETURNING *
-  `,
+const countInvoiceItems = `
+  SELECT COUNT(*) FROM invoice_items
+  WHERE invoice_id = $1 AND organization_id = $2 AND is_active = true
+`;
 
-  // Delete invoice item
-  deleteInvoiceItem: `
-    UPDATE invoice_items
-    SET is_active = false, updated_at = NOW()
-    WHERE id = $1 AND organization_id = $2
-  `,
+const findInvoiceItemById = `
+  SELECT * FROM invoice_items
+  WHERE id = $1 AND organization_id = $2 AND is_active = true
+`;
 
-  // Get invoice payments
-  getInvoicePayments: `
-    SELECT * FROM invoice_payments
-    WHERE invoice_id = $1 AND organization_id = $2 AND is_active = true
-    ORDER BY created_at DESC
-  `,
+const createInvoiceItem = `
+  INSERT INTO invoice_items (
+    invoice_id, name, description, quantity, unit_price,
+    unit_type, tax_rate, discount_percentage, total, organization_id
+  )
+  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+  RETURNING *
+`;
 
-  // Create invoice payment
-  createInvoicePayment: `
-    INSERT INTO invoice_payments (id, organization_id, invoice_id, payment_method,
-                                amount, transaction_id, payment_date, status)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-    RETURNING *
-  `,
+const deleteInvoiceItem = `
+  UPDATE invoice_items
+  SET is_active = false, updated_at = NOW()
+  WHERE id = $1 AND organization_id = $2 AND is_active = true
+  RETURNING *
+`;
 
-  // Update invoice payment
-  updateInvoicePayment: `
-    UPDATE invoice_payments
-    SET payment_method = COALESCE($1, payment_method),
-        amount = COALESCE($2, amount),
-        transaction_id = COALESCE($3, transaction_id),
-        payment_date = COALESCE($4, payment_date),
-        status = COALESCE($5, status),
-        updated_at = NOW()
-    WHERE id = $6 AND organization_id = $7
-    RETURNING *
-  `,
+// === PAYMENT INTEGRATION QUERIES ===
 
-  // Delete invoice payment
-  deleteInvoicePayment: `
-    UPDATE invoice_payments
-    SET is_active = false, updated_at = NOW()
-    WHERE id = $1 AND organization_id = $2
-  `,
+const createPayment = `
+  INSERT INTO payments (
+    invoice_id, payment_method, amount, currency, payment_reference,
+    transaction_id, payment_date, notes, organization_id
+  )
+  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+  RETURNING *
+`;
 
-  // Get invoice templates
-  getInvoiceTemplates: `
-    SELECT * FROM invoice_templates
-    WHERE organization_id = $1 AND is_active = true
-    ORDER BY created_at DESC
-  `,
+const verifyPayment = `
+  SELECT * FROM payments
+  WHERE invoice_id = $1 AND organization_id = $2
+    AND transaction_id = $3 AND payment_method = $4
+  ORDER BY created_at DESC
+  LIMIT 1
+`;
 
-  // Create invoice template
-  createInvoiceTemplate: `
-    INSERT INTO invoice_templates (id, organization_id, name, description, content,
-                                 header_template, footer_template, terms_conditions)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-    RETURNING *
-  `,
+// === INVOICE STATISTICS QUERIES ===
 
-  // Update invoice template
-  updateInvoiceTemplate: `
-    UPDATE invoice_templates
-    SET name = COALESCE($1, name),
-        description = COALESCE($2, description),
-        content = COALESCE($3, content),
-        header_template = COALESCE($4, header_template),
-        footer_template = COALESCE($5, footer_template),
-        terms_conditions = COALESCE($6, terms_conditions),
-        updated_at = NOW()
-    WHERE id = $7 AND organization_id = $8
-    RETURNING *
-  `,
+const getInvoiceStatistics = `
+  SELECT
+    COUNT(*) as total_invoices,
+    COUNT(CASE WHEN status = 'draft' THEN 1 END) as draft_invoices,
+    COUNT(CASE WHEN status = 'sent' THEN 1 END) as sent_invoices,
+    COUNT(CASE WHEN status = 'paid' THEN 1 END) as paid_invoices,
+    COUNT(CASE WHEN status = 'overdue' THEN 1 END) as overdue_invoices,
+    COUNT(CASE WHEN status = 'cancelled' THEN 1 END) as cancelled_invoices,
+    SUM(total_amount) as total_amount,
+    AVG(total_amount) as avg_amount,
+    SUM(CASE WHEN status = 'paid' THEN total_amount END) as total_paid_amount,
+    SUM(CASE WHEN status = 'overdue' THEN total_amount END) as total_overdue_amount,
+    AVG(CASE WHEN status = 'paid' THEN EXTRACT(EPOCH FROM (payment_date - issue_date))/86400 END) as avg_payment_days
+  FROM invoices
+  WHERE organization_id = $1 AND is_active = true
+`;
 
-  // Delete invoice template
-  deleteInvoiceTemplate: `
-    UPDATE invoice_templates
-    SET is_active = false, updated_at = NOW()
-    WHERE id = $1 AND organization_id = $2
-  `,
+const getPaymentStatistics = `
+  SELECT
+    COUNT(*) as total_payments,
+    COUNT(CASE WHEN payment_method = 'bank_transfer' THEN 1 END) as bank_transfer_payments,
+    COUNT(CASE WHEN payment_method = 'credit_card' THEN 1 END) as credit_card_payments,
+    COUNT(CASE WHEN payment_method = 'cash' THEN 1 END) as cash_payments,
+    COUNT(CASE WHEN payment_method = 'check' THEN 1 END) as check_payments,
+    COUNT(CASE WHEN payment_method = 'paypal' THEN 1 END) as paypal_payments,
+    COUNT(CASE WHEN payment_method = 'stripe' THEN 1 END) as stripe_payments,
+    SUM(amount) as total_payment_amount,
+    AVG(amount) as avg_payment_amount,
+    SUM(CASE WHEN payment_method = 'bank_transfer' THEN amount END) as bank_transfer_amount,
+    SUM(CASE WHEN payment_method = 'credit_card' THEN amount END) as credit_card_amount,
+    SUM(CASE WHEN payment_method = 'cash' THEN amount END) as cash_amount,
+    SUM(CASE WHEN payment_method = 'check' THEN amount END) as check_amount,
+    SUM(CASE WHEN payment_method = 'paypal' THEN amount END) as paypal_amount,
+    SUM(CASE WHEN payment_method = 'stripe' THEN amount END) as stripe_amount
+  FROM payments
+  WHERE organization_id = $1 AND is_active = true
+`;
 
-  // Get invoice history
-  getInvoiceHistory: `
-    SELECT ih.*, u.first_name || ' ' || u.last_name as performed_by_name
-    FROM invoice_history ih
-    LEFT JOIN users u ON ih.performed_by = u.id
-    WHERE ih.invoice_id = $1 AND ih.organization_id = $2 AND ih.is_active = true
-    ORDER BY ih.created_at DESC
-  `,
+module.exports = {
+  // Invoice CRUD
+  findAll,
+  countInvoices,
+  findInvoiceById,
+  createInvoice,
+  deleteInvoice,
+  searchInvoices,
+  countSearchInvoices,
+  updateInvoiceStatus,
 
-  // Create invoice history
-  createInvoiceHistory: `
-    INSERT INTO invoice_history (id, organization_id, invoice_id, action, description,
-                               performed_by, old_values, new_values)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-    RETURNING *
-  `,
+  // Invoice Items
+  getInvoiceItems,
+  countInvoiceItems,
+  findInvoiceItemById,
+  createInvoiceItem,
+  deleteInvoiceItem,
 
-  // Get invoice dashboard data
-  getInvoiceDashboardData: `
-    SELECT
-      i.id,
-      i.invoice_number,
-      i.title,
-      i.status,
-      i.total_amount,
-      i.created_at,
-      i.due_date,
-      c.name as client_name,
-      u.first_name || ' ' || u.last_name as created_by_name,
-      COUNT(ii.id) as total_items,
-      SUM(ii.total_price) as items_total
-    FROM invoices i
-    LEFT JOIN clients c ON i.client_id = c.id
-    LEFT JOIN users u ON i.created_by = u.id
-    LEFT JOIN invoice_items ii ON i.id = ii.invoice_id AND ii.is_active = true
-    WHERE i.organization_id = $1 AND i.is_active = true
-    GROUP BY i.id, i.invoice_number, i.title, i.status, i.total_amount, i.created_at,
-             i.due_date, c.name, u.first_name, u.last_name
-    ORDER BY i.created_at DESC
-  `,
+  // Payment Integration
+  createPayment,
+  verifyPayment,
 
-  // Get invoice timeline
-  getInvoiceTimeline: `
-    SELECT
-      'item' as type,
-      ii.id,
-      ii.description as title,
-      ii.created_at as date,
-      'added' as status,
-      NULL as performed_by_name
-    FROM invoice_items ii
-    WHERE ii.invoice_id = $1 AND ii.organization_id = $2 AND ii.is_active = true
-
-    UNION ALL
-
-    SELECT
-      'payment' as type,
-      ip.id,
-      ip.payment_method as title,
-      ip.payment_date as date,
-      ip.status,
-      NULL as performed_by_name
-    FROM invoice_payments ip
-    WHERE ip.invoice_id = $1 AND ip.organization_id = $2 AND ip.is_active = true
-
-    UNION ALL
-
-    SELECT
-      'history' as type,
-      ih.id,
-      ih.action as title,
-      ih.created_at as date,
-      ih.description as status,
-      u.first_name || ' ' || u.last_name as performed_by_name
-    FROM invoice_history ih
-    LEFT JOIN users u ON ih.performed_by = u.id
-    WHERE ih.invoice_id = $1 AND ih.organization_id = $2 AND ih.is_active = true
-
-    ORDER BY date DESC
-  `,
-
-  // Update invoice status
-  updateInvoiceStatus: `
-    UPDATE invoices
-    SET status = $1, updated_at = NOW()
-    WHERE id = $2 AND organization_id = $3
-    RETURNING *
-  `,
-
-  // Get overdue invoices
-  getOverdueInvoices: `
-    SELECT i.*, c.name as client_name, c.email as client_email
-    FROM invoices i
-    LEFT JOIN clients c ON i.client_id = c.id
-    WHERE i.organization_id = $1 AND i.due_date < NOW()
-    AND i.status IN ('sent', 'draft') AND i.is_active = true
-    ORDER BY i.due_date ASC
-  `,
-
-  // Get invoice revenue by period
-  getInvoiceRevenueByPeriod: `
-    SELECT
-      DATE_TRUNC('month', created_at) as period,
-      COUNT(*) as invoice_count,
-      SUM(total_amount) as revenue,
-      AVG(total_amount) as avg_invoice_value,
-      SUM(CASE WHEN status = 'paid' THEN total_amount ELSE 0 END) as paid_revenue
-    FROM invoices
-    WHERE organization_id = $1 AND is_active = true
-    AND created_at >= $2 AND created_at <= $3
-    GROUP BY DATE_TRUNC('month', created_at)
-    ORDER BY period DESC
-  `,
-
-  // Get next invoice number
-  getNextInvoiceNumber: `
-    SELECT COALESCE(MAX(CAST(SUBSTRING(invoice_number FROM '[0-9]+') AS INTEGER)), 0) + 1 as next_number
-    FROM invoices
-    WHERE organization_id = $1 AND is_active = true
-  `,
-
-  // Get invoice aging report
-  getInvoiceAgingReport: `
-    SELECT
-      client_id,
-      c.name as client_name,
-      COUNT(*) as total_invoices,
-      SUM(total_amount) as total_amount,
-      SUM(CASE WHEN status = 'paid' THEN total_amount ELSE 0 END) as paid_amount,
-      SUM(CASE WHEN status = 'sent' AND due_date < NOW() THEN total_amount ELSE 0 END) as overdue_amount,
-      SUM(CASE WHEN status = 'sent' AND due_date >= NOW() THEN total_amount ELSE 0 END) as current_amount
-    FROM invoices i
-    LEFT JOIN clients c ON i.client_id = c.id
-    WHERE i.organization_id = $1 AND i.is_active = true
-    GROUP BY client_id, c.name
-    ORDER BY overdue_amount DESC
-  `,
-
-  // Get invoice collection rate
-  getInvoiceCollectionRate: `
-    SELECT
-      COUNT(*) as total_invoices,
-      COUNT(CASE WHEN status = 'paid' THEN 1 END) as paid_invoices,
-      ROUND(
-        (COUNT(CASE WHEN status = 'paid' THEN 1 END)::DECIMAL / COUNT(*)::DECIMAL) * 100, 2
-      ) as collection_rate
-    FROM invoices
-    WHERE organization_id = $1 AND is_active = true
-  `
+  // Invoice Statistics
+  getInvoiceStatistics,
+  getPaymentStatistics
 };
-
-module.exports = invoiceQueries;

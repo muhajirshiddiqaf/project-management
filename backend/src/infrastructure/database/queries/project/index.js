@@ -1,265 +1,292 @@
-// Project module database queries
-const projectQueries = {
-  // Find project by ID
-  findProjectById: `
-    SELECT p.*, c.name as client_name, c.email as client_email,
-           u.first_name || ' ' || u.last_name as created_by_name
-    FROM projects p
-    LEFT JOIN clients c ON p.client_id = c.id
-    LEFT JOIN users u ON p.created_by = u.id
-    WHERE p.id = $1 AND p.organization_id = $2 AND p.is_active = true
-  `,
+// === PROJECT CRUD QUERIES ===
 
-  // Find projects by organization
-  findProjectsByOrganization: `
-    SELECT p.*, c.name as client_name, c.email as client_email,
-           u.first_name || ' ' || u.last_name as created_by_name
-    FROM projects p
-    LEFT JOIN clients c ON p.client_id = c.id
-    LEFT JOIN users u ON p.created_by = u.id
-    WHERE p.organization_id = $1 AND p.is_active = true
-    ORDER BY p.created_at DESC
-  `,
+const findAll = `
+  SELECT p.*,
+         c.name as client_name,
+         c.email as client_email,
+         u.first_name || ' ' || u.last_name as assigned_to_name,
+         creator.first_name || ' ' || creator.last_name as created_by_name
+  FROM projects p
+  LEFT JOIN clients c ON p.client_id = c.id
+  LEFT JOIN users u ON p.assigned_to = u.id
+  LEFT JOIN users creator ON p.created_by = creator.id
+  WHERE p.organization_id = $1 AND p.is_active = true
+    AND ($2::text IS NULL OR p.status = $2)
+    AND ($3::text IS NULL OR p.priority = $3)
+    AND ($4::text IS NULL OR p.category = $4)
+    AND ($5::uuid IS NULL OR p.client_id = $5)
+    AND ($6::uuid IS NULL OR p.assigned_to = $6)
+    AND ($7::uuid IS NULL OR p.created_by = $7)
+  ORDER BY p.${sortBy} ${sortOrder}
+  LIMIT $8 OFFSET $9
+`;
 
-  // Create project
-  createProject: `
-    INSERT INTO projects (id, organization_id, client_id, name, description, status,
-                        start_date, end_date, budget, actual_cost, progress_percentage, created_by)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-    RETURNING *
-  `,
+const countProjects = `
+  SELECT COUNT(*) FROM projects
+  WHERE organization_id = $1 AND is_active = true
+    AND ($2::text IS NULL OR status = $2)
+    AND ($3::text IS NULL OR priority = $3)
+    AND ($4::text IS NULL OR category = $4)
+    AND ($5::uuid IS NULL OR client_id = $5)
+    AND ($6::uuid IS NULL OR assigned_to = $6)
+    AND ($7::uuid IS NULL OR created_by = $7)
+`;
 
-  // Update project
-  updateProject: `
-    UPDATE projects
-    SET name = COALESCE($1, name),
-        description = COALESCE($2, description),
-        status = COALESCE($3, status),
-        start_date = COALESCE($4, start_date),
-        end_date = COALESCE($5, end_date),
-        budget = COALESCE($6, budget),
-        actual_cost = COALESCE($7, actual_cost),
-        progress_percentage = COALESCE($8, progress_percentage),
-        updated_at = NOW()
-    WHERE id = $9 AND organization_id = $10
-    RETURNING *
-  `,
+const findProjectById = `
+  SELECT p.*,
+         c.name as client_name,
+         c.email as client_email,
+         u.first_name || ' ' || u.last_name as assigned_to_name,
+         creator.first_name || ' ' || creator.last_name as created_by_name
+  FROM projects p
+  LEFT JOIN clients c ON p.client_id = c.id
+  LEFT JOIN users u ON p.assigned_to = u.id
+  LEFT JOIN users creator ON p.created_by = creator.id
+  WHERE p.id = $1 AND p.organization_id = $2 AND p.is_active = true
+`;
 
-  // Delete project (soft delete)
-  deleteProject: `
-    UPDATE projects
-    SET is_active = false, updated_at = NOW()
-    WHERE id = $1 AND organization_id = $2
-  `,
+const createProject = `
+  INSERT INTO projects (
+    title, description, client_id, status, priority, category,
+    start_date, end_date, budget, currency, assigned_to,
+    tags, attachments, notes, organization_id, created_by
+  )
+  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+  RETURNING *
+`;
 
-  // Get project statistics
-  getProjectStatistics: `
-    SELECT
-      COUNT(*) as total_projects,
-      COUNT(CASE WHEN status = 'active' THEN 1 END) as active_projects,
-      COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_projects,
-      COUNT(CASE WHEN status = 'on_hold' THEN 1 END) as on_hold_projects,
-      COUNT(CASE WHEN status = 'cancelled' THEN 1 END) as cancelled_projects,
-      AVG(progress_percentage) as avg_progress,
-      SUM(budget) as total_budget,
-      SUM(actual_cost) as total_actual_cost,
-      AVG(EXTRACT(EPOCH FROM (end_date - start_date))/86400) as avg_duration_days
-    FROM projects
-    WHERE organization_id = $1 AND is_active = true
-  `,
+const deleteProject = `
+  UPDATE projects
+  SET is_active = false, updated_at = NOW()
+  WHERE id = $1 AND organization_id = $2 AND is_active = true
+  RETURNING *
+`;
 
-  // Search projects
-  searchProjects: `
-    SELECT p.*, c.name as client_name, c.email as client_email,
-           u.first_name || ' ' || u.last_name as created_by_name
-    FROM projects p
-    LEFT JOIN clients c ON p.client_id = c.id
-    LEFT JOIN users u ON p.created_by = u.id
-    WHERE p.organization_id = $1 AND p.is_active = true
+const searchProjects = `
+  SELECT p.*,
+         c.name as client_name,
+         c.email as client_email,
+         u.first_name || ' ' || u.last_name as assigned_to_name,
+         creator.first_name || ' ' || creator.last_name as created_by_name
+  FROM projects p
+  LEFT JOIN clients c ON p.client_id = c.id
+  LEFT JOIN users u ON p.assigned_to = u.id
+  LEFT JOIN users creator ON p.created_by = creator.id
+  WHERE p.organization_id = $1 AND p.is_active = true
     AND (
-      LOWER(p.name) LIKE LOWER($2) OR
-      LOWER(p.description) LIKE LOWER($2) OR
-      LOWER(c.name) LIKE LOWER($2)
+      p.title ILIKE $2 OR
+      p.description ILIKE $2 OR
+      c.name ILIKE $2 OR
+      c.email ILIKE $2
     )
-    ORDER BY p.created_at DESC
-  `,
+  ORDER BY p.${sortBy} ${sortOrder}
+  LIMIT $3 OFFSET $4
+`;
 
-  // Get projects by status
-  getProjectsByStatus: `
-    SELECT p.*, c.name as client_name, c.email as client_email,
-           u.first_name || ' ' || u.last_name as created_by_name
-    FROM projects p
-    LEFT JOIN clients c ON p.client_id = c.id
-    LEFT JOIN users u ON p.created_by = u.id
-    WHERE p.organization_id = $1 AND p.status = $2 AND p.is_active = true
-    ORDER BY p.created_at DESC
-  `,
+const countSearchProjects = `
+  SELECT COUNT(*) FROM projects p
+  LEFT JOIN clients c ON p.client_id = c.id
+  WHERE p.organization_id = $1 AND p.is_active = true
+    AND (
+      p.title ILIKE $2 OR
+      p.description ILIKE $2 OR
+      c.name ILIKE $2 OR
+      c.email ILIKE $2
+    )
+`;
 
-  // Get projects by client
-  getProjectsByClient: `
-    SELECT p.*, c.name as client_name, c.email as client_email,
-           u.first_name || ' ' || u.last_name as created_by_name
-    FROM projects p
-    LEFT JOIN clients c ON p.client_id = c.id
-    LEFT JOIN users u ON p.created_by = u.id
-    WHERE p.organization_id = $1 AND p.client_id = $2 AND p.is_active = true
-    ORDER BY p.created_at DESC
-  `,
+const updateProjectStatus = `
+  UPDATE projects
+  SET status = $3, notes = $4, updated_at = NOW()
+  WHERE id = $1 AND organization_id = $2 AND is_active = true
+  RETURNING *
+`;
 
-  // Get project tasks
-  getProjectTasks: `
-    SELECT * FROM project_tasks
-    WHERE project_id = $1 AND organization_id = $2 AND is_active = true
-    ORDER BY created_at ASC
-  `,
+const assignProject = `
+  UPDATE projects
+  SET assigned_to = $3, updated_at = NOW()
+  WHERE id = $1 AND organization_id = $2 AND is_active = true
+  RETURNING *
+`;
 
-  // Create project task
-  createProjectTask: `
-    INSERT INTO project_tasks (id, organization_id, project_id, name, description,
-                              estimated_hours, actual_hours, status, assigned_to)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-    RETURNING *
-  `,
+// === PROJECT COST CALCULATION QUERIES ===
 
-  // Update project task
-  updateProjectTask: `
-    UPDATE project_tasks
-    SET name = COALESCE($1, name),
-        description = COALESCE($2, description),
-        estimated_hours = COALESCE($3, estimated_hours),
-        actual_hours = COALESCE($4, actual_hours),
-        status = COALESCE($5, status),
-        assigned_to = COALESCE($6, assigned_to),
-        updated_at = NOW()
-    WHERE id = $7 AND organization_id = $8
-    RETURNING *
-  `,
+const createProjectCostCalculation = `
+  INSERT INTO project_cost_calculations (
+    project_id, services, materials, services_cost, materials_cost,
+    subtotal, overhead_percentage, overhead_amount, subtotal_with_overhead,
+    profit_margin_percentage, profit_amount, subtotal_with_profit,
+    discount_percentage, discount_amount, subtotal_after_discount,
+    tax_rate, tax_amount, grand_total, organization_id
+  )
+  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+  RETURNING *
+`;
 
-  // Delete project task
-  deleteProjectTask: `
-    UPDATE project_tasks
-    SET is_active = false, updated_at = NOW()
-    WHERE id = $1 AND organization_id = $2
-  `,
+const getProjectCostBreakdown = `
+  SELECT * FROM project_cost_calculations
+  WHERE project_id = $1 AND organization_id = $2 AND is_active = true
+  ORDER BY created_at DESC
+  LIMIT 1
+`;
 
-  // Get project materials
-  getProjectMaterials: `
-    SELECT pm.*, m.name as material_name, m.unit_price, m.unit_type
-    FROM project_materials pm
-    JOIN materials m ON pm.material_id = m.id
-    WHERE pm.project_id = $1 AND pm.organization_id = $2 AND pm.is_active = true
-    ORDER BY pm.created_at ASC
-  `,
+// === PROJECT TEAM MANAGEMENT QUERIES ===
 
-  // Create project material
-  createProjectMaterial: `
-    INSERT INTO project_materials (id, organization_id, project_id, material_id, quantity, unit_price)
-    VALUES ($1, $2, $3, $4, $5, $6)
-    RETURNING *
-  `,
+const assignTeamMember = `
+  INSERT INTO project_team_members (
+    project_id, user_id, role, hourly_rate, start_date, end_date, organization_id
+  )
+  VALUES ($1, $2, $3, $4, $5, $6, $7)
+  ON CONFLICT (project_id, user_id) DO UPDATE SET
+    role = EXCLUDED.role,
+    hourly_rate = EXCLUDED.hourly_rate,
+    start_date = EXCLUDED.start_date,
+    end_date = EXCLUDED.end_date,
+    updated_at = NOW()
+  RETURNING *
+`;
 
-  // Update project material
-  updateProjectMaterial: `
-    UPDATE project_materials
-    SET quantity = COALESCE($1, quantity),
-        unit_price = COALESCE($2, unit_price),
-        updated_at = NOW()
-    WHERE id = $3 AND organization_id = $4
-    RETURNING *
-  `,
+const getProjectTeam = `
+  SELECT ptm.*,
+         u.first_name || ' ' || u.last_name as user_name,
+         u.email as user_email
+  FROM project_team_members ptm
+  JOIN users u ON ptm.user_id = u.id
+  WHERE ptm.project_id = $1 AND ptm.organization_id = $2 AND ptm.is_active = true
+  ORDER BY ptm.created_at DESC
+`;
 
-  // Delete project material
-  deleteProjectMaterial: `
-    UPDATE project_materials
-    SET is_active = false, updated_at = NOW()
-    WHERE id = $1 AND organization_id = $2
-  `,
+const updateTeamMemberRole = `
+  UPDATE project_team_members
+  SET role = $4, hourly_rate = $5, start_date = $6, end_date = $7, updated_at = NOW()
+  WHERE project_id = $1 AND user_id = $2 AND organization_id = $3 AND is_active = true
+  RETURNING *
+`;
 
-  // Get project cost calculation
-  getProjectCostCalculation: `
-    SELECT * FROM project_cost_calculations
-    WHERE project_id = $1 AND organization_id = $2 AND is_active = true
-    ORDER BY created_at DESC
-    LIMIT 1
-  `,
+const removeTeamMember = `
+  UPDATE project_team_members
+  SET is_active = false, updated_at = NOW()
+  WHERE project_id = $1 AND user_id = $2 AND organization_id = $3 AND is_active = true
+  RETURNING *
+`;
 
-  // Create project cost calculation
-  createProjectCostCalculation: `
-    INSERT INTO project_cost_calculations (id, organization_id, project_id, labor_cost, material_cost,
-                                         overhead_cost, profit_margin, total_cost, pricing_strategy)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-    RETURNING *
-  `,
+// === PROJECT TIMELINE & MILESTONES QUERIES ===
 
-  // Update project cost calculation
-  updateProjectCostCalculation: `
-    UPDATE project_cost_calculations
-    SET labor_cost = COALESCE($1, labor_cost),
-        material_cost = COALESCE($2, material_cost),
-        overhead_cost = COALESCE($3, overhead_cost),
-        profit_margin = COALESCE($4, profit_margin),
-        total_cost = COALESCE($5, total_cost),
-        pricing_strategy = COALESCE($6, pricing_strategy),
-        updated_at = NOW()
-    WHERE id = $7 AND organization_id = $8
-    RETURNING *
-  `,
+const createMilestone = `
+  INSERT INTO project_milestones (
+    project_id, title, description, due_date, status, priority,
+    assigned_to, dependencies, organization_id
+  )
+  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+  RETURNING *
+`;
 
-  // Get project dashboard data
-  getProjectDashboardData: `
-    SELECT
-      p.id,
-      p.name,
-      p.status,
-      p.progress_percentage,
-      p.budget,
-      p.actual_cost,
-      p.start_date,
-      p.end_date,
-      c.name as client_name,
-      u.first_name || ' ' || u.last_name as created_by_name,
-      COUNT(pt.id) as total_tasks,
-      COUNT(CASE WHEN pt.status = 'completed' THEN 1 END) as completed_tasks,
-      SUM(pt.estimated_hours) as total_estimated_hours,
-      SUM(pt.actual_hours) as total_actual_hours
-    FROM projects p
-    LEFT JOIN clients c ON p.client_id = c.id
-    LEFT JOIN users u ON p.created_by = u.id
-    LEFT JOIN project_tasks pt ON p.id = pt.project_id AND pt.is_active = true
-    WHERE p.organization_id = $1 AND p.is_active = true
-    GROUP BY p.id, p.name, p.status, p.progress_percentage, p.budget, p.actual_cost,
-             p.start_date, p.end_date, c.name, u.first_name, u.last_name
-    ORDER BY p.created_at DESC
-  `,
+const getProjectMilestones = `
+  SELECT pm.*,
+         u.first_name || ' ' || u.last_name as assigned_to_name
+  FROM project_milestones pm
+  LEFT JOIN users u ON pm.assigned_to = u.id
+  WHERE pm.project_id = $1 AND pm.organization_id = $2 AND pm.is_active = true
+    AND ($3::text IS NULL OR pm.status = $3)
+  ORDER BY pm.due_date ASC
+  LIMIT $4 OFFSET $5
+`;
 
-  // Get project timeline
-  getProjectTimeline: `
-    SELECT
-      'task' as type,
-      pt.id,
-      pt.name as title,
-      pt.created_at as date,
-      pt.status,
-      u.first_name || ' ' || u.last_name as assigned_to_name
-    FROM project_tasks pt
-    LEFT JOIN users u ON pt.assigned_to = u.id
-    WHERE pt.project_id = $1 AND pt.organization_id = $2 AND pt.is_active = true
+const countProjectMilestones = `
+  SELECT COUNT(*) FROM project_milestones
+  WHERE project_id = $1 AND organization_id = $2 AND is_active = true
+    AND ($3::text IS NULL OR status = $3)
+`;
 
-    UNION ALL
+const findMilestoneById = `
+  SELECT pm.*,
+         u.first_name || ' ' || u.last_name as assigned_to_name
+  FROM project_milestones pm
+  LEFT JOIN users u ON pm.assigned_to = u.id
+  WHERE pm.id = $1 AND pm.organization_id = $2 AND pm.is_active = true
+`;
 
-    SELECT
-      'material' as type,
-      pm.id,
-      m.name as title,
-      pm.created_at as date,
-      'added' as status,
-      NULL as assigned_to_name
-    FROM project_materials pm
-    JOIN materials m ON pm.material_id = m.id
-    WHERE pm.project_id = $1 AND pm.organization_id = $2 AND pm.is_active = true
+const deleteMilestone = `
+  UPDATE project_milestones
+  SET is_active = false, updated_at = NOW()
+  WHERE id = $1 AND organization_id = $2 AND is_active = true
+  RETURNING *
+`;
 
-    ORDER BY date DESC
-  `
+const updateMilestoneStatus = `
+  UPDATE project_milestones
+  SET status = $3, completion_notes = $4, updated_at = NOW()
+  WHERE id = $1 AND organization_id = $2 AND is_active = true
+  RETURNING *
+`;
+
+// === PROJECT STATISTICS QUERIES ===
+
+const getProjectStatistics = `
+  SELECT
+    COUNT(*) as total_projects,
+    COUNT(CASE WHEN status = 'draft' THEN 1 END) as draft_projects,
+    COUNT(CASE WHEN status = 'active' THEN 1 END) as active_projects,
+    COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_projects,
+    COUNT(CASE WHEN status = 'cancelled' THEN 1 END) as cancelled_projects,
+    COUNT(CASE WHEN status = 'on_hold' THEN 1 END) as on_hold_projects,
+    COUNT(CASE WHEN priority = 'urgent' THEN 1 END) as urgent_projects,
+    COUNT(CASE WHEN priority = 'high' THEN 1 END) as high_priority_projects,
+    COUNT(CASE WHEN priority = 'medium' THEN 1 END) as medium_priority_projects,
+    COUNT(CASE WHEN priority = 'low' THEN 1 END) as low_priority_projects,
+    AVG(CASE WHEN budget IS NOT NULL THEN budget END) as avg_budget,
+    SUM(CASE WHEN budget IS NOT NULL THEN budget END) as total_budget
+  FROM projects
+  WHERE organization_id = $1 AND is_active = true
+`;
+
+const getProjectCostStatistics = `
+  SELECT
+    COUNT(*) as total_calculations,
+    AVG(services_cost) as avg_services_cost,
+    AVG(materials_cost) as avg_materials_cost,
+    AVG(subtotal) as avg_subtotal,
+    AVG(overhead_percentage) as avg_overhead_percentage,
+    AVG(profit_margin_percentage) as avg_profit_margin,
+    AVG(tax_rate) as avg_tax_rate,
+    AVG(discount_percentage) as avg_discount_percentage,
+    AVG(grand_total) as avg_grand_total,
+    SUM(grand_total) as total_grand_total
+  FROM project_cost_calculations
+  WHERE project_id = $1 AND organization_id = $2 AND is_active = true
+`;
+
+module.exports = {
+  // Project CRUD
+  findAll,
+  countProjects,
+  findProjectById,
+  createProject,
+  deleteProject,
+  searchProjects,
+  countSearchProjects,
+  updateProjectStatus,
+  assignProject,
+
+  // Project Cost Calculation
+  createProjectCostCalculation,
+  getProjectCostBreakdown,
+
+  // Project Team Management
+  assignTeamMember,
+  getProjectTeam,
+  updateTeamMemberRole,
+  removeTeamMember,
+
+  // Project Milestones
+  createMilestone,
+  getProjectMilestones,
+  countProjectMilestones,
+  findMilestoneById,
+  deleteMilestone,
+  updateMilestoneStatus,
+
+  // Project Statistics
+  getProjectStatistics,
+  getProjectCostStatistics
 };
-
-module.exports = projectQueries;
