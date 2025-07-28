@@ -13,6 +13,7 @@ const AnalyticsRepository = require('./analyticsRepository');
 const ReportsRepository = require('./reportsRepository');
 const DocsRepository = require('./docsRepository');
 const OrganizationRepository = require('./organizationRepository'); // New import
+const SystemRepository = require('./systemRepository'); // New import
 
 module.exports = {
   UserRepository,
@@ -28,5 +29,6 @@ module.exports = {
   AnalyticsRepository,
   ReportsRepository,
   DocsRepository,
-  OrganizationRepository // New export
+  OrganizationRepository, // New export
+  SystemRepository // New export
 };

@@ -14,6 +14,7 @@ const analytics = require('./analytics');
 const reports = require('./reports');
 const docs = require('./docs');
 const organization = require('./organization'); // New import
+const system = require('./system'); // New import
 
 const queries = {
   auth,
@@ -30,7 +31,8 @@ const queries = {
   analytics,
   reports,
   docs,
-  organization // New export
+  organization, // New export
+  system // New export
 };
 
 module.exports = { queries };
