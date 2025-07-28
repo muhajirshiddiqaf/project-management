@@ -1,15 +1,13 @@
-const Joi = require('@hapi/joi');
+const clientHandler = require('./handler');
+const clientValidator = require('./validator');
 const { tenantIsolation, roleBasedAccess, permissionBasedAccess } = require('../../middleware');
 
 const routes = [
-  // Get all clients (with tenant isolation)
+  // Get all clients
   {
     method: 'GET',
     path: '/clients',
-    handler: (request, h) => {
-      // Handler akan diimplementasikan nanti
-      return h.response({ message: 'Get clients' });
-    },
+    handler: clientHandler.getClients,
     options: {
       auth: 'jwt',
       pre: [
@@ -24,10 +22,7 @@ const routes = [
   {
     method: 'GET',
     path: '/clients/{id}',
-    handler: (request, h) => {
-      // Handler akan diimplementasikan nanti
-      return h.response({ message: 'Get client by ID' });
-    },
+    handler: clientHandler.getClientById,
     options: {
       auth: 'jwt',
       pre: [
@@ -35,22 +30,17 @@ const routes = [
         { method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        params: Joi.object({
-          id: Joi.string().required()
-        })
+        params: clientValidator.getClientById
       },
       tags: ['clients']
     }
   },
 
-  // Create new client
+  // Create client
   {
     method: 'POST',
     path: '/clients',
-    handler: (request, h) => {
-      // Handler akan diimplementasikan nanti
-      return h.response({ message: 'Create client' });
-    },
+    handler: clientHandler.createClient,
     options: {
       auth: 'jwt',
       pre: [
@@ -59,12 +49,7 @@ const routes = [
         { method: permissionBasedAccess(['client:create']) }
       ],
       validate: {
-        payload: Joi.object({
-          name: Joi.string().required(),
-          email: Joi.string().email().required(),
-          phone: Joi.string().optional(),
-          address: Joi.string().optional()
-        })
+        payload: clientValidator.createClient
       },
       tags: ['clients']
     }
@@ -74,10 +59,7 @@ const routes = [
   {
     method: 'PUT',
     path: '/clients/{id}',
-    handler: (request, h) => {
-      // Handler akan diimplementasikan nanti
-      return h.response({ message: 'Update client' });
-    },
+    handler: clientHandler.updateClient,
     options: {
       auth: 'jwt',
       pre: [
@@ -86,15 +68,8 @@ const routes = [
         { method: permissionBasedAccess(['client:update']) }
       ],
       validate: {
-        params: Joi.object({
-          id: Joi.string().required()
-        }),
-        payload: Joi.object({
-          name: Joi.string().optional(),
-          email: Joi.string().email().optional(),
-          phone: Joi.string().optional(),
-          address: Joi.string().optional()
-        })
+        params: clientValidator.getClientById,
+        payload: clientValidator.updateClient
       },
       tags: ['clients']
     }
@@ -104,10 +79,7 @@ const routes = [
   {
     method: 'DELETE',
     path: '/clients/{id}',
-    handler: (request, h) => {
-      // Handler akan diimplementasikan nanti
-      return h.response({ message: 'Delete client' });
-    },
+    handler: clientHandler.deleteClient,
     options: {
       auth: 'jwt',
       pre: [
@@ -116,9 +88,7 @@ const routes = [
         { method: permissionBasedAccess(['client:delete']) }
       ],
       validate: {
-        params: Joi.object({
-          id: Joi.string().required()
-        })
+        params: clientValidator.deleteClient
       },
       tags: ['clients']
     }
@@ -128,10 +98,7 @@ const routes = [
   {
     method: 'GET',
     path: '/clients/search',
-    handler: (request, h) => {
-      // Handler akan diimplementasikan nanti
-      return h.response({ message: 'Search clients' });
-    },
+    handler: clientHandler.searchClients,
     options: {
       auth: 'jwt',
       pre: [
@@ -139,11 +106,7 @@ const routes = [
         { method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        query: Joi.object({
-          q: Joi.string().optional(),
-          page: Joi.number().integer().min(1).default(1),
-          limit: Joi.number().integer().min(1).max(100).default(10)
-        })
+        query: clientValidator.searchClients
       },
       tags: ['clients']
     }
