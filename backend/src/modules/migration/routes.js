@@ -1,21 +1,17 @@
-const migrationHandler = require('./handler');
-const migrationValidator = require('./validator');
-const { roleBasedAccess, permissionBasedAccess } = require('../../middleware');
-
-const routes = [
+const routes = (handler, auth) => [
   // === MIGRATION MANAGEMENT ROUTES ===
   {
     method: 'POST',
     path: '/migrations',
-    handler: migrationHandler.createMigration,
+    handler: handler.createMigration,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['migration:create']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['migration:create']) }
       ],
       validate: {
-        payload: migrationValidator.createMigration
+        payload: auth.createMigration
       },
       tags: ['migration', 'management']
     }
@@ -23,15 +19,15 @@ const routes = [
   {
     method: 'GET',
     path: '/migrations',
-    handler: migrationHandler.getMigrations,
+    handler: handler.getMigrations,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['migration:read']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['migration:read']) }
       ],
       validate: {
-        query: migrationValidator.getMigrations
+        query: auth.getMigrations
       },
       tags: ['migration', 'management']
     }
@@ -39,15 +35,15 @@ const routes = [
   {
     method: 'GET',
     path: '/migrations/{id}',
-    handler: migrationHandler.getMigrationById,
+    handler: handler.getMigrationById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['migration:read']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['migration:read']) }
       ],
       validate: {
-        params: migrationValidator.getMigrationById
+        params: auth.getMigrationById
       },
       tags: ['migration', 'management']
     }
@@ -55,16 +51,16 @@ const routes = [
   {
     method: 'PUT',
     path: '/migrations/{id}',
-    handler: migrationHandler.updateMigration,
+    handler: handler.updateMigration,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['migration:update']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['migration:update']) }
       ],
       validate: {
-        params: migrationValidator.getMigrationById,
-        payload: migrationValidator.updateMigration
+        params: auth.getMigrationById,
+        payload: auth.updateMigration
       },
       tags: ['migration', 'management']
     }
@@ -72,15 +68,15 @@ const routes = [
   {
     method: 'DELETE',
     path: '/migrations/{id}',
-    handler: migrationHandler.deleteMigration,
+    handler: handler.deleteMigration,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['migration:delete']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['migration:delete']) }
       ],
       validate: {
-        params: migrationValidator.deleteMigration
+        params: auth.deleteMigration
       },
       tags: ['migration', 'management']
     }
@@ -90,16 +86,16 @@ const routes = [
   {
     method: 'POST',
     path: '/migrations/{id}/run',
-    handler: migrationHandler.runMigration,
+    handler: handler.runMigration,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['migration:execute']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['migration:execute']) }
       ],
       validate: {
-        params: migrationValidator.getMigrationById,
-        payload: migrationValidator.runMigration
+        params: auth.getMigrationById,
+        payload: auth.runMigration
       },
       tags: ['migration', 'execution']
     }
@@ -107,15 +103,15 @@ const routes = [
   {
     method: 'POST',
     path: '/migrations/run',
-    handler: migrationHandler.runMigrations,
+    handler: handler.runMigrations,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['migration:execute']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['migration:execute']) }
       ],
       validate: {
-        payload: migrationValidator.runMigrations
+        payload: auth.runMigrations
       },
       tags: ['migration', 'execution']
     }
@@ -123,16 +119,16 @@ const routes = [
   {
     method: 'POST',
     path: '/migrations/{id}/rollback',
-    handler: migrationHandler.rollbackMigration,
+    handler: handler.rollbackMigration,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['migration:rollback']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['migration:rollback']) }
       ],
       validate: {
-        params: migrationValidator.getMigrationById,
-        payload: migrationValidator.rollbackMigration
+        params: auth.getMigrationById,
+        payload: auth.rollbackMigration
       },
       tags: ['migration', 'execution']
     }
@@ -140,15 +136,15 @@ const routes = [
   {
     method: 'POST',
     path: '/migrations/rollback',
-    handler: migrationHandler.rollbackMigrations,
+    handler: handler.rollbackMigrations,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['migration:rollback']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['migration:rollback']) }
       ],
       validate: {
-        payload: migrationValidator.rollbackMigrations
+        payload: auth.rollbackMigrations
       },
       tags: ['migration', 'execution']
     }
@@ -158,15 +154,15 @@ const routes = [
   {
     method: 'GET',
     path: '/migrations/status',
-    handler: migrationHandler.getMigrationStatus,
+    handler: handler.getMigrationStatus,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['migration:read']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['migration:read']) }
       ],
       validate: {
-        query: migrationValidator.getMigrationStatus
+        query: auth.getMigrationStatus
       },
       tags: ['migration', 'status']
     }
@@ -174,15 +170,15 @@ const routes = [
   {
     method: 'GET',
     path: '/migrations/history',
-    handler: migrationHandler.getMigrationHistory,
+    handler: handler.getMigrationHistory,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['migration:read']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['migration:read']) }
       ],
       validate: {
-        query: migrationValidator.getMigrationHistory
+        query: auth.getMigrationHistory
       },
       tags: ['migration', 'history']
     }
@@ -192,15 +188,15 @@ const routes = [
   {
     method: 'POST',
     path: '/seeds',
-    handler: migrationHandler.createSeed,
+    handler: handler.createSeed,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['seed:create']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['seed:create']) }
       ],
       validate: {
-        payload: migrationValidator.createSeed
+        payload: auth.createSeed
       },
       tags: ['seed', 'management']
     }
@@ -208,15 +204,15 @@ const routes = [
   {
     method: 'GET',
     path: '/seeds',
-    handler: migrationHandler.getSeeds,
+    handler: handler.getSeeds,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['seed:read']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['seed:read']) }
       ],
       validate: {
-        query: migrationValidator.getSeeds
+        query: auth.getSeeds
       },
       tags: ['seed', 'management']
     }
@@ -224,15 +220,15 @@ const routes = [
   {
     method: 'GET',
     path: '/seeds/{id}',
-    handler: migrationHandler.getSeedById,
+    handler: handler.getSeedById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['seed:read']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['seed:read']) }
       ],
       validate: {
-        params: migrationValidator.getSeedById
+        params: auth.getSeedById
       },
       tags: ['seed', 'management']
     }
@@ -240,16 +236,16 @@ const routes = [
   {
     method: 'PUT',
     path: '/seeds/{id}',
-    handler: migrationHandler.updateSeed,
+    handler: handler.updateSeed,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['seed:update']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['seed:update']) }
       ],
       validate: {
-        params: migrationValidator.getSeedById,
-        payload: migrationValidator.updateSeed
+        params: auth.getSeedById,
+        payload: auth.updateSeed
       },
       tags: ['seed', 'management']
     }
@@ -257,15 +253,15 @@ const routes = [
   {
     method: 'DELETE',
     path: '/seeds/{id}',
-    handler: migrationHandler.deleteSeed,
+    handler: handler.deleteSeed,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['seed:delete']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['seed:delete']) }
       ],
       validate: {
-        params: migrationValidator.deleteSeed
+        params: auth.deleteSeed
       },
       tags: ['seed', 'management']
     }
@@ -275,16 +271,16 @@ const routes = [
   {
     method: 'POST',
     path: '/seeds/{id}/run',
-    handler: migrationHandler.runSeed,
+    handler: handler.runSeed,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['seed:execute']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['seed:execute']) }
       ],
       validate: {
-        params: migrationValidator.getSeedById,
-        payload: migrationValidator.runSeed
+        params: auth.getSeedById,
+        payload: auth.runSeed
       },
       tags: ['seed', 'execution']
     }
@@ -292,15 +288,15 @@ const routes = [
   {
     method: 'POST',
     path: '/seeds/run',
-    handler: migrationHandler.runSeeds,
+    handler: handler.runSeeds,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['seed:execute']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['seed:execute']) }
       ],
       validate: {
-        payload: migrationValidator.runSeeds
+        payload: auth.runSeeds
       },
       tags: ['seed', 'execution']
     }
@@ -310,15 +306,15 @@ const routes = [
   {
     method: 'GET',
     path: '/migrations/versions',
-    handler: migrationHandler.getMigrationVersions,
+    handler: handler.getMigrationVersions,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['version:read']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['version:read']) }
       ],
       validate: {
-        query: migrationValidator.getMigrationVersions
+        query: auth.getMigrationVersions
       },
       tags: ['migration', 'versioning']
     }
@@ -326,15 +322,15 @@ const routes = [
   {
     method: 'POST',
     path: '/migrations/versions',
-    handler: migrationHandler.createVersion,
+    handler: handler.createVersion,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['version:create']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['version:create']) }
       ],
       validate: {
-        payload: migrationValidator.createVersion
+        payload: auth.createVersion
       },
       tags: ['migration', 'versioning']
     }
@@ -342,15 +338,15 @@ const routes = [
   {
     method: 'GET',
     path: '/migrations/versions/{id}',
-    handler: migrationHandler.getVersionById,
+    handler: handler.getVersionById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['version:read']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['version:read']) }
       ],
       validate: {
-        params: migrationValidator.getVersionById
+        params: auth.getVersionById
       },
       tags: ['migration', 'versioning']
     }
@@ -358,16 +354,16 @@ const routes = [
   {
     method: 'PUT',
     path: '/migrations/versions/{id}',
-    handler: migrationHandler.updateVersion,
+    handler: handler.updateVersion,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['version:update']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['version:update']) }
       ],
       validate: {
-        params: migrationValidator.getVersionById,
-        payload: migrationValidator.updateVersion
+        params: auth.getVersionById,
+        payload: auth.updateVersion
       },
       tags: ['migration', 'versioning']
     }
@@ -375,15 +371,15 @@ const routes = [
   {
     method: 'DELETE',
     path: '/migrations/versions/{id}',
-    handler: migrationHandler.deleteVersion,
+    handler: handler.deleteVersion,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['version:delete']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['version:delete']) }
       ],
       validate: {
-        params: migrationValidator.deleteVersion
+        params: auth.deleteVersion
       },
       tags: ['migration', 'versioning']
     }
@@ -393,15 +389,15 @@ const routes = [
   {
     method: 'GET',
     path: '/migrations/dependencies',
-    handler: migrationHandler.getDependencies,
+    handler: handler.getDependencies,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['dependency:read']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['dependency:read']) }
       ],
       validate: {
-        query: migrationValidator.getDependencies
+        query: auth.getDependencies
       },
       tags: ['migration', 'dependencies']
     }
@@ -409,15 +405,15 @@ const routes = [
   {
     method: 'POST',
     path: '/migrations/dependencies',
-    handler: migrationHandler.addDependency,
+    handler: handler.addDependency,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['dependency:create']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['dependency:create']) }
       ],
       validate: {
-        payload: migrationValidator.addDependency
+        payload: auth.addDependency
       },
       tags: ['migration', 'dependencies']
     }
@@ -425,15 +421,15 @@ const routes = [
   {
     method: 'DELETE',
     path: '/migrations/dependencies',
-    handler: migrationHandler.removeDependency,
+    handler: handler.removeDependency,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['dependency:delete']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['dependency:delete']) }
       ],
       validate: {
-        payload: migrationValidator.removeDependency
+        payload: auth.removeDependency
       },
       tags: ['migration', 'dependencies']
     }
@@ -443,16 +439,16 @@ const routes = [
   {
     method: 'POST',
     path: '/migrations/{id}/validate',
-    handler: migrationHandler.validateMigration,
+    handler: handler.validateMigration,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['migration:validate']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['migration:validate']) }
       ],
       validate: {
-        params: migrationValidator.getMigrationById,
-        payload: migrationValidator.validateMigration
+        params: auth.getMigrationById,
+        payload: auth.validateMigration
       },
       tags: ['migration', 'validation']
     }
@@ -460,16 +456,16 @@ const routes = [
   {
     method: 'POST',
     path: '/seeds/{id}/validate',
-    handler: migrationHandler.validateSeed,
+    handler: handler.validateSeed,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['seed:validate']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['seed:validate']) }
       ],
       validate: {
-        params: migrationValidator.getSeedById,
-        payload: migrationValidator.validateSeed
+        params: auth.getSeedById,
+        payload: auth.validateSeed
       },
       tags: ['seed', 'validation']
     }
@@ -477,16 +473,16 @@ const routes = [
   {
     method: 'POST',
     path: '/migrations/{id}/test',
-    handler: migrationHandler.testMigration,
+    handler: handler.testMigration,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['migration:test']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['migration:test']) }
       ],
       validate: {
-        params: migrationValidator.getMigrationById,
-        payload: migrationValidator.testMigration
+        params: auth.getMigrationById,
+        payload: auth.testMigration
       },
       tags: ['migration', 'testing']
     }
@@ -494,16 +490,16 @@ const routes = [
   {
     method: 'POST',
     path: '/seeds/{id}/test',
-    handler: migrationHandler.testSeed,
+    handler: handler.testSeed,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['seed:test']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['seed:test']) }
       ],
       validate: {
-        params: migrationValidator.getSeedById,
-        payload: migrationValidator.testSeed
+        params: auth.getSeedById,
+        payload: auth.testSeed
       },
       tags: ['seed', 'testing']
     }
@@ -513,16 +509,16 @@ const routes = [
   {
     method: 'GET',
     path: '/migrations/{id}/export',
-    handler: migrationHandler.exportMigration,
+    handler: handler.exportMigration,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['migration:export']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['migration:export']) }
       ],
       validate: {
-        params: migrationValidator.getMigrationById,
-        query: migrationValidator.exportMigration
+        params: auth.getMigrationById,
+        query: auth.exportMigration
       },
       tags: ['migration', 'export']
     }
@@ -530,16 +526,16 @@ const routes = [
   {
     method: 'GET',
     path: '/seeds/{id}/export',
-    handler: migrationHandler.exportSeed,
+    handler: handler.exportSeed,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['seed:export']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['seed:export']) }
       ],
       validate: {
-        params: migrationValidator.getSeedById,
-        query: migrationValidator.exportSeed
+        params: auth.getSeedById,
+        query: auth.exportSeed
       },
       tags: ['seed', 'export']
     }
@@ -547,15 +543,15 @@ const routes = [
   {
     method: 'POST',
     path: '/migrations/import',
-    handler: migrationHandler.importMigration,
+    handler: handler.importMigration,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['migration:import']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['migration:import']) }
       ],
       validate: {
-        payload: migrationValidator.importMigration
+        payload: auth.importMigration
       },
       tags: ['migration', 'import']
     }
@@ -563,15 +559,15 @@ const routes = [
   {
     method: 'POST',
     path: '/seeds/import',
-    handler: migrationHandler.importSeed,
+    handler: handler.importSeed,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['seed:import']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['seed:import']) }
       ],
       validate: {
-        payload: migrationValidator.importSeed
+        payload: auth.importSeed
       },
       tags: ['seed', 'import']
     }
@@ -581,15 +577,15 @@ const routes = [
   {
     method: 'POST',
     path: '/migrations/bulk',
-    handler: migrationHandler.bulkCreateMigrations,
+    handler: handler.bulkCreateMigrations,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['migration:create']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['migration:create']) }
       ],
       validate: {
-        payload: migrationValidator.bulkCreateMigrations
+        payload: auth.bulkCreateMigrations
       },
       tags: ['migration', 'bulk']
     }
@@ -597,15 +593,15 @@ const routes = [
   {
     method: 'POST',
     path: '/seeds/bulk',
-    handler: migrationHandler.bulkCreateSeeds,
+    handler: handler.bulkCreateSeeds,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['seed:create']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['seed:create']) }
       ],
       validate: {
-        payload: migrationValidator.bulkCreateSeeds
+        payload: auth.bulkCreateSeeds
       },
       tags: ['seed', 'bulk']
     }
@@ -615,15 +611,15 @@ const routes = [
   {
     method: 'GET',
     path: '/migrations/statistics',
-    handler: migrationHandler.getMigrationStatistics,
+    handler: handler.getMigrationStatistics,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['migration:read']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['migration:read']) }
       ],
       validate: {
-        query: migrationValidator.getMigrationStatistics
+        query: auth.getMigrationStatistics
       },
       tags: ['migration', 'statistics']
     }
@@ -631,15 +627,15 @@ const routes = [
   {
     method: 'GET',
     path: '/seeds/statistics',
-    handler: migrationHandler.getSeedStatistics,
+    handler: handler.getSeedStatistics,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['seed:read']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['seed:read']) }
       ],
       validate: {
-        query: migrationValidator.getSeedStatistics
+        query: auth.getSeedStatistics
       },
       tags: ['seed', 'statistics']
     }
@@ -647,15 +643,15 @@ const routes = [
   {
     method: 'GET',
     path: '/migrations/report',
-    handler: migrationHandler.generateMigrationReport,
+    handler: handler.generateMigrationReport,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['migration:report']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['migration:report']) }
       ],
       validate: {
-        query: migrationValidator.generateMigrationReport
+        query: auth.generateMigrationReport
       },
       tags: ['migration', 'reporting']
     }
@@ -663,15 +659,15 @@ const routes = [
   {
     method: 'GET',
     path: '/seeds/report',
-    handler: migrationHandler.generateSeedReport,
+    handler: handler.generateSeedReport,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['seed:report']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['seed:report']) }
       ],
       validate: {
-        query: migrationValidator.generateSeedReport
+        query: auth.generateSeedReport
       },
       tags: ['seed', 'reporting']
     }

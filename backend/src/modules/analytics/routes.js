@@ -1,21 +1,17 @@
-const analyticsHandler = require('./handler');
-const analyticsValidator = require('./validator');
-const { tenantIsolation, roleBasedAccess, permissionBasedAccess } = require('../../middleware');
-
-const routes = [
+const routes = (handler, auth) => [
   // === DASHBOARD OVERVIEW ROUTES ===
   {
     method: 'GET',
     path: '/analytics/dashboard',
-    handler: analyticsHandler.getDashboardOverview,
+    handler: handler.getDashboardOverview,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: analyticsValidator.getDashboardOverview
+        query: auth.getDashboardOverview
       },
       tags: ['analytics']
     }
@@ -25,15 +21,15 @@ const routes = [
   {
     method: 'GET',
     path: '/analytics/revenue',
-    handler: analyticsHandler.getRevenueAnalytics,
+    handler: handler.getRevenueAnalytics,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: analyticsValidator.getRevenueAnalytics
+        query: auth.getRevenueAnalytics
       },
       tags: ['analytics']
     }
@@ -43,15 +39,15 @@ const routes = [
   {
     method: 'GET',
     path: '/analytics/clients',
-    handler: analyticsHandler.getClientAnalytics,
+    handler: handler.getClientAnalytics,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: analyticsValidator.getClientAnalytics
+        query: auth.getClientAnalytics
       },
       tags: ['analytics']
     }
@@ -61,15 +57,15 @@ const routes = [
   {
     method: 'GET',
     path: '/analytics/orders',
-    handler: analyticsHandler.getOrderAnalytics,
+    handler: handler.getOrderAnalytics,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: analyticsValidator.getOrderAnalytics
+        query: auth.getOrderAnalytics
       },
       tags: ['analytics']
     }
@@ -79,15 +75,15 @@ const routes = [
   {
     method: 'GET',
     path: '/analytics/tickets',
-    handler: analyticsHandler.getTicketAnalytics,
+    handler: handler.getTicketAnalytics,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: analyticsValidator.getTicketAnalytics
+        query: auth.getTicketAnalytics
       },
       tags: ['analytics']
     }
@@ -97,15 +93,15 @@ const routes = [
   {
     method: 'GET',
     path: '/analytics/projects',
-    handler: analyticsHandler.getProjectAnalytics,
+    handler: handler.getProjectAnalytics,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: analyticsValidator.getProjectAnalytics
+        query: auth.getProjectAnalytics
       },
       tags: ['analytics']
     }
@@ -115,15 +111,15 @@ const routes = [
   {
     method: 'GET',
     path: '/analytics/services',
-    handler: analyticsHandler.getServiceAnalytics,
+    handler: handler.getServiceAnalytics,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: analyticsValidator.getServiceAnalytics
+        query: auth.getServiceAnalytics
       },
       tags: ['analytics']
     }
@@ -133,15 +129,15 @@ const routes = [
   {
     method: 'GET',
     path: '/analytics/quotations',
-    handler: analyticsHandler.getQuotationAnalytics,
+    handler: handler.getQuotationAnalytics,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: analyticsValidator.getQuotationAnalytics
+        query: auth.getQuotationAnalytics
       },
       tags: ['analytics']
     }
@@ -151,15 +147,15 @@ const routes = [
   {
     method: 'GET',
     path: '/analytics/invoices',
-    handler: analyticsHandler.getInvoiceAnalytics,
+    handler: handler.getInvoiceAnalytics,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: analyticsValidator.getInvoiceAnalytics
+        query: auth.getInvoiceAnalytics
       },
       tags: ['analytics']
     }
@@ -169,15 +165,15 @@ const routes = [
   {
     method: 'GET',
     path: '/analytics/performance',
-    handler: analyticsHandler.getPerformanceMetrics,
+    handler: handler.getPerformanceMetrics,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: analyticsValidator.getPerformanceMetrics
+        query: auth.getPerformanceMetrics
       },
       tags: ['analytics']
     }
@@ -187,15 +183,15 @@ const routes = [
   {
     method: 'GET',
     path: '/analytics/growth',
-    handler: analyticsHandler.getGrowthAnalytics,
+    handler: handler.getGrowthAnalytics,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: analyticsValidator.getGrowthAnalytics
+        query: auth.getGrowthAnalytics
       },
       tags: ['analytics']
     }
@@ -205,16 +201,16 @@ const routes = [
   {
     method: 'POST',
     path: '/analytics/custom',
-    handler: analyticsHandler.getCustomAnalytics,
+    handler: handler.getCustomAnalytics,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['analytics:custom']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['analytics:custom']) }
       ],
       validate: {
-        payload: analyticsValidator.getCustomAnalytics
+        payload: auth.getCustomAnalytics
       },
       tags: ['analytics']
     }
@@ -224,16 +220,16 @@ const routes = [
   {
     method: 'POST',
     path: '/analytics/export',
-    handler: analyticsHandler.exportAnalyticsData,
+    handler: handler.exportAnalyticsData,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['analytics:export']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['analytics:export']) }
       ],
       validate: {
-        payload: analyticsValidator.exportAnalyticsData
+        payload: auth.exportAnalyticsData
       },
       tags: ['analytics']
     }
@@ -243,15 +239,15 @@ const routes = [
   {
     method: 'GET',
     path: '/analytics/realtime',
-    handler: analyticsHandler.getRealTimeDashboard,
+    handler: handler.getRealTimeDashboard,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: analyticsValidator.getRealTimeDashboard
+        query: auth.getRealTimeDashboard
       },
       tags: ['analytics']
     }
@@ -261,15 +257,15 @@ const routes = [
   {
     method: 'GET',
     path: '/analytics/activity-feed',
-    handler: analyticsHandler.getActivityFeed,
+    handler: handler.getActivityFeed,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        query: analyticsValidator.getActivityFeed
+        query: auth.getActivityFeed
       },
       tags: ['analytics']
     }
@@ -279,15 +275,15 @@ const routes = [
   {
     method: 'GET',
     path: '/analytics/alerts',
-    handler: analyticsHandler.getAlertsAndNotifications,
+    handler: handler.getAlertsAndNotifications,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        query: analyticsValidator.getAlertsAndNotifications
+        query: auth.getAlertsAndNotifications
       },
       tags: ['analytics']
     }

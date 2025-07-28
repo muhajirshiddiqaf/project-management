@@ -485,6 +485,40 @@ class IntegrationHandler {
     }
   }
 
+  // Update webhook (dummy implementation)
+  async updateWebhook(request, h) {
+    try {
+      // TODO: Implement actual update logic
+      return h.response({
+        success: true,
+        message: 'Webhook updated (dummy response)'
+      }).code(200);
+    } catch (error) {
+      return h.response({
+        success: false,
+        message: 'Failed to update webhook',
+        error: error.message
+      }).code(500);
+    }
+  }
+
+  // Delete webhook (dummy implementation)
+  async deleteWebhook(request, h) {
+    try {
+      // TODO: Implement actual delete logic
+      return h.response({
+        success: true,
+        message: 'Webhook deleted (dummy response)'
+      }).code(200);
+    } catch (error) {
+      return h.response({
+        success: false,
+        message: 'Failed to delete webhook',
+        error: error.message
+      }).code(500);
+    }
+  }
+
   // Bulk operations
   async bulkOperation(request, h) {
     try {
@@ -601,6 +635,91 @@ class IntegrationHandler {
       return h.response({
         success: false,
         message: 'Failed to export integrations',
+        error: error.message
+      }).code(500);
+    }
+  }
+
+  // Import integrations (dummy implementation)
+  async importIntegrations(request, h) {
+    try {
+      // TODO: Implement actual import logic
+      return h.response({
+        success: true,
+        message: 'Integrations imported (dummy response)'
+      }).code(200);
+    } catch (error) {
+      return h.response({
+        success: false,
+        message: 'Failed to import integrations',
+        error: error.message
+      }).code(500);
+    }
+  }
+
+  // OAuth callback (dummy implementation)
+  async oauthCallback(request, h) {
+    try {
+      // TODO: Implement actual OAuth callback logic
+      return h.response({
+        success: true,
+        message: 'OAuth callback handled (dummy response)'
+      }).code(200);
+    } catch (error) {
+      return h.response({
+        success: false,
+        message: 'Failed to handle OAuth callback',
+        error: error.message
+      }).code(500);
+    }
+  }
+
+  // Rotate API key (dummy implementation)
+  async rotateApiKey(request, h) {
+    try {
+      // TODO: Implement actual API key rotation logic
+      return h.response({
+        success: true,
+        message: 'API key rotated (dummy response)'
+      }).code(200);
+    } catch (error) {
+      return h.response({
+        success: false,
+        message: 'Failed to rotate API key',
+        error: error.message
+      }).code(500);
+    }
+  }
+
+  // Health check (dummy implementation)
+  async healthCheck(request, h) {
+    try {
+      // TODO: Implement actual health check logic
+      return h.response({
+        success: true,
+        message: 'Integration health is OK (dummy response)'
+      }).code(200);
+    } catch (error) {
+      return h.response({
+        success: false,
+        message: 'Failed to check integration health',
+        error: error.message
+      }).code(500);
+    }
+  }
+
+  // Cleanup logs (dummy implementation)
+  async cleanupLogs(request, h) {
+    try {
+      // TODO: Implement actual cleanup logic
+      return h.response({
+        success: true,
+        message: 'Integration logs cleaned up (dummy response)'
+      }).code(200);
+    } catch (error) {
+      return h.response({
+        success: false,
+        message: 'Failed to cleanup integration logs',
         error: error.message
       }).code(500);
     }

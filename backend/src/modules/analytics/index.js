@@ -1,15 +1,13 @@
-const analyticsRoutes = require('./routes');
-const analyticsHandler = require('./handler');
-const AnalyticsRepository = require('../../infrastructure/repositories/analyticsRepository');
+const AnalyticsHandler = require('./handler');
+const routes = require('./routes');
 
-const analyticsModule = {
-  name: 'analytics',
-  register: async function (server, options) {
-    const db = server.app.db;
-    const analyticsRepository = new AnalyticsRepository(db);
-    analyticsHandler.setAnalyticsRepository(analyticsRepository);
-    server.route(analyticsRoutes);
-  }
+const analytics = async (server, { service, validator, auth }) => {
+  const analyticsHandler = new AnalyticsHandler(service, validator);
+  server.route(routes(analyticsHandler, auth));
 };
 
-module.exports = analyticsModule;
+module.exports = {
+  name: 'analytics',
+  version: '1.0.0',
+  register: analytics
+};

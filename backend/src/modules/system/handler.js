@@ -7,19 +7,47 @@ const archiver = require('archiver');
 const xlsx = require('xlsx');
 
 class SystemHandler {
-  constructor() {
-    this.systemRepository = null;
-  }
+  constructor(service, validator) {
+    this._service = service;
+    this._validator = validator;
 
-  setSystemRepository(systemRepository) {
-    this.systemRepository = systemRepository;
+    // Bind all methods to preserve 'this' context
+    this.getGeneralSettings = this.getGeneralSettings.bind(this);
+    this.updateGeneralSettings = this.updateGeneralSettings.bind(this);
+    this.getNotificationSettings = this.getNotificationSettings.bind(this);
+    this.updateNotificationSettings = this.updateNotificationSettings.bind(this);
+    this.getIntegrationSettings = this.getIntegrationSettings.bind(this);
+    this.updateIntegrationSettings = this.updateIntegrationSettings.bind(this);
+    this.getAuditLogs = this.getAuditLogs.bind(this);
+    this.getAuditLogById = this.getAuditLogById.bind(this);
+    this.exportAuditLogs = this.exportAuditLogs.bind(this);
+    this.getSystemHealth = this.getSystemHealth.bind(this);
+    this.getSystemMetrics = this.getSystemMetrics.bind(this);
+    this.createBackup = this.createBackup.bind(this);
+    this.getBackups = this.getBackups.bind(this);
+    this.getBackupById = this.getBackupById.bind(this);
+    this.downloadBackup = this.downloadBackup.bind(this);
+    this.deleteBackup = this.deleteBackup.bind(this);
+    this.restoreBackup = this.restoreBackup.bind(this);
+    this.startMaintenance = this.startMaintenance.bind(this);
+    this.endMaintenance = this.endMaintenance.bind(this);
+    this.getMaintenanceStatus = this.getMaintenanceStatus.bind(this);
+    this.checkForUpdates = this.checkForUpdates.bind(this);
+    this.getUpdateHistory = this.getUpdateHistory.bind(this);
+    this.installUpdate = this.installUpdate.bind(this);
+    this.getSystemConfiguration = this.getSystemConfiguration.bind(this);
+    this.updateSystemConfiguration = this.updateSystemConfiguration.bind(this);
+    this.resetSystemConfiguration = this.resetSystemConfiguration.bind(this);
+    this.getSystemStatistics = this.getSystemStatistics.bind(this);
+    this.runSystemDiagnostics = this.runSystemDiagnostics.bind(this);
+    this.getDiagnosticReport = this.getDiagnosticReport.bind(this);
   }
 
   // === GENERAL SYSTEM SETTINGS ===
 
   async getGeneralSettings(request, h) {
     try {
-      const settings = await this.systemRepository.getGeneralSettings();
+      const settings = await this._service.getGeneralSettings();
 
       return h.response({
         success: true,
@@ -36,10 +64,10 @@ class SystemHandler {
       const userId = request.auth.credentials.userId;
       const updateData = request.payload;
 
-      const settings = await this.systemRepository.updateGeneralSettings(updateData);
+      const settings = await this._service.updateGeneralSettings(updateData);
 
       // Log activity
-      await this.systemRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'update',
         resource: 'system_settings',
@@ -64,7 +92,7 @@ class SystemHandler {
 
   async getNotificationSettings(request, h) {
     try {
-      const settings = await this.systemRepository.getNotificationSettings();
+      const settings = await this._service.getNotificationSettings();
 
       return h.response({
         success: true,
@@ -81,10 +109,10 @@ class SystemHandler {
       const userId = request.auth.credentials.userId;
       const updateData = request.payload;
 
-      const settings = await this.systemRepository.updateNotificationSettings(updateData);
+      const settings = await this._service.updateNotificationSettings(updateData);
 
       // Log activity
-      await this.systemRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'update',
         resource: 'system_settings',
@@ -109,7 +137,7 @@ class SystemHandler {
 
   async getIntegrationSettings(request, h) {
     try {
-      const settings = await this.systemRepository.getIntegrationSettings();
+      const settings = await this._service.getIntegrationSettings();
 
       return h.response({
         success: true,
@@ -126,10 +154,10 @@ class SystemHandler {
       const userId = request.auth.credentials.userId;
       const updateData = request.payload;
 
-      const settings = await this.systemRepository.updateIntegrationSettings(updateData);
+      const settings = await this._service.updateIntegrationSettings(updateData);
 
       // Log activity
-      await this.systemRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'update',
         resource: 'system_settings',
@@ -160,8 +188,8 @@ class SystemHandler {
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sort_by, sort_order };
 
       const [logs, total] = await Promise.all([
-        this.systemRepository.getAuditLogs(filters, pagination),
-        this.systemRepository.countAuditLogs(filters)
+        this._service.getAuditLogs(filters, pagination),
+        this._service.countAuditLogs(filters)
       ]);
 
       return h.response({
@@ -186,7 +214,7 @@ class SystemHandler {
     try {
       const { id } = request.params;
 
-      const log = await this.systemRepository.getAuditLogById(id);
+      const log = await this._service.getAuditLogById(id);
       if (!log) {
         throw Boom.notFound('Audit log not found');
       }
@@ -206,7 +234,7 @@ class SystemHandler {
       const { format, start_date, end_date, user_id, action, resource } = request.query;
 
       const filters = { start_date, end_date, user_id, action, resource };
-      const logs = await this.systemRepository.getAuditLogsForExport(filters);
+      const logs = await this._service.getAuditLogsForExport(filters);
       const exportData = await this.formatAuditLogExport(logs, format);
 
       return h.response(exportData.content)
@@ -222,7 +250,7 @@ class SystemHandler {
 
   async getSystemHealth(request, h) {
     try {
-      const health = await this.systemRepository.getSystemHealth();
+      const health = await this._service.getSystemHealth();
 
       return h.response({
         success: true,
@@ -238,7 +266,7 @@ class SystemHandler {
     try {
       const { period, metrics } = request.query;
 
-      const systemMetrics = await this.systemRepository.getSystemMetrics(period, metrics);
+      const systemMetrics = await this._service.getSystemMetrics(period, metrics);
 
       return h.response({
         success: true,
@@ -257,7 +285,7 @@ class SystemHandler {
       const userId = request.auth.credentials.userId;
       const { type, description, include_logs, compression } = request.payload;
 
-      const backup = await this.systemRepository.createBackup({
+      const backup = await this._service.createBackup({
         type,
         description,
         include_logs,
@@ -266,7 +294,7 @@ class SystemHandler {
       });
 
       // Log activity
-      await this.systemRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'create',
         resource: 'backup',
@@ -295,8 +323,8 @@ class SystemHandler {
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sort_by, sort_order };
 
       const [backups, total] = await Promise.all([
-        this.systemRepository.getBackups(filters, pagination),
-        this.systemRepository.countBackups(filters)
+        this._service.getBackups(filters, pagination),
+        this._service.countBackups(filters)
       ]);
 
       return h.response({
@@ -321,7 +349,7 @@ class SystemHandler {
     try {
       const { id } = request.params;
 
-      const backup = await this.systemRepository.getBackupById(id);
+      const backup = await this._service.getBackupById(id);
       if (!backup) {
         throw Boom.notFound('Backup not found');
       }
@@ -340,12 +368,12 @@ class SystemHandler {
     try {
       const { id } = request.params;
 
-      const backup = await this.systemRepository.getBackupById(id);
+      const backup = await this._service.getBackupById(id);
       if (!backup) {
         throw Boom.notFound('Backup not found');
       }
 
-      const filePath = await this.systemRepository.getBackupFilePath(id);
+      const filePath = await this._service.getBackupFilePath(id);
       const fileName = `backup-${backup.type}-${backup.created_at.toISOString().split('T')[0]}.zip`;
 
       return h.file(filePath, { filename: fileName });
@@ -360,13 +388,13 @@ class SystemHandler {
       const userId = request.auth.credentials.userId;
       const { id } = request.params;
 
-      const backup = await this.systemRepository.deleteBackup(id);
+      const backup = await this._service.deleteBackup(id);
       if (!backup) {
         throw Boom.notFound('Backup not found');
       }
 
       // Log activity
-      await this.systemRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'delete',
         resource: 'backup',
@@ -395,15 +423,15 @@ class SystemHandler {
         throw Boom.badRequest('Confirmation required for backup restoration');
       }
 
-      const backup = await this.systemRepository.getBackupById(id);
+      const backup = await this._service.getBackupById(id);
       if (!backup) {
         throw Boom.notFound('Backup not found');
       }
 
-      const restoreResult = await this.systemRepository.restoreBackup(id, options);
+      const restoreResult = await this._service.restoreBackup(id, options);
 
       // Log activity
-      await this.systemRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'restore',
         resource: 'backup',
@@ -431,13 +459,13 @@ class SystemHandler {
       const userId = request.auth.credentials.userId;
       const maintenanceData = request.payload;
 
-      const maintenance = await this.systemRepository.startMaintenance({
+      const maintenance = await this._service.startMaintenance({
         ...maintenanceData,
         started_by: userId
       });
 
       // Log activity
-      await this.systemRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'start',
         resource: 'maintenance',
@@ -462,10 +490,10 @@ class SystemHandler {
     try {
       const userId = request.auth.credentials.userId;
 
-      const maintenance = await this.systemRepository.endMaintenance(userId);
+      const maintenance = await this._service.endMaintenance(userId);
 
       // Log activity
-      await this.systemRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'end',
         resource: 'maintenance',
@@ -488,7 +516,7 @@ class SystemHandler {
 
   async getMaintenanceStatus(request, h) {
     try {
-      const status = await this.systemRepository.getMaintenanceStatus();
+      const status = await this._service.getMaintenanceStatus();
 
       return h.response({
         success: true,
@@ -504,7 +532,7 @@ class SystemHandler {
 
   async checkForUpdates(request, h) {
     try {
-      const updates = await this.systemRepository.checkForUpdates();
+      const updates = await this._service.checkForUpdates();
 
       return h.response({
         success: true,
@@ -524,8 +552,8 @@ class SystemHandler {
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sort_by, sort_order };
 
       const [updates, total] = await Promise.all([
-        this.systemRepository.getUpdateHistory(filters, pagination),
-        this.systemRepository.countUpdateHistory(filters)
+        this._service.getUpdateHistory(filters, pagination),
+        this._service.countUpdateHistory(filters)
       ]);
 
       return h.response({
@@ -555,7 +583,7 @@ class SystemHandler {
         throw Boom.badRequest('Confirmation required for system update');
       }
 
-      const updateResult = await this.systemRepository.installUpdate({
+      const updateResult = await this._service.installUpdate({
         version,
         backup_before_update,
         auto_restart,
@@ -563,7 +591,7 @@ class SystemHandler {
       });
 
       // Log activity
-      await this.systemRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'install',
         resource: 'system_update',
@@ -590,7 +618,7 @@ class SystemHandler {
     try {
       const { section } = request.query;
 
-      const configuration = await this.systemRepository.getSystemConfiguration(section);
+      const configuration = await this._service.getSystemConfiguration(section);
 
       return h.response({
         success: true,
@@ -607,10 +635,10 @@ class SystemHandler {
       const userId = request.auth.credentials.userId;
       const { section, settings } = request.payload;
 
-      const configuration = await this.systemRepository.updateSystemConfiguration(section, settings);
+      const configuration = await this._service.updateSystemConfiguration(section, settings);
 
       // Log activity
-      await this.systemRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'update',
         resource: 'system_configuration',
@@ -640,10 +668,10 @@ class SystemHandler {
         throw Boom.badRequest('Confirmation required for configuration reset');
       }
 
-      const configuration = await this.systemRepository.resetSystemConfiguration(section);
+      const configuration = await this._service.resetSystemConfiguration(section);
 
       // Log activity
-      await this.systemRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'reset',
         resource: 'system_configuration',
@@ -670,7 +698,7 @@ class SystemHandler {
     try {
       const { period, include_details } = request.query;
 
-      const statistics = await this.systemRepository.getSystemStatistics(period, include_details);
+      const statistics = await this._service.getSystemStatistics(period, include_details);
 
       return h.response({
         success: true,
@@ -689,14 +717,14 @@ class SystemHandler {
       const userId = request.auth.credentials.userId;
       const { tests, verbose } = request.payload;
 
-      const diagnostics = await this.systemRepository.runSystemDiagnostics({
+      const diagnostics = await this._service.runSystemDiagnostics({
         tests,
         verbose,
         run_by: userId
       });
 
       // Log activity
-      await this.systemRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'run',
         resource: 'system_diagnostics',
@@ -721,7 +749,7 @@ class SystemHandler {
     try {
       const { id } = request.params;
 
-      const report = await this.systemRepository.getDiagnosticReport(id);
+      const report = await this._service.getDiagnosticReport(id);
       if (!report) {
         throw Boom.notFound('Diagnostic report not found');
       }
@@ -785,4 +813,4 @@ class SystemHandler {
   }
 }
 
-module.exports = new SystemHandler();
+module.exports = SystemHandler;

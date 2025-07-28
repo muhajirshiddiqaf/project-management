@@ -11,13 +11,11 @@ const baseFields = {
   updatedAt: Joi.date().iso().optional()
 };
 
-// Integration type validation
-const integrationTypeSchema = Joi.object({
-  type: Joi.string().valid('github', 'gitlab', 'bitbucket', 'slack', 'discord', 'trello', 'asana', 'jira', 'stripe', 'sendgrid', 'aws', 'google', 'microsoft', 'custom').required(),
-  provider: Joi.string().min(1).max(100).required(),
-  version: Joi.string().max(20).optional(),
-  category: Joi.string().valid('version-control', 'communication', 'project-management', 'payment', 'email', 'cloud-storage', 'analytics', 'custom').required()
-});
+// Integration type fields (not schema object)
+const type = Joi.string().valid('github', 'gitlab', 'bitbucket', 'slack', 'discord', 'trello', 'asana', 'jira', 'stripe', 'sendgrid', 'aws', 'google', 'microsoft', 'custom').required();
+const provider = Joi.string().min(1).max(100).required();
+const version = Joi.string().max(20).optional();
+const category = Joi.string().valid('version-control', 'communication', 'project-management', 'payment', 'email', 'cloud-storage', 'analytics', 'custom').required();
 
 // Authentication validation
 const authenticationSchema = Joi.object({
@@ -86,7 +84,10 @@ const configurationSchema = Joi.object({
 // Validation schemas for different operations
 const createIntegrationSchema = Joi.object({
   ...baseFields,
-  ...integrationTypeSchema,
+  type,
+  provider,
+  version,
+  category,
   authentication: authenticationSchema.required(),
   configuration: configurationSchema.optional(),
   metadata: Joi.object().optional()
@@ -105,8 +106,8 @@ const getIntegrationsSchema = Joi.object({
   page: Joi.number().integer().min(1).default(1),
   limit: Joi.number().integer().min(1).max(100).default(10),
   search: Joi.string().max(255).optional(),
-  type: Joi.string().valid('github', 'gitlab', 'bitbucket', 'slack', 'discord', 'trello', 'asana', 'jira', 'stripe', 'sendgrid', 'aws', 'google', 'microsoft', 'custom').optional(),
-  category: Joi.string().valid('version-control', 'communication', 'project-management', 'payment', 'email', 'cloud-storage', 'analytics', 'custom').optional(),
+  type: type.optional(),
+  category: category.optional(),
   isActive: Joi.boolean().optional(),
   sortBy: Joi.string().valid('name', 'type', 'provider', 'createdAt', 'updatedAt').default('createdAt'),
   sortOrder: Joi.string().valid('asc', 'desc').default('desc')

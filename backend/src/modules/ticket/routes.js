@@ -1,23 +1,19 @@
-const ticketHandler = require('./handler');
-const ticketValidator = require('./validator');
-const { tenantIsolation, roleBasedAccess, permissionBasedAccess } = require('../../middleware');
-
-const routes = [
+const routes = (handler, auth) => [
   // === TICKET CRUD ROUTES ===
 
   // Get all tickets
   {
     method: 'GET',
     path: '/tickets',
-    handler: ticketHandler.getTickets,
+    handler: handler.getTickets,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        query: ticketValidator.getTickets
+        query: auth.getTickets
       },
       tags: ['tickets']
     }
@@ -27,15 +23,15 @@ const routes = [
   {
     method: 'GET',
     path: '/tickets/{id}',
-    handler: ticketHandler.getTicketById,
+    handler: handler.getTicketById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        params: ticketValidator.getTicketById
+        params: auth.getTicketById
       },
       tags: ['tickets']
     }
@@ -45,16 +41,16 @@ const routes = [
   {
     method: 'POST',
     path: '/tickets',
-    handler: ticketHandler.createTicket,
+    handler: handler.createTicket,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) },
-        { method: permissionBasedAccess(['ticket:create']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) },
+        //{ method: permissionBasedAccess(['ticket:create']) }
       ],
       validate: {
-        payload: ticketValidator.createTicket
+        payload: auth.createTicket
       },
       tags: ['tickets']
     }
@@ -64,17 +60,17 @@ const routes = [
   {
     method: 'PUT',
     path: '/tickets/{id}',
-    handler: ticketHandler.updateTicket,
+    handler: handler.updateTicket,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['ticket:update']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['ticket:update']) }
       ],
       validate: {
-        params: ticketValidator.getTicketById,
-        payload: ticketValidator.updateTicket
+        params: auth.getTicketById,
+        payload: auth.updateTicket
       },
       tags: ['tickets']
     }
@@ -84,16 +80,16 @@ const routes = [
   {
     method: 'DELETE',
     path: '/tickets/{id}',
-    handler: ticketHandler.deleteTicket,
+    handler: handler.deleteTicket,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['ticket:delete']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['ticket:delete']) }
       ],
       validate: {
-        params: ticketValidator.deleteTicket
+        params: auth.deleteTicket
       },
       tags: ['tickets']
     }
@@ -103,15 +99,15 @@ const routes = [
   {
     method: 'GET',
     path: '/tickets/search',
-    handler: ticketHandler.searchTickets,
+    handler: handler.searchTickets,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        query: ticketValidator.searchTickets
+        query: auth.searchTickets
       },
       tags: ['tickets']
     }
@@ -121,17 +117,17 @@ const routes = [
   {
     method: 'PATCH',
     path: '/tickets/{id}/status',
-    handler: ticketHandler.updateTicketStatus,
+    handler: handler.updateTicketStatus,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['ticket:update_status']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['ticket:update_status']) }
       ],
       validate: {
-        params: ticketValidator.getTicketById,
-        payload: ticketValidator.updateTicketStatus
+        params: auth.getTicketById,
+        payload: auth.updateTicketStatus
       },
       tags: ['tickets']
     }
@@ -141,17 +137,17 @@ const routes = [
   {
     method: 'PATCH',
     path: '/tickets/{id}/assign',
-    handler: ticketHandler.assignTicket,
+    handler: handler.assignTicket,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['ticket:assign']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['ticket:assign']) }
       ],
       validate: {
-        params: ticketValidator.getTicketById,
-        payload: ticketValidator.assignTicket
+        params: auth.getTicketById,
+        payload: auth.assignTicket
       },
       tags: ['tickets']
     }
@@ -161,16 +157,16 @@ const routes = [
   {
     method: 'POST',
     path: '/tickets/comments',
-    handler: ticketHandler.addTicketComment,
+    handler: handler.addTicketComment,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) },
-        { method: permissionBasedAccess(['ticket:comment']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) },
+        //{ method: permissionBasedAccess(['ticket:comment']) }
       ],
       validate: {
-        payload: ticketValidator.createTicketMessage
+        payload: auth.createTicketMessage
       },
       tags: ['ticket-comments']
     }
@@ -180,15 +176,15 @@ const routes = [
   {
     method: 'GET',
     path: '/tickets/comments',
-    handler: ticketHandler.getTicketComments,
+    handler: handler.getTicketComments,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        query: ticketValidator.getTicketMessages
+        query: auth.getTicketMessages
       },
       tags: ['ticket-comments']
     }
@@ -198,12 +194,12 @@ const routes = [
   {
     method: 'GET',
     path: '/tickets/statistics',
-    handler: ticketHandler.getTicketStatistics,
+    handler: handler.getTicketStatistics,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       tags: ['tickets']
     }
@@ -215,15 +211,15 @@ const routes = [
   {
     method: 'GET',
     path: '/tickets/messages',
-    handler: ticketHandler.getTicketMessages,
+    handler: handler.getTicketMessages,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        query: ticketValidator.getTicketMessages
+        query: auth.getTicketMessages
       },
       tags: ['ticket-messages']
     }
@@ -233,15 +229,15 @@ const routes = [
   {
     method: 'GET',
     path: '/tickets/messages/{id}',
-    handler: ticketHandler.getTicketMessageById,
+    handler: handler.getTicketMessageById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        params: ticketValidator.getTicketMessageById
+        params: auth.getTicketMessageById
       },
       tags: ['ticket-messages']
     }
@@ -251,16 +247,16 @@ const routes = [
   {
     method: 'POST',
     path: '/tickets/messages',
-    handler: ticketHandler.createTicketMessage,
+    handler: handler.createTicketMessage,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) },
-        { method: permissionBasedAccess(['ticket:create_message']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) },
+        //{ method: permissionBasedAccess(['ticket:create_message']) }
       ],
       validate: {
-        payload: ticketValidator.createTicketMessage
+        payload: auth.createTicketMessage
       },
       tags: ['ticket-messages']
     }
@@ -270,17 +266,17 @@ const routes = [
   {
     method: 'PUT',
     path: '/tickets/messages/{id}',
-    handler: ticketHandler.updateTicketMessage,
+    handler: handler.updateTicketMessage,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['ticket:update_message']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['ticket:update_message']) }
       ],
       validate: {
-        params: ticketValidator.getTicketMessageById,
-        payload: ticketValidator.updateTicketMessage
+        params: auth.getTicketMessageById,
+        payload: auth.updateTicketMessage
       },
       tags: ['ticket-messages']
     }
@@ -290,16 +286,16 @@ const routes = [
   {
     method: 'DELETE',
     path: '/tickets/messages/{id}',
-    handler: ticketHandler.deleteTicketMessage,
+    handler: handler.deleteTicketMessage,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['ticket:delete_message']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['ticket:delete_message']) }
       ],
       validate: {
-        params: ticketValidator.deleteTicketMessage
+        params: auth.deleteTicketMessage
       },
       tags: ['ticket-messages']
     }
@@ -309,16 +305,16 @@ const routes = [
   {
     method: 'POST',
     path: '/tickets/messages/reply',
-    handler: ticketHandler.replyToTicketMessage,
+    handler: handler.replyToTicketMessage,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) },
-        { method: permissionBasedAccess(['ticket:create_message']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) },
+        //{ method: permissionBasedAccess(['ticket:create_message']) }
       ],
       validate: {
-        payload: ticketValidator.replyToTicketMessage
+        payload: auth.replyToTicketMessage
       },
       tags: ['ticket-messages']
     }
@@ -328,15 +324,15 @@ const routes = [
   {
     method: 'POST',
     path: '/tickets/messages/read',
-    handler: ticketHandler.markTicketMessageAsRead,
+    handler: handler.markTicketMessageAsRead,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        payload: ticketValidator.markTicketMessageAsRead
+        payload: auth.markTicketMessageAsRead
       },
       tags: ['ticket-messages']
     }
@@ -346,15 +342,15 @@ const routes = [
   {
     method: 'GET',
     path: '/tickets/messages/thread',
-    handler: ticketHandler.getTicketMessageThread,
+    handler: handler.getTicketMessageThread,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        query: ticketValidator.getTicketMessageThread
+        query: auth.getTicketMessageThread
       },
       tags: ['ticket-messages']
     }
@@ -364,16 +360,16 @@ const routes = [
   {
     method: 'POST',
     path: '/tickets/messages/bulk',
-    handler: ticketHandler.bulkCreateTicketMessages,
+    handler: handler.bulkCreateTicketMessages,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['ticket:create_message']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['ticket:create_message']) }
       ],
       validate: {
-        payload: ticketValidator.bulkCreateTicketMessages
+        payload: auth.bulkCreateTicketMessages
       },
       tags: ['ticket-messages']
     }
@@ -383,16 +379,16 @@ const routes = [
   {
     method: 'POST',
     path: '/tickets/messages/import',
-    handler: ticketHandler.importTicketMessages,
+    handler: handler.importTicketMessages,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['ticket:import_messages']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['ticket:import_messages']) }
       ],
       validate: {
-        payload: ticketValidator.importTicketMessages
+        payload: auth.importTicketMessages
       },
       tags: ['ticket-messages']
     }
@@ -402,16 +398,16 @@ const routes = [
   {
     method: 'GET',
     path: '/tickets/messages/export',
-    handler: ticketHandler.exportTicketMessages,
+    handler: handler.exportTicketMessages,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) },
-        { method: permissionBasedAccess(['ticket:export_messages']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) },
+        //{ method: permissionBasedAccess(['ticket:export_messages']) }
       ],
       validate: {
-        query: ticketValidator.exportTicketMessages
+        query: auth.exportTicketMessages
       },
       tags: ['ticket-messages']
     }

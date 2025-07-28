@@ -8,12 +8,50 @@ const csv = require('csv-parser');
 const xlsx = require('xlsx');
 
 class UserHandler {
-  constructor() {
-    this.userRepository = null;
-  }
+  constructor(service, validator) {
+    this._service = service;
+    this._validator = validator;
 
-  setUserRepository(userRepository) {
-    this.userRepository = userRepository;
+    // Bind all methods to preserve 'this' context
+    this.createUser = this.createUser.bind(this);
+    this.getUsers = this.getUsers.bind(this);
+    this.getUserById = this.getUserById.bind(this);
+    this.updateUser = this.updateUser.bind(this);
+    this.deleteUser = this.deleteUser.bind(this);
+    this.createRole = this.createRole.bind(this);
+    this.getRoles = this.getRoles.bind(this);
+    this.getRoleById = this.getRoleById.bind(this);
+    this.updateRole = this.updateRole.bind(this);
+    this.deleteRole = this.deleteRole.bind(this);
+    this.assignRoleToUser = this.assignRoleToUser.bind(this);
+    this.removeRoleFromUser = this.removeRoleFromUser.bind(this);
+    this.getUserRoles = this.getUserRoles.bind(this);
+    this.createPermission = this.createPermission.bind(this);
+    this.getPermissions = this.getPermissions.bind(this);
+    this.getPermissionById = this.getPermissionById.bind(this);
+    this.updatePermission = this.updatePermission.bind(this);
+    this.deletePermission = this.deletePermission.bind(this);
+    this.getUserActivityLogs = this.getUserActivityLogs.bind(this);
+    this.getActivityLogById = this.getActivityLogById.bind(this);
+    this.initiatePasswordReset = this.initiatePasswordReset.bind(this);
+    this.resetPassword = this.resetPassword.bind(this);
+    this.changePassword = this.changePassword.bind(this);
+    this.verifyPasswordResetToken = this.verifyPasswordResetToken.bind(this);
+    this.updateProfile = this.updateProfile.bind(this);
+    this.uploadAvatar = this.uploadAvatar.bind(this);
+    this.getUserSessions = this.getUserSessions.bind(this);
+    this.revokeSession = this.revokeSession.bind(this);
+    this.revokeAllSessions = this.revokeAllSessions.bind(this);
+    this.getUserStatistics = this.getUserStatistics.bind(this);
+    this.bulkUpdateUsers = this.bulkUpdateUsers.bind(this);
+    this.bulkDeleteUsers = this.bulkDeleteUsers.bind(this);
+    this.importUsers = this.importUsers.bind(this);
+    this.exportUsers = this.exportUsers.bind(this);
+    this.getUserNotifications = this.getUserNotifications.bind(this);
+    this.markNotificationAsRead = this.markNotificationAsRead.bind(this);
+    this.markAllNotificationsAsRead = this.markAllNotificationsAsRead.bind(this);
+    this.getUserPreferences = this.getUserPreferences.bind(this);
+    this.updateUserPreferences = this.updateUserPreferences.bind(this);
   }
 
   // === USER CRUD OPERATIONS ===
@@ -27,10 +65,10 @@ class UserHandler {
       // Hash password
       userData.password = await bcrypt.hash(userData.password, 10);
 
-      const user = await this.userRepository.createUser(userData);
+      const user = await this._service.createUser(userData);
 
       // Log activity
-      await this.userRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: organizationId,
         user_id: userId,
         action: 'create',
@@ -59,8 +97,8 @@ class UserHandler {
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sort_by, sort_order };
 
       const [users, total] = await Promise.all([
-        this.userRepository.getUsers(organizationId, filters, pagination),
-        this.userRepository.countUsers(organizationId, filters)
+        this._service.getUsers(organizationId, filters, pagination),
+        this._service.countUsers(organizationId, filters)
       ]);
 
       return h.response({
@@ -86,7 +124,7 @@ class UserHandler {
       const organizationId = request.auth.credentials.organizationId;
       const { id } = request.params;
 
-      const user = await this.userRepository.getUserById(id, organizationId);
+      const user = await this._service.getUserById(id, organizationId);
       if (!user) {
         throw Boom.notFound('User not found');
       }
@@ -108,13 +146,13 @@ class UserHandler {
       const { id } = request.params;
       const updateData = request.payload;
 
-      const user = await this.userRepository.updateUser(id, organizationId, updateData);
+      const user = await this._service.updateUser(id, organizationId, updateData);
       if (!user) {
         throw Boom.notFound('User not found');
       }
 
       // Log activity
-      await this.userRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: organizationId,
         user_id: userId,
         action: 'update',
@@ -140,13 +178,13 @@ class UserHandler {
       const userId = request.auth.credentials.userId;
       const { id } = request.params;
 
-      const user = await this.userRepository.deleteUser(id, organizationId);
+      const user = await this._service.deleteUser(id, organizationId);
       if (!user) {
         throw Boom.notFound('User not found');
       }
 
       // Log activity
-      await this.userRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: organizationId,
         user_id: userId,
         action: 'delete',
@@ -173,10 +211,10 @@ class UserHandler {
       const userId = request.auth.credentials.userId;
       const roleData = { ...request.payload, organization_id: organizationId, created_by: userId };
 
-      const role = await this.userRepository.createRole(roleData);
+      const role = await this._service.createRole(roleData);
 
       // Log activity
-      await this.userRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: organizationId,
         user_id: userId,
         action: 'create',
@@ -205,8 +243,8 @@ class UserHandler {
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sort_by, sort_order };
 
       const [roles, total] = await Promise.all([
-        this.userRepository.getRoles(organizationId, filters, pagination),
-        this.userRepository.countRoles(organizationId, filters)
+        this._service.getRoles(organizationId, filters, pagination),
+        this._service.countRoles(organizationId, filters)
       ]);
 
       return h.response({
@@ -232,7 +270,7 @@ class UserHandler {
       const organizationId = request.auth.credentials.organizationId;
       const { id } = request.params;
 
-      const role = await this.userRepository.getRoleById(id, organizationId);
+      const role = await this._service.getRoleById(id, organizationId);
       if (!role) {
         throw Boom.notFound('Role not found');
       }
@@ -254,13 +292,13 @@ class UserHandler {
       const { id } = request.params;
       const updateData = request.payload;
 
-      const role = await this.userRepository.updateRole(id, organizationId, updateData);
+      const role = await this._service.updateRole(id, organizationId, updateData);
       if (!role) {
         throw Boom.notFound('Role not found');
       }
 
       // Log activity
-      await this.userRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: organizationId,
         user_id: userId,
         action: 'update',
@@ -286,13 +324,13 @@ class UserHandler {
       const userId = request.auth.credentials.userId;
       const { id } = request.params;
 
-      const role = await this.userRepository.deleteRole(id, organizationId);
+      const role = await this._service.deleteRole(id, organizationId);
       if (!role) {
         throw Boom.notFound('Role not found');
       }
 
       // Log activity
-      await this.userRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: organizationId,
         user_id: userId,
         action: 'delete',
@@ -317,10 +355,10 @@ class UserHandler {
       const userId = request.auth.credentials.userId;
       const { user_id, role_id } = request.payload;
 
-      const userRole = await this.userRepository.assignRoleToUser(user_id, role_id, organizationId);
+      const userRole = await this._service.assignRoleToUser(user_id, role_id, organizationId);
 
       // Log activity
-      await this.userRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: organizationId,
         user_id: userId,
         action: 'assign_role',
@@ -346,13 +384,13 @@ class UserHandler {
       const userId = request.auth.credentials.userId;
       const { user_id, role_id } = request.payload;
 
-      const userRole = await this.userRepository.removeRoleFromUser(user_id, role_id, organizationId);
+      const userRole = await this._service.removeRoleFromUser(user_id, role_id, organizationId);
       if (!userRole) {
         throw Boom.notFound('User role not found');
       }
 
       // Log activity
-      await this.userRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: organizationId,
         user_id: userId,
         action: 'remove_role',
@@ -376,7 +414,7 @@ class UserHandler {
       const organizationId = request.auth.credentials.organizationId;
       const { user_id } = request.params;
 
-      const roles = await this.userRepository.getUserRoles(user_id, organizationId);
+      const roles = await this._service.getUserRoles(user_id, organizationId);
 
       return h.response({
         success: true,
@@ -396,10 +434,10 @@ class UserHandler {
       const userId = request.auth.credentials.userId;
       const permissionData = { ...request.payload, organization_id: organizationId, created_by: userId };
 
-      const permission = await this.userRepository.createPermission(permissionData);
+      const permission = await this._service.createPermission(permissionData);
 
       // Log activity
-      await this.userRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: organizationId,
         user_id: userId,
         action: 'create',
@@ -428,8 +466,8 @@ class UserHandler {
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sort_by, sort_order };
 
       const [permissions, total] = await Promise.all([
-        this.userRepository.getPermissions(organizationId, filters, pagination),
-        this.userRepository.countPermissions(organizationId, filters)
+        this._service.getPermissions(organizationId, filters, pagination),
+        this._service.countPermissions(organizationId, filters)
       ]);
 
       return h.response({
@@ -455,7 +493,7 @@ class UserHandler {
       const organizationId = request.auth.credentials.organizationId;
       const { id } = request.params;
 
-      const permission = await this.userRepository.getPermissionById(id, organizationId);
+      const permission = await this._service.getPermissionById(id, organizationId);
       if (!permission) {
         throw Boom.notFound('Permission not found');
       }
@@ -477,13 +515,13 @@ class UserHandler {
       const { id } = request.params;
       const updateData = request.payload;
 
-      const permission = await this.userRepository.updatePermission(id, organizationId, updateData);
+      const permission = await this._service.updatePermission(id, organizationId, updateData);
       if (!permission) {
         throw Boom.notFound('Permission not found');
       }
 
       // Log activity
-      await this.userRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: organizationId,
         user_id: userId,
         action: 'update',
@@ -509,13 +547,13 @@ class UserHandler {
       const userId = request.auth.credentials.userId;
       const { id } = request.params;
 
-      const permission = await this.userRepository.deletePermission(id, organizationId);
+      const permission = await this._service.deletePermission(id, organizationId);
       if (!permission) {
         throw Boom.notFound('Permission not found');
       }
 
       // Log activity
-      await this.userRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: organizationId,
         user_id: userId,
         action: 'delete',
@@ -545,8 +583,8 @@ class UserHandler {
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sort_by, sort_order };
 
       const [logs, total] = await Promise.all([
-        this.userRepository.getUserActivityLogs(organizationId, filters, pagination),
-        this.userRepository.countUserActivityLogs(organizationId, filters)
+        this._service.getUserActivityLogs(organizationId, filters, pagination),
+        this._service.countUserActivityLogs(organizationId, filters)
       ]);
 
       return h.response({
@@ -572,7 +610,7 @@ class UserHandler {
       const organizationId = request.auth.credentials.organizationId;
       const { id } = request.params;
 
-      const log = await this.userRepository.getActivityLogById(id, organizationId);
+      const log = await this._service.getActivityLogById(id, organizationId);
       if (!log) {
         throw Boom.notFound('Activity log not found');
       }
@@ -594,7 +632,7 @@ class UserHandler {
       const { email } = request.payload;
       const organizationId = request.auth.credentials.organizationId;
 
-      const user = await this.userRepository.getUserByEmail(email, organizationId);
+      const user = await this._service.getUserByEmail(email, organizationId);
       if (!user) {
         // Don't reveal if user exists or not for security
         return h.response({
@@ -607,7 +645,7 @@ class UserHandler {
       const resetToken = crypto.randomBytes(32).toString('hex');
       const resetTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-      await this.userRepository.updateUser(user.id, organizationId, {
+      await this._service.updateUser(user.id, organizationId, {
         reset_token: resetToken,
         reset_token_expiry: resetTokenExpiry
       });
@@ -616,7 +654,7 @@ class UserHandler {
       // await this.emailService.sendPasswordResetEmail(user.email, resetToken);
 
       // Log activity
-      await this.userRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: organizationId,
         user_id: user.id,
         action: 'password_reset_initiated',
@@ -639,7 +677,7 @@ class UserHandler {
     try {
       const { token, new_password } = request.payload;
 
-      const user = await this.userRepository.getUserByResetToken(token);
+      const user = await this._service.getUserByResetToken(token);
       if (!user) {
         throw Boom.badRequest('Invalid or expired reset token');
       }
@@ -651,14 +689,14 @@ class UserHandler {
       // Hash new password
       const hashedPassword = await bcrypt.hash(new_password, 10);
 
-      await this.userRepository.updateUser(user.id, user.organization_id, {
+      await this._service.updateUser(user.id, user.organization_id, {
         password: hashedPassword,
         reset_token: null,
         reset_token_expiry: null
       });
 
       // Log activity
-      await this.userRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: user.organization_id,
         user_id: user.id,
         action: 'password_reset_completed',
@@ -683,7 +721,7 @@ class UserHandler {
       const userId = request.auth.credentials.userId;
       const { current_password, new_password } = request.payload;
 
-      const user = await this.userRepository.getUserById(userId, organizationId);
+      const user = await this._service.getUserById(userId, organizationId);
       if (!user) {
         throw Boom.notFound('User not found');
       }
@@ -697,12 +735,12 @@ class UserHandler {
       // Hash new password
       const hashedPassword = await bcrypt.hash(new_password, 10);
 
-      await this.userRepository.updateUser(userId, organizationId, {
+      await this._service.updateUser(userId, organizationId, {
         password: hashedPassword
       });
 
       // Log activity
-      await this.userRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: organizationId,
         user_id: userId,
         action: 'password_changed',
@@ -725,7 +763,7 @@ class UserHandler {
     try {
       const { token } = request.payload;
 
-      const user = await this.userRepository.getUserByResetToken(token);
+      const user = await this._service.getUserByResetToken(token);
       if (!user) {
         throw Boom.badRequest('Invalid reset token');
       }
@@ -753,13 +791,13 @@ class UserHandler {
       const userId = request.auth.credentials.userId;
       const updateData = request.payload;
 
-      const user = await this.userRepository.updateUser(userId, organizationId, updateData);
+      const user = await this._service.updateUser(userId, organizationId, updateData);
       if (!user) {
         throw Boom.notFound('User not found');
       }
 
       // Log activity
-      await this.userRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: organizationId,
         user_id: userId,
         action: 'profile_updated',
@@ -796,7 +834,7 @@ class UserHandler {
 
       // Update user avatar
       const avatarUrl = `/uploads/avatars/${fileName}`;
-      await this.userRepository.updateUser(userId, organizationId, { avatar: avatarUrl });
+      await this._service.updateUser(userId, organizationId, { avatar: avatarUrl });
 
       return h.response({
         success: true,
@@ -820,8 +858,8 @@ class UserHandler {
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sort_by, sort_order };
 
       const [sessions, total] = await Promise.all([
-        this.userRepository.getUserSessions(organizationId, filters, pagination),
-        this.userRepository.countUserSessions(organizationId, filters)
+        this._service.getUserSessions(organizationId, filters, pagination),
+        this._service.countUserSessions(organizationId, filters)
       ]);
 
       return h.response({
@@ -848,13 +886,13 @@ class UserHandler {
       const userId = request.auth.credentials.userId;
       const { session_id } = request.params;
 
-      const session = await this.userRepository.revokeSession(session_id, organizationId);
+      const session = await this._service.revokeSession(session_id, organizationId);
       if (!session) {
         throw Boom.notFound('Session not found');
       }
 
       // Log activity
-      await this.userRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: organizationId,
         user_id: userId,
         action: 'session_revoked',
@@ -879,10 +917,10 @@ class UserHandler {
       const userId = request.auth.credentials.userId;
       const { user_id } = request.params;
 
-      const sessions = await this.userRepository.revokeAllSessions(user_id, organizationId);
+      const sessions = await this._service.revokeAllSessions(user_id, organizationId);
 
       // Log activity
-      await this.userRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: organizationId,
         user_id: userId,
         action: 'all_sessions_revoked',
@@ -908,7 +946,7 @@ class UserHandler {
       const organizationId = request.auth.credentials.organizationId;
       const { user_id, start_date, end_date, group_by } = request.query;
 
-      const stats = await this.userRepository.getUserStatistics(organizationId, {
+      const stats = await this._service.getUserStatistics(organizationId, {
         user_id,
         start_date,
         end_date,
@@ -933,10 +971,10 @@ class UserHandler {
       const userId = request.auth.credentials.userId;
       const { user_ids, updates } = request.payload;
 
-      const results = await this.userRepository.bulkUpdateUsers(user_ids, organizationId, updates);
+      const results = await this._service.bulkUpdateUsers(user_ids, organizationId, updates);
 
       // Log activity
-      await this.userRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: organizationId,
         user_id: userId,
         action: 'bulk_update',
@@ -965,10 +1003,10 @@ class UserHandler {
       const userId = request.auth.credentials.userId;
       const { user_ids, force } = request.payload;
 
-      const results = await this.userRepository.bulkDeleteUsers(user_ids, organizationId, force);
+      const results = await this._service.bulkDeleteUsers(user_ids, organizationId, force);
 
       // Log activity
-      await this.userRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: organizationId,
         user_id: userId,
         action: 'bulk_delete',
@@ -1002,7 +1040,7 @@ class UserHandler {
       const results = await this.processUserImport(file, organizationId, options);
 
       // Log activity
-      await this.userRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: organizationId,
         user_id: userId,
         action: 'import_users',
@@ -1031,7 +1069,7 @@ class UserHandler {
       const organizationId = request.auth.credentials.organizationId;
       const { format, filters } = request.query;
 
-      const users = await this.userRepository.getUsersForExport(organizationId, filters);
+      const users = await this._service.getUsersForExport(organizationId, filters);
       const exportData = await this.formatUserExport(users, format);
 
       return h.response(exportData.content)
@@ -1055,8 +1093,8 @@ class UserHandler {
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sort_by, sort_order };
 
       const [notifications, total] = await Promise.all([
-        this.userRepository.getUserNotifications(userId, organizationId, filters, pagination),
-        this.userRepository.countUserNotifications(userId, organizationId, filters)
+        this._service.getUserNotifications(userId, organizationId, filters, pagination),
+        this._service.countUserNotifications(userId, organizationId, filters)
       ]);
 
       return h.response({
@@ -1083,7 +1121,7 @@ class UserHandler {
       const userId = request.auth.credentials.userId;
       const { notification_id } = request.params;
 
-      const notification = await this.userRepository.markNotificationAsRead(notification_id, userId, organizationId);
+      const notification = await this._service.markNotificationAsRead(notification_id, userId, organizationId);
       if (!notification) {
         throw Boom.notFound('Notification not found');
       }
@@ -1103,7 +1141,7 @@ class UserHandler {
       const organizationId = request.auth.credentials.organizationId;
       const userId = request.auth.credentials.userId;
 
-      const count = await this.userRepository.markAllNotificationsAsRead(userId, organizationId);
+      const count = await this._service.markAllNotificationsAsRead(userId, organizationId);
 
       return h.response({
         success: true,
@@ -1122,7 +1160,7 @@ class UserHandler {
       const organizationId = request.auth.credentials.organizationId;
       const userId = request.auth.credentials.userId;
 
-      const preferences = await this.userRepository.getUserPreferences(userId, organizationId);
+      const preferences = await this._service.getUserPreferences(userId, organizationId);
 
       return h.response({
         success: true,
@@ -1140,7 +1178,7 @@ class UserHandler {
       const userId = request.auth.credentials.userId;
       const updateData = request.payload;
 
-      const preferences = await this.userRepository.updateUserPreferences(userId, organizationId, updateData);
+      const preferences = await this._service.updateUserPreferences(userId, organizationId, updateData);
 
       return h.response({
         success: true,
@@ -1180,7 +1218,7 @@ class UserHandler {
           }
 
           // Check if user exists
-          const existingUser = await this.userRepository.getUserByEmail(userData.email, organizationId);
+          const existingUser = await this._service.getUserByEmail(userData.email, organizationId);
 
           if (existingUser && !options.update_existing) {
             results.errors.push({ row: userData.row, error: 'User already exists' });
@@ -1201,9 +1239,9 @@ class UserHandler {
           };
 
           if (existingUser && options.update_existing) {
-            await this.userRepository.updateUser(existingUser.id, organizationId, userToCreate);
+            await this._service.updateUser(existingUser.id, organizationId, userToCreate);
           } else {
-            await this.userRepository.createUser(userToCreate);
+            await this._service.createUser(userToCreate);
           }
 
           results.imported++;
@@ -1297,4 +1335,4 @@ class UserHandler {
   }
 }
 
-module.exports = new UserHandler();
+module.exports = UserHandler;

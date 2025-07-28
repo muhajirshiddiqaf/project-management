@@ -1,21 +1,17 @@
-const projectHandler = require('./handler');
-const projectValidator = require('./validator');
-const { tenantIsolation, roleBasedAccess, permissionBasedAccess } = require('../../middleware');
-
-const routes = [
+const routes = (handler, auth) => [
   // === PROJECT CRUD ROUTES ===
   {
     method: 'GET',
     path: '/projects',
-    handler: projectHandler.getProjects,
+    handler: handler.getProjects,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        query: projectValidator.getProjects
+        query: auth.getProjects
       },
       tags: ['projects']
     }
@@ -23,15 +19,15 @@ const routes = [
   {
     method: 'GET',
     path: '/projects/{id}',
-    handler: projectHandler.getProjectById,
+    handler: handler.getProjectById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        params: projectValidator.getProjectById
+        params: auth.getProjectById
       },
       tags: ['projects']
     }
@@ -39,16 +35,16 @@ const routes = [
   {
     method: 'POST',
     path: '/projects',
-    handler: projectHandler.createProject,
+    handler: handler.createProject,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['project:create']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['project:create']) }
       ],
       validate: {
-        payload: projectValidator.createProject
+        payload: auth.createProject
       },
       tags: ['projects']
     }
@@ -56,17 +52,17 @@ const routes = [
   {
     method: 'PUT',
     path: '/projects/{id}',
-    handler: projectHandler.updateProject,
+    handler: handler.updateProject,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['project:update']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['project:update']) }
       ],
       validate: {
-        params: projectValidator.getProjectById,
-        payload: projectValidator.updateProject
+        params: auth.getProjectById,
+        payload: auth.updateProject
       },
       tags: ['projects']
     }
@@ -74,16 +70,16 @@ const routes = [
   {
     method: 'DELETE',
     path: '/projects/{id}',
-    handler: projectHandler.deleteProject,
+    handler: handler.deleteProject,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['project:delete']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['project:delete']) }
       ],
       validate: {
-        params: projectValidator.deleteProject
+        params: auth.deleteProject
       },
       tags: ['projects']
     }
@@ -91,15 +87,15 @@ const routes = [
   {
     method: 'GET',
     path: '/projects/search',
-    handler: projectHandler.searchProjects,
+    handler: handler.searchProjects,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        query: projectValidator.searchProjects
+        query: auth.searchProjects
       },
       tags: ['projects']
     }
@@ -107,17 +103,17 @@ const routes = [
   {
     method: 'PUT',
     path: '/projects/{id}/status',
-    handler: projectHandler.updateProjectStatus,
+    handler: handler.updateProjectStatus,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['project:update_status']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['project:update_status']) }
       ],
       validate: {
-        params: projectValidator.getProjectById,
-        payload: projectValidator.updateProjectStatus
+        params: auth.getProjectById,
+        payload: auth.updateProjectStatus
       },
       tags: ['projects']
     }
@@ -125,17 +121,17 @@ const routes = [
   {
     method: 'PUT',
     path: '/projects/{id}/assign',
-    handler: projectHandler.assignProject,
+    handler: handler.assignProject,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['project:assign']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['project:assign']) }
       ],
       validate: {
-        params: projectValidator.getProjectById,
-        payload: projectValidator.assignProject
+        params: auth.getProjectById,
+        payload: auth.assignProject
       },
       tags: ['projects']
     }
@@ -145,16 +141,16 @@ const routes = [
   {
     method: 'POST',
     path: '/projects/calculate-cost',
-    handler: projectHandler.calculateProjectCost,
+    handler: handler.calculateProjectCost,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['project:calculate_cost']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['project:calculate_cost']) }
       ],
       validate: {
-        payload: projectValidator.calculateProjectCost
+        payload: auth.calculateProjectCost
       },
       tags: ['project-cost']
     }
@@ -162,15 +158,15 @@ const routes = [
   {
     method: 'GET',
     path: '/projects/cost-breakdown',
-    handler: projectHandler.getProjectCostBreakdown,
+    handler: handler.getProjectCostBreakdown,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        query: projectValidator.getProjectCostBreakdown
+        query: auth.getProjectCostBreakdown
       },
       tags: ['project-cost']
     }
@@ -178,17 +174,17 @@ const routes = [
   {
     method: 'PUT',
     path: '/projects/cost-calculations/{calculation_id}',
-    handler: projectHandler.updateProjectCostCalculation,
+    handler: handler.updateProjectCostCalculation,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['project:update_cost']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['project:update_cost']) }
       ],
       validate: {
-        params: projectValidator.updateProjectCostCalculation,
-        payload: projectValidator.updateProjectCostCalculation
+        params: auth.updateProjectCostCalculation,
+        payload: auth.updateProjectCostCalculation
       },
       tags: ['project-cost']
     }
@@ -198,16 +194,16 @@ const routes = [
   {
     method: 'POST',
     path: '/projects/assign-team',
-    handler: projectHandler.assignTeamToProject,
+    handler: handler.assignTeamToProject,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['project:assign_team']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['project:assign_team']) }
       ],
       validate: {
-        payload: projectValidator.assignTeamToProject
+        payload: auth.assignTeamToProject
       },
       tags: ['project-team']
     }
@@ -215,15 +211,15 @@ const routes = [
   {
     method: 'GET',
     path: '/projects/team',
-    handler: projectHandler.getProjectTeam,
+    handler: handler.getProjectTeam,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        query: projectValidator.getProjectTeam
+        query: auth.getProjectTeam
       },
       tags: ['project-team']
     }
@@ -231,16 +227,16 @@ const routes = [
   {
     method: 'PUT',
     path: '/projects/team/update-role',
-    handler: projectHandler.updateTeamMemberRole,
+    handler: handler.updateTeamMemberRole,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['project:update_team_role']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['project:update_team_role']) }
       ],
       validate: {
-        payload: projectValidator.updateTeamMemberRole
+        payload: auth.updateTeamMemberRole
       },
       tags: ['project-team']
     }
@@ -248,16 +244,16 @@ const routes = [
   {
     method: 'DELETE',
     path: '/projects/team/remove-member',
-    handler: projectHandler.removeTeamMember,
+    handler: handler.removeTeamMember,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['project:remove_team_member']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['project:remove_team_member']) }
       ],
       validate: {
-        payload: projectValidator.removeTeamMember
+        payload: auth.removeTeamMember
       },
       tags: ['project-team']
     }
@@ -267,16 +263,16 @@ const routes = [
   {
     method: 'POST',
     path: '/milestones',
-    handler: projectHandler.createMilestone,
+    handler: handler.createMilestone,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['milestone:create']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['milestone:create']) }
       ],
       validate: {
-        payload: projectValidator.createMilestone
+        payload: auth.createMilestone
       },
       tags: ['milestones']
     }
@@ -284,15 +280,15 @@ const routes = [
   {
     method: 'GET',
     path: '/milestones',
-    handler: projectHandler.getProjectMilestones,
+    handler: handler.getProjectMilestones,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        query: projectValidator.getProjectMilestones
+        query: auth.getProjectMilestones
       },
       tags: ['milestones']
     }
@@ -300,15 +296,15 @@ const routes = [
   {
     method: 'GET',
     path: '/milestones/{id}',
-    handler: projectHandler.getMilestoneById,
+    handler: handler.getMilestoneById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        params: projectValidator.getMilestoneById
+        params: auth.getMilestoneById
       },
       tags: ['milestones']
     }
@@ -316,17 +312,17 @@ const routes = [
   {
     method: 'PUT',
     path: '/milestones/{id}',
-    handler: projectHandler.updateMilestone,
+    handler: handler.updateMilestone,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['milestone:update']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['milestone:update']) }
       ],
       validate: {
-        params: projectValidator.getMilestoneById,
-        payload: projectValidator.updateMilestone
+        params: auth.getMilestoneById,
+        payload: auth.updateMilestone
       },
       tags: ['milestones']
     }
@@ -334,16 +330,16 @@ const routes = [
   {
     method: 'DELETE',
     path: '/milestones/{id}',
-    handler: projectHandler.deleteMilestone,
+    handler: handler.deleteMilestone,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['milestone:delete']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['milestone:delete']) }
       ],
       validate: {
-        params: projectValidator.deleteMilestone
+        params: auth.deleteMilestone
       },
       tags: ['milestones']
     }
@@ -351,17 +347,17 @@ const routes = [
   {
     method: 'PUT',
     path: '/milestones/{id}/status',
-    handler: projectHandler.updateMilestoneStatus,
+    handler: handler.updateMilestoneStatus,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['milestone:update_status']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['milestone:update_status']) }
       ],
       validate: {
-        params: projectValidator.getMilestoneById,
-        payload: projectValidator.updateMilestoneStatus
+        params: auth.getMilestoneById,
+        payload: auth.updateMilestoneStatus
       },
       tags: ['milestones']
     }
@@ -371,15 +367,15 @@ const routes = [
   {
     method: 'GET',
     path: '/projects/statistics',
-    handler: projectHandler.getProjectStatistics,
+    handler: handler.getProjectStatistics,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: projectValidator.getProjectStatistics
+        query: auth.getProjectStatistics
       },
       tags: ['project-statistics']
     }
@@ -387,15 +383,15 @@ const routes = [
   {
     method: 'GET',
     path: '/projects/cost-statistics',
-    handler: projectHandler.getProjectCostStatistics,
+    handler: handler.getProjectCostStatistics,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: projectValidator.getProjectCostStatistics
+        query: auth.getProjectCostStatistics
       },
       tags: ['project-statistics']
     }

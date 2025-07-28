@@ -6,12 +6,51 @@ const yaml = require('js-yaml');
 const xlsx = require('xlsx');
 
 class MigrationHandler {
-  constructor() {
-    this.migrationRepository = null;
-  }
+  constructor(service, validator) {
+    this._service = service;
+    this._validator = validator;
 
-  setMigrationRepository(migrationRepository) {
-    this.migrationRepository = migrationRepository;
+    // Bind all methods to preserve 'this' context
+    this.createMigration = this.createMigration.bind(this);
+    this.getMigrations = this.getMigrations.bind(this);
+    this.getMigrationById = this.getMigrationById.bind(this);
+    this.updateMigration = this.updateMigration.bind(this);
+    this.deleteMigration = this.deleteMigration.bind(this);
+    this.runMigration = this.runMigration.bind(this);
+    this.runMigrations = this.runMigrations.bind(this);
+    this.rollbackMigration = this.rollbackMigration.bind(this);
+    this.rollbackMigrations = this.rollbackMigrations.bind(this);
+    this.getMigrationStatus = this.getMigrationStatus.bind(this);
+    this.getMigrationHistory = this.getMigrationHistory.bind(this);
+    this.createSeed = this.createSeed.bind(this);
+    this.getSeeds = this.getSeeds.bind(this);
+    this.getSeedById = this.getSeedById.bind(this);
+    this.updateSeed = this.updateSeed.bind(this);
+    this.deleteSeed = this.deleteSeed.bind(this);
+    this.runSeed = this.runSeed.bind(this);
+    this.runSeeds = this.runSeeds.bind(this);
+    this.getMigrationVersions = this.getMigrationVersions.bind(this);
+    this.createVersion = this.createVersion.bind(this);
+    this.getVersionById = this.getVersionById.bind(this);
+    this.updateVersion = this.updateVersion.bind(this);
+    this.deleteVersion = this.deleteVersion.bind(this);
+    this.getDependencies = this.getDependencies.bind(this);
+    this.addDependency = this.addDependency.bind(this);
+    this.removeDependency = this.removeDependency.bind(this);
+    this.validateMigration = this.validateMigration.bind(this);
+    this.validateSeed = this.validateSeed.bind(this);
+    this.testMigration = this.testMigration.bind(this);
+    this.testSeed = this.testSeed.bind(this);
+    this.exportMigration = this.exportMigration.bind(this);
+    this.exportSeed = this.exportSeed.bind(this);
+    this.importMigration = this.importMigration.bind(this);
+    this.importSeed = this.importSeed.bind(this);
+    this.bulkCreateMigrations = this.bulkCreateMigrations.bind(this);
+    this.bulkCreateSeeds = this.bulkCreateSeeds.bind(this);
+    this.getMigrationStatistics = this.getMigrationStatistics.bind(this);
+    this.getSeedStatistics = this.getSeedStatistics.bind(this);
+    this.generateMigrationReport = this.generateMigrationReport.bind(this);
+    this.generateSeedReport = this.generateSeedReport.bind(this);
   }
 
   // === MIGRATION MANAGEMENT ===
@@ -21,13 +60,13 @@ class MigrationHandler {
       const userId = request.auth.credentials.userId;
       const migrationData = request.payload;
 
-      const migration = await this.migrationRepository.createMigration({
+      const migration = await this._service.createMigration({
         ...migrationData,
         created_by: userId
       });
 
       // Log activity
-      await this.migrationRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'create',
         resource: 'migration',
@@ -56,8 +95,8 @@ class MigrationHandler {
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sort_by, sort_order };
 
       const [migrations, total] = await Promise.all([
-        this.migrationRepository.getMigrations(filters, pagination),
-        this.migrationRepository.countMigrations(filters)
+        this._service.getMigrations(filters, pagination),
+        this._service.countMigrations(filters)
       ]);
 
       return h.response({
@@ -82,7 +121,7 @@ class MigrationHandler {
     try {
       const { id } = request.params;
 
-      const migration = await this.migrationRepository.getMigrationById(id);
+      const migration = await this._service.getMigrationById(id);
       if (!migration) {
         throw Boom.notFound('Migration not found');
       }
@@ -103,13 +142,13 @@ class MigrationHandler {
       const { id } = request.params;
       const updateData = request.payload;
 
-      const migration = await this.migrationRepository.updateMigration(id, updateData);
+      const migration = await this._service.updateMigration(id, updateData);
       if (!migration) {
         throw Boom.notFound('Migration not found');
       }
 
       // Log activity
-      await this.migrationRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'update',
         resource: 'migration',
@@ -135,13 +174,13 @@ class MigrationHandler {
       const userId = request.auth.credentials.userId;
       const { id } = request.params;
 
-      const migration = await this.migrationRepository.deleteMigration(id);
+      const migration = await this._service.deleteMigration(id);
       if (!migration) {
         throw Boom.notFound('Migration not found');
       }
 
       // Log activity
-      await this.migrationRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'delete',
         resource: 'migration',
@@ -169,7 +208,7 @@ class MigrationHandler {
       const { id } = request.params;
       const { force, dry_run, rollback_on_failure, timeout_seconds } = request.payload;
 
-      const result = await this.migrationRepository.runMigration({
+      const result = await this._service.runMigration({
         id,
         force,
         dry_run,
@@ -179,7 +218,7 @@ class MigrationHandler {
       });
 
       // Log activity
-      await this.migrationRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'execute',
         resource: 'migration',
@@ -205,7 +244,7 @@ class MigrationHandler {
       const userId = request.auth.credentials.userId;
       const { version, type, force, dry_run, rollback_on_failure, timeout_seconds, batch_size } = request.payload;
 
-      const result = await this.migrationRepository.runMigrations({
+      const result = await this._service.runMigrations({
         version,
         type,
         force,
@@ -217,7 +256,7 @@ class MigrationHandler {
       });
 
       // Log activity
-      await this.migrationRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'execute_bulk',
         resource: 'migration',
@@ -244,7 +283,7 @@ class MigrationHandler {
       const { id } = request.params;
       const { force, dry_run, timeout_seconds } = request.payload;
 
-      const result = await this.migrationRepository.rollbackMigration({
+      const result = await this._service.rollbackMigration({
         id,
         force,
         dry_run,
@@ -253,7 +292,7 @@ class MigrationHandler {
       });
 
       // Log activity
-      await this.migrationRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'rollback',
         resource: 'migration',
@@ -279,7 +318,7 @@ class MigrationHandler {
       const userId = request.auth.credentials.userId;
       const { version, type, force, dry_run, timeout_seconds, limit } = request.payload;
 
-      const result = await this.migrationRepository.rollbackMigrations({
+      const result = await this._service.rollbackMigrations({
         version,
         type,
         force,
@@ -290,7 +329,7 @@ class MigrationHandler {
       });
 
       // Log activity
-      await this.migrationRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'rollback_bulk',
         resource: 'migration',
@@ -317,7 +356,7 @@ class MigrationHandler {
     try {
       const { id, version } = request.query;
 
-      const status = await this.migrationRepository.getMigrationStatus({ id, version });
+      const status = await this._service.getMigrationStatus({ id, version });
 
       return h.response({
         success: true,
@@ -337,8 +376,8 @@ class MigrationHandler {
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sort_by, sort_order };
 
       const [history, total] = await Promise.all([
-        this.migrationRepository.getMigrationHistory(filters, pagination),
-        this.migrationRepository.countMigrationHistory(filters)
+        this._service.getMigrationHistory(filters, pagination),
+        this._service.countMigrationHistory(filters)
       ]);
 
       return h.response({
@@ -366,13 +405,13 @@ class MigrationHandler {
       const userId = request.auth.credentials.userId;
       const seedData = request.payload;
 
-      const seed = await this.migrationRepository.createSeed({
+      const seed = await this._service.createSeed({
         ...seedData,
         created_by: userId
       });
 
       // Log activity
-      await this.migrationRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'create',
         resource: 'seed',
@@ -401,8 +440,8 @@ class MigrationHandler {
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sort_by, sort_order };
 
       const [seeds, total] = await Promise.all([
-        this.migrationRepository.getSeeds(filters, pagination),
-        this.migrationRepository.countSeeds(filters)
+        this._service.getSeeds(filters, pagination),
+        this._service.countSeeds(filters)
       ]);
 
       return h.response({
@@ -427,7 +466,7 @@ class MigrationHandler {
     try {
       const { id } = request.params;
 
-      const seed = await this.migrationRepository.getSeedById(id);
+      const seed = await this._service.getSeedById(id);
       if (!seed) {
         throw Boom.notFound('Seed not found');
       }
@@ -448,13 +487,13 @@ class MigrationHandler {
       const { id } = request.params;
       const updateData = request.payload;
 
-      const seed = await this.migrationRepository.updateSeed(id, updateData);
+      const seed = await this._service.updateSeed(id, updateData);
       if (!seed) {
         throw Boom.notFound('Seed not found');
       }
 
       // Log activity
-      await this.migrationRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'update',
         resource: 'seed',
@@ -480,13 +519,13 @@ class MigrationHandler {
       const userId = request.auth.credentials.userId;
       const { id } = request.params;
 
-      const seed = await this.migrationRepository.deleteSeed(id);
+      const seed = await this._service.deleteSeed(id);
       if (!seed) {
         throw Boom.notFound('Seed not found');
       }
 
       // Log activity
-      await this.migrationRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'delete',
         resource: 'seed',
@@ -514,7 +553,7 @@ class MigrationHandler {
       const { id } = request.params;
       const { force, dry_run, update_existing, timeout_seconds } = request.payload;
 
-      const result = await this.migrationRepository.runSeed({
+      const result = await this._service.runSeed({
         id,
         force,
         dry_run,
@@ -524,7 +563,7 @@ class MigrationHandler {
       });
 
       // Log activity
-      await this.migrationRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'execute',
         resource: 'seed',
@@ -550,7 +589,7 @@ class MigrationHandler {
       const userId = request.auth.credentials.userId;
       const { table_name, force, dry_run, update_existing, timeout_seconds, batch_size } = request.payload;
 
-      const result = await this.migrationRepository.runSeeds({
+      const result = await this._service.runSeeds({
         table_name,
         force,
         dry_run,
@@ -561,7 +600,7 @@ class MigrationHandler {
       });
 
       // Log activity
-      await this.migrationRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'execute_bulk',
         resource: 'seed',
@@ -588,7 +627,7 @@ class MigrationHandler {
     try {
       const { include_completed, include_failed, sort_order } = request.query;
 
-      const versions = await this.migrationRepository.getMigrationVersions({
+      const versions = await this._service.getMigrationVersions({
         include_completed,
         include_failed,
         sort_order
@@ -609,13 +648,13 @@ class MigrationHandler {
       const userId = request.auth.credentials.userId;
       const versionData = request.payload;
 
-      const version = await this.migrationRepository.createVersion({
+      const version = await this._service.createVersion({
         ...versionData,
         created_by: userId
       });
 
       // Log activity
-      await this.migrationRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'create',
         resource: 'version',
@@ -640,7 +679,7 @@ class MigrationHandler {
     try {
       const { id } = request.params;
 
-      const version = await this.migrationRepository.getVersionById(id);
+      const version = await this._service.getVersionById(id);
       if (!version) {
         throw Boom.notFound('Version not found');
       }
@@ -661,13 +700,13 @@ class MigrationHandler {
       const { id } = request.params;
       const updateData = request.payload;
 
-      const version = await this.migrationRepository.updateVersion(id, updateData);
+      const version = await this._service.updateVersion(id, updateData);
       if (!version) {
         throw Boom.notFound('Version not found');
       }
 
       // Log activity
-      await this.migrationRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'update',
         resource: 'version',
@@ -693,13 +732,13 @@ class MigrationHandler {
       const userId = request.auth.credentials.userId;
       const { id } = request.params;
 
-      const version = await this.migrationRepository.deleteVersion(id);
+      const version = await this._service.deleteVersion(id);
       if (!version) {
         throw Boom.notFound('Version not found');
       }
 
       // Log activity
-      await this.migrationRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'delete',
         resource: 'version',
@@ -725,7 +764,7 @@ class MigrationHandler {
     try {
       const { migration_id, seed_id, version_id, type } = request.query;
 
-      const dependencies = await this.migrationRepository.getDependencies({
+      const dependencies = await this._service.getDependencies({
         migration_id,
         seed_id,
         version_id,
@@ -747,13 +786,13 @@ class MigrationHandler {
       const userId = request.auth.credentials.userId;
       const dependencyData = request.payload;
 
-      const dependency = await this.migrationRepository.addDependency({
+      const dependency = await this._service.addDependency({
         ...dependencyData,
         created_by: userId
       });
 
       // Log activity
-      await this.migrationRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'add_dependency',
         resource: 'dependency',
@@ -783,7 +822,7 @@ class MigrationHandler {
       const userId = request.auth.credentials.userId;
       const { source_id, source_type, target_id, target_type } = request.payload;
 
-      const dependency = await this.migrationRepository.removeDependency({
+      const dependency = await this._service.removeDependency({
         source_id,
         source_type,
         target_id,
@@ -791,7 +830,7 @@ class MigrationHandler {
       });
 
       // Log activity
-      await this.migrationRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'remove_dependency',
         resource: 'dependency',
@@ -818,7 +857,7 @@ class MigrationHandler {
       const { id } = request.params;
       const { check_syntax, check_dependencies, check_conflicts, dry_run } = request.payload;
 
-      const result = await this.migrationRepository.validateMigration({
+      const result = await this._service.validateMigration({
         id,
         check_syntax,
         check_dependencies,
@@ -842,7 +881,7 @@ class MigrationHandler {
       const { id } = request.params;
       const { check_schema, check_constraints, check_data_types, dry_run } = request.payload;
 
-      const result = await this.migrationRepository.validateSeed({
+      const result = await this._service.validateSeed({
         id,
         check_schema,
         check_constraints,
@@ -867,7 +906,7 @@ class MigrationHandler {
       const { id } = request.params;
       const { test_environment, backup_before_test, restore_after_test, timeout_seconds } = request.payload;
 
-      const result = await this.migrationRepository.testMigration({
+      const result = await this._service.testMigration({
         id,
         test_environment,
         backup_before_test,
@@ -877,7 +916,7 @@ class MigrationHandler {
       });
 
       // Log activity
-      await this.migrationRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'test',
         resource: 'migration',
@@ -904,7 +943,7 @@ class MigrationHandler {
       const { id } = request.params;
       const { test_environment, backup_before_test, restore_after_test, timeout_seconds } = request.payload;
 
-      const result = await this.migrationRepository.testSeed({
+      const result = await this._service.testSeed({
         id,
         test_environment,
         backup_before_test,
@@ -914,7 +953,7 @@ class MigrationHandler {
       });
 
       // Log activity
-      await this.migrationRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'test',
         resource: 'seed',
@@ -942,7 +981,7 @@ class MigrationHandler {
       const { id } = request.params;
       const { format, include_dependencies, include_metadata } = request.query;
 
-      const exportData = await this.migrationRepository.exportMigration({
+      const exportData = await this._service.exportMigration({
         id,
         format,
         include_dependencies,
@@ -965,7 +1004,7 @@ class MigrationHandler {
       const { id } = request.params;
       const { format, include_metadata } = request.query;
 
-      const exportData = await this.migrationRepository.exportSeed({
+      const exportData = await this._service.exportSeed({
         id,
         format,
         include_metadata
@@ -987,7 +1026,7 @@ class MigrationHandler {
       const userId = request.auth.credentials.userId;
       const { file, format, validate_before_import, overwrite_existing } = request.payload;
 
-      const result = await this.migrationRepository.importMigration({
+      const result = await this._service.importMigration({
         file,
         format,
         validate_before_import,
@@ -996,7 +1035,7 @@ class MigrationHandler {
       });
 
       // Log activity
-      await this.migrationRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'import',
         resource: 'migration',
@@ -1022,7 +1061,7 @@ class MigrationHandler {
       const userId = request.auth.credentials.userId;
       const { file, format, validate_before_import, overwrite_existing } = request.payload;
 
-      const result = await this.migrationRepository.importSeed({
+      const result = await this._service.importSeed({
         file,
         format,
         validate_before_import,
@@ -1031,7 +1070,7 @@ class MigrationHandler {
       });
 
       // Log activity
-      await this.migrationRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'import',
         resource: 'seed',
@@ -1059,14 +1098,14 @@ class MigrationHandler {
       const userId = request.auth.credentials.userId;
       const { migrations, validate_before_create } = request.payload;
 
-      const result = await this.migrationRepository.bulkCreateMigrations({
+      const result = await this._service.bulkCreateMigrations({
         migrations,
         validate_before_create,
         created_by: userId
       });
 
       // Log activity
-      await this.migrationRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'bulk_create',
         resource: 'migration',
@@ -1092,14 +1131,14 @@ class MigrationHandler {
       const userId = request.auth.credentials.userId;
       const { seeds, validate_before_create } = request.payload;
 
-      const result = await this.migrationRepository.bulkCreateSeeds({
+      const result = await this._service.bulkCreateSeeds({
         seeds,
         validate_before_create,
         created_by: userId
       });
 
       // Log activity
-      await this.migrationRepository.createAuditLog({
+      await this._service.createAuditLog({
         user_id: userId,
         action: 'bulk_create',
         resource: 'seed',
@@ -1126,7 +1165,7 @@ class MigrationHandler {
     try {
       const { period, type, include_details } = request.query;
 
-      const statistics = await this.migrationRepository.getMigrationStatistics({
+      const statistics = await this._service.getMigrationStatistics({
         period,
         type,
         include_details
@@ -1146,7 +1185,7 @@ class MigrationHandler {
     try {
       const { period, table_name, include_details } = request.query;
 
-      const statistics = await this.migrationRepository.getSeedStatistics({
+      const statistics = await this._service.getSeedStatistics({
         period,
         table_name,
         include_details
@@ -1166,7 +1205,7 @@ class MigrationHandler {
     try {
       const { start_date, end_date, type, format, include_details } = request.query;
 
-      const report = await this.migrationRepository.generateMigrationReport({
+      const report = await this._service.generateMigrationReport({
         start_date,
         end_date,
         type,
@@ -1189,7 +1228,7 @@ class MigrationHandler {
     try {
       const { start_date, end_date, table_name, format, include_details } = request.query;
 
-      const report = await this.migrationRepository.generateSeedReport({
+      const report = await this._service.generateSeedReport({
         start_date,
         end_date,
         table_name,
@@ -1209,4 +1248,4 @@ class MigrationHandler {
   }
 }
 
-module.exports = new MigrationHandler();
+module.exports = MigrationHandler;

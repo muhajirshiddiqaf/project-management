@@ -1,21 +1,17 @@
-const serviceHandler = require('./handler');
-const serviceValidator = require('./validator');
-const { tenantIsolation, roleBasedAccess, permissionBasedAccess } = require('../../middleware');
-
-const routes = [
+const routes = (handler, auth) => [
   // === SERVICE CRUD ROUTES ===
   {
     method: 'GET',
     path: '/services',
-    handler: serviceHandler.getServices,
+    handler: handler.getServices,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        query: serviceValidator.getServices
+        query: auth.getServices
       },
       tags: ['services']
     }
@@ -23,15 +19,15 @@ const routes = [
   {
     method: 'GET',
     path: '/services/{id}',
-    handler: serviceHandler.getServiceById,
+    handler: handler.getServiceById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        params: serviceValidator.getServiceById
+        params: auth.getServiceById
       },
       tags: ['services']
     }
@@ -39,16 +35,16 @@ const routes = [
   {
     method: 'POST',
     path: '/services',
-    handler: serviceHandler.createService,
+    handler: handler.createService,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['service:create']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['service:create']) }
       ],
       validate: {
-        payload: serviceValidator.createService
+        payload: auth.createService
       },
       tags: ['services']
     }
@@ -56,17 +52,17 @@ const routes = [
   {
     method: 'PUT',
     path: '/services/{id}',
-    handler: serviceHandler.updateService,
+    handler: handler.updateService,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['service:update']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['service:update']) }
       ],
       validate: {
-        params: serviceValidator.getServiceById,
-        payload: serviceValidator.updateService
+        params: auth.getServiceById,
+        payload: auth.updateService
       },
       tags: ['services']
     }
@@ -74,16 +70,16 @@ const routes = [
   {
     method: 'DELETE',
     path: '/services/{id}',
-    handler: serviceHandler.deleteService,
+    handler: handler.deleteService,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['service:delete']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['service:delete']) }
       ],
       validate: {
-        params: serviceValidator.deleteService
+        params: auth.deleteService
       },
       tags: ['services']
     }
@@ -91,15 +87,15 @@ const routes = [
   {
     method: 'GET',
     path: '/services/search',
-    handler: serviceHandler.searchServices,
+    handler: handler.searchServices,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        query: serviceValidator.searchServices
+        query: auth.searchServices
       },
       tags: ['services']
     }
@@ -107,17 +103,17 @@ const routes = [
   {
     method: 'PUT',
     path: '/services/{id}/status',
-    handler: serviceHandler.updateServiceStatus,
+    handler: handler.updateServiceStatus,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['service:update_status']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['service:update_status']) }
       ],
       validate: {
-        params: serviceValidator.getServiceById,
-        payload: serviceValidator.updateServiceStatus
+        params: auth.getServiceById,
+        payload: auth.updateServiceStatus
       },
       tags: ['services']
     }
@@ -127,15 +123,15 @@ const routes = [
   {
     method: 'GET',
     path: '/service-categories',
-    handler: serviceHandler.getServiceCategories,
+    handler: handler.getServiceCategories,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        query: serviceValidator.getServiceCategories
+        query: auth.getServiceCategories
       },
       tags: ['service-categories']
     }
@@ -143,15 +139,15 @@ const routes = [
   {
     method: 'GET',
     path: '/service-categories/{id}',
-    handler: serviceHandler.getServiceCategoryById,
+    handler: handler.getServiceCategoryById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        params: serviceValidator.getServiceCategoryById
+        params: auth.getServiceCategoryById
       },
       tags: ['service-categories']
     }
@@ -159,16 +155,16 @@ const routes = [
   {
     method: 'POST',
     path: '/service-categories',
-    handler: serviceHandler.createServiceCategory,
+    handler: handler.createServiceCategory,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['service:create_category']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['service:create_category']) }
       ],
       validate: {
-        payload: serviceValidator.createServiceCategory
+        payload: auth.createServiceCategory
       },
       tags: ['service-categories']
     }
@@ -176,17 +172,17 @@ const routes = [
   {
     method: 'PUT',
     path: '/service-categories/{id}',
-    handler: serviceHandler.updateServiceCategory,
+    handler: handler.updateServiceCategory,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['service:update_category']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['service:update_category']) }
       ],
       validate: {
-        params: serviceValidator.getServiceCategoryById,
-        payload: serviceValidator.updateServiceCategory
+        params: auth.getServiceCategoryById,
+        payload: auth.updateServiceCategory
       },
       tags: ['service-categories']
     }
@@ -194,16 +190,16 @@ const routes = [
   {
     method: 'DELETE',
     path: '/service-categories/{id}',
-    handler: serviceHandler.deleteServiceCategory,
+    handler: handler.deleteServiceCategory,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['service:delete_category']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['service:delete_category']) }
       ],
       validate: {
-        params: serviceValidator.deleteServiceCategory
+        params: auth.deleteServiceCategory
       },
       tags: ['service-categories']
     }
@@ -213,15 +209,15 @@ const routes = [
   {
     method: 'GET',
     path: '/service-pricing',
-    handler: serviceHandler.getServicePricing,
+    handler: handler.getServicePricing,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        query: serviceValidator.getServicePricing
+        query: auth.getServicePricing
       },
       tags: ['service-pricing']
     }
@@ -229,15 +225,15 @@ const routes = [
   {
     method: 'GET',
     path: '/service-pricing/{id}',
-    handler: serviceHandler.getServicePricingById,
+    handler: handler.getServicePricingById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        params: serviceValidator.getServicePricingById
+        params: auth.getServicePricingById
       },
       tags: ['service-pricing']
     }
@@ -245,16 +241,16 @@ const routes = [
   {
     method: 'POST',
     path: '/service-pricing',
-    handler: serviceHandler.createServicePricing,
+    handler: handler.createServicePricing,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['service:create_pricing']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['service:create_pricing']) }
       ],
       validate: {
-        payload: serviceValidator.createServicePricing
+        payload: auth.createServicePricing
       },
       tags: ['service-pricing']
     }
@@ -262,17 +258,17 @@ const routes = [
   {
     method: 'PUT',
     path: '/service-pricing/{id}',
-    handler: serviceHandler.updateServicePricing,
+    handler: handler.updateServicePricing,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['service:update_pricing']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['service:update_pricing']) }
       ],
       validate: {
-        params: serviceValidator.getServicePricingById,
-        payload: serviceValidator.updateServicePricing
+        params: auth.getServicePricingById,
+        payload: auth.updateServicePricing
       },
       tags: ['service-pricing']
     }
@@ -280,16 +276,16 @@ const routes = [
   {
     method: 'DELETE',
     path: '/service-pricing/{id}',
-    handler: serviceHandler.deleteServicePricing,
+    handler: handler.deleteServicePricing,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['service:delete_pricing']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['service:delete_pricing']) }
       ],
       validate: {
-        params: serviceValidator.deleteServicePricing
+        params: auth.deleteServicePricing
       },
       tags: ['service-pricing']
     }
@@ -299,15 +295,15 @@ const routes = [
   {
     method: 'GET',
     path: '/service-templates',
-    handler: serviceHandler.getServiceTemplates,
+    handler: handler.getServiceTemplates,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        query: serviceValidator.getServiceTemplates
+        query: auth.getServiceTemplates
       },
       tags: ['service-templates']
     }
@@ -315,15 +311,15 @@ const routes = [
   {
     method: 'GET',
     path: '/service-templates/{id}',
-    handler: serviceHandler.getServiceTemplateById,
+    handler: handler.getServiceTemplateById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        params: serviceValidator.getServiceTemplateById
+        params: auth.getServiceTemplateById
       },
       tags: ['service-templates']
     }
@@ -331,16 +327,16 @@ const routes = [
   {
     method: 'POST',
     path: '/service-templates',
-    handler: serviceHandler.createServiceTemplate,
+    handler: handler.createServiceTemplate,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['service:create_template']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['service:create_template']) }
       ],
       validate: {
-        payload: serviceValidator.createServiceTemplate
+        payload: auth.createServiceTemplate
       },
       tags: ['service-templates']
     }
@@ -348,17 +344,17 @@ const routes = [
   {
     method: 'PUT',
     path: '/service-templates/{id}',
-    handler: serviceHandler.updateServiceTemplate,
+    handler: handler.updateServiceTemplate,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['service:update_template']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['service:update_template']) }
       ],
       validate: {
-        params: serviceValidator.getServiceTemplateById,
-        payload: serviceValidator.updateServiceTemplate
+        params: auth.getServiceTemplateById,
+        payload: auth.updateServiceTemplate
       },
       tags: ['service-templates']
     }
@@ -366,16 +362,16 @@ const routes = [
   {
     method: 'DELETE',
     path: '/service-templates/{id}',
-    handler: serviceHandler.deleteServiceTemplate,
+    handler: handler.deleteServiceTemplate,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['service:delete_template']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['service:delete_template']) }
       ],
       validate: {
-        params: serviceValidator.deleteServiceTemplate
+        params: auth.deleteServiceTemplate
       },
       tags: ['service-templates']
     }
@@ -385,15 +381,15 @@ const routes = [
   {
     method: 'GET',
     path: '/services/statistics',
-    handler: serviceHandler.getServiceStatistics,
+    handler: handler.getServiceStatistics,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: serviceValidator.getServiceStatistics
+        query: auth.getServiceStatistics
       },
       tags: ['service-statistics']
     }
@@ -401,15 +397,15 @@ const routes = [
   {
     method: 'GET',
     path: '/service-categories/statistics',
-    handler: serviceHandler.getServiceCategoryStatistics,
+    handler: handler.getServiceCategoryStatistics,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: serviceValidator.getServiceCategoryStatistics
+        query: auth.getServiceCategoryStatistics
       },
       tags: ['service-statistics']
     }

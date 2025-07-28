@@ -1,15 +1,13 @@
-const systemRoutes = require('./routes');
-const systemHandler = require('./handler');
-const SystemRepository = require('../../infrastructure/repositories/systemRepository');
+const SystemHandler = require('./handler');
+const routes = require('./routes');
 
-const systemModule = {
-  name: 'system',
-  register: async function (server, options) {
-    const db = server.app.db;
-    const systemRepository = new SystemRepository(db);
-    systemHandler.setSystemRepository(systemRepository);
-    server.route(systemRoutes);
-  }
+const system = async (server, { service, validator, auth }) => {
+  const systemHandler = new SystemHandler(service, validator);
+  server.route(routes(systemHandler, auth));
 };
 
-module.exports = systemModule;
+module.exports = {
+  name: 'system',
+  version: '1.0.0',
+  register: system
+};

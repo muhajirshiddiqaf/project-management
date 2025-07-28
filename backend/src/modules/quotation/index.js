@@ -1,15 +1,13 @@
-const quotationRoutes = require('./routes');
-const quotationHandler = require('./handler');
-const QuotationRepository = require('../../infrastructure/repositories/quotationRepository');
+const QuotationHandler = require('./handler');
+const routes = require('./routes');
 
-const quotationModule = {
-  name: 'quotation',
-  register: async function (server, options) {
-    const db = server.app.db;
-    const quotationRepository = new QuotationRepository(db);
-    quotationHandler.setQuotationRepository(quotationRepository);
-    server.route(quotationRoutes);
-  }
+const quotation = async (server, { service, validator, auth }) => {
+  const quotationHandler = new QuotationHandler(service, validator);
+  server.route(routes(quotationHandler, auth));
 };
 
-module.exports = quotationModule;
+module.exports = {
+  name: 'quotation',
+  version: '1.0.0',
+  register: quotation
+};

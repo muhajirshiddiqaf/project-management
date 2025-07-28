@@ -9,13 +9,11 @@ class ClientRepository {
 
   async findAll(organizationId, options = {}) {
     try {
-      const { page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'desc' } = options;
+      const { page = 1, limit = 10 } = options;
       const offset = (page - 1) * limit;
 
       const result = await this.db.query(queries.client.findAllClients, [
         organizationId,
-        sortBy,
-        sortOrder,
         limit,
         offset
       ]);
@@ -49,14 +47,23 @@ class ClientRepository {
   async create(clientData) {
     try {
       const result = await this.db.query(queries.client.createClient, [
+        clientData.organization_id,
         clientData.name,
+        clientData.company_name,
         clientData.email,
         clientData.phone,
         clientData.address,
-        clientData.company,
+        clientData.city,
+        clientData.state,
+        clientData.country,
+        clientData.postal_code,
         clientData.website,
+        clientData.industry,
+        clientData.client_type,
+        clientData.status,
+        clientData.source,
         clientData.notes,
-        clientData.organization_id
+        clientData.tags
       ]);
       return result.rows[0];
     } catch (error) {
@@ -66,28 +73,26 @@ class ClientRepository {
 
   async update(id, organizationId, updateData) {
     try {
-      const fields = [];
-      const values = [];
-      let paramCount = 1;
-
-      Object.keys(updateData).forEach(key => {
-        if (updateData[key] !== undefined) {
-          fields.push(`${key} = $${paramCount}`);
-          values.push(updateData[key]);
-          paramCount++;
-        }
-      });
-
-      if (fields.length === 0) {
-        throw new Error('No fields to update');
-      }
-
-      fields.push('updated_at = NOW()');
-      values.push(id, organizationId);
-
-      const query = `UPDATE clients SET ${fields.join(', ')} WHERE id = $${paramCount} AND organization_id = $${paramCount + 1} RETURNING *`;
-      const result = await this.db.query(query, values);
-
+      const result = await this.db.query(queries.client.updateClient, [
+        id,
+        organizationId,
+        updateData.name,
+        updateData.company_name,
+        updateData.email,
+        updateData.phone,
+        updateData.address,
+        updateData.city,
+        updateData.state,
+        updateData.country,
+        updateData.postal_code,
+        updateData.website,
+        updateData.industry,
+        updateData.client_type,
+        updateData.status,
+        updateData.source,
+        updateData.notes,
+        updateData.tags
+      ]);
       return result.rows[0] || null;
     } catch (error) {
       throw new Error('Failed to update client');
@@ -105,19 +110,21 @@ class ClientRepository {
 
   async search(organizationId, searchTerm, options = {}) {
     try {
-      const { page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'desc' } = options;
+      const { page = 1, limit = 10 } = options;
       const offset = (page - 1) * limit;
+      const searchPattern = `%${searchTerm}%`;
 
       const result = await this.db.query(queries.client.searchClients, [
         organizationId,
-        searchTerm,
-        sortBy,
-        sortOrder,
+        searchPattern,
         limit,
         offset
       ]);
 
-      const countResult = await this.db.query(queries.client.countSearchClients, [organizationId, searchTerm]);
+      const countResult = await this.db.query(queries.client.countSearchClients, [
+        organizationId,
+        searchPattern
+      ]);
       const totalCount = parseInt(countResult.rows[0].count, 10);
 
       return {
@@ -136,19 +143,18 @@ class ClientRepository {
 
   // === CLIENT CONTACTS METHODS ===
 
-  async getContacts(clientId, organizationId, options = {}) {
+  async getContacts(clientId, options = {}) {
     try {
       const { page = 1, limit = 10 } = options;
       const offset = (page - 1) * limit;
 
       const result = await this.db.query(queries.client.findAllClientContacts, [
         clientId,
-        organizationId,
         limit,
         offset
       ]);
 
-      const countResult = await this.db.query(queries.client.countClientContacts, [clientId, organizationId]);
+      const countResult = await this.db.query(queries.client.countClientContacts, [clientId]);
       const totalCount = parseInt(countResult.rows[0].count, 10);
 
       return {
@@ -165,9 +171,9 @@ class ClientRepository {
     }
   }
 
-  async getContactById(id, organizationId) {
+  async getContactById(id) {
     try {
-      const result = await this.db.query(queries.client.findClientContactById, [id, organizationId]);
+      const result = await this.db.query(queries.client.findClientContactById, [id]);
       return result.rows[0] || null;
     } catch (error) {
       throw new Error('Failed to find client contact by ID');
@@ -182,10 +188,7 @@ class ClientRepository {
         contactData.email,
         contactData.phone,
         contactData.position,
-        contactData.department,
-        contactData.is_primary,
-        contactData.notes,
-        contactData.organization_id
+        contactData.is_primary
       ]);
       return result.rows[0];
     } catch (error) {

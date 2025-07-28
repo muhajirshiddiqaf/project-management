@@ -339,7 +339,7 @@ const getMigrationVersions = `
   LEFT JOIN users u ON mv.created_by = u.id
   WHERE ($1 = true OR mv.status != 'completed')
   AND ($2 = true OR mv.status != 'failed')
-  ORDER BY mv.version ${sort_order}
+  ORDER BY mv.version DESC
 `;
 
 const createVersion = `

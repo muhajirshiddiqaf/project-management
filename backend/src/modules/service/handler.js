@@ -1,13 +1,35 @@
 const Boom = require('@hapi/boom');
 
 class ServiceHandler {
-  constructor() {
-    this.serviceRepository = null;
-  }
+  constructor(service, validator) {
+    this._service = service;
+    this._validator = validator;
 
-  // Set repository (dependency injection)
-  setServiceRepository(serviceRepository) {
-    this.serviceRepository = serviceRepository;
+    // Bind all methods to preserve 'this' context
+    this.getServices = this.getServices.bind(this);
+    this.getServiceById = this.getServiceById.bind(this);
+    this.createService = this.createService.bind(this);
+    this.updateService = this.updateService.bind(this);
+    this.deleteService = this.deleteService.bind(this);
+    this.searchServices = this.searchServices.bind(this);
+    this.updateServiceStatus = this.updateServiceStatus.bind(this);
+    this.getServiceCategories = this.getServiceCategories.bind(this);
+    this.getServiceCategoryById = this.getServiceCategoryById.bind(this);
+    this.createServiceCategory = this.createServiceCategory.bind(this);
+    this.updateServiceCategory = this.updateServiceCategory.bind(this);
+    this.deleteServiceCategory = this.deleteServiceCategory.bind(this);
+    this.getServicePricing = this.getServicePricing.bind(this);
+    this.getServicePricingById = this.getServicePricingById.bind(this);
+    this.createServicePricing = this.createServicePricing.bind(this);
+    this.updateServicePricing = this.updateServicePricing.bind(this);
+    this.deleteServicePricing = this.deleteServicePricing.bind(this);
+    this.getServiceTemplates = this.getServiceTemplates.bind(this);
+    this.getServiceTemplateById = this.getServiceTemplateById.bind(this);
+    this.createServiceTemplate = this.createServiceTemplate.bind(this);
+    this.updateServiceTemplate = this.updateServiceTemplate.bind(this);
+    this.deleteServiceTemplate = this.deleteServiceTemplate.bind(this);
+    this.getServiceStatistics = this.getServiceStatistics.bind(this);
+    this.getServiceCategoryStatistics = this.getServiceCategoryStatistics.bind(this);
   }
 
   // === SERVICE CRUD METHODS ===
@@ -19,8 +41,8 @@ class ServiceHandler {
       const filters = { category_id, is_active, unit_type };
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sortBy, sortOrder };
 
-      const services = await this.serviceRepository.findAll(organizationId, filters, pagination);
-      const total = await this.serviceRepository.countServices(organizationId, filters);
+      const services = await this._service.findAll(organizationId, filters, pagination);
+      const total = await this._service.countServices(organizationId, filters);
 
       return h.response({
         success: true,
@@ -43,7 +65,7 @@ class ServiceHandler {
       const { id } = request.params;
       const organizationId = request.auth.credentials.organization_id;
 
-      const service = await this.serviceRepository.findById(id, organizationId);
+      const service = await this._service.findById(id, organizationId);
       if (!service) {
         throw Boom.notFound('Service not found');
       }
@@ -67,7 +89,7 @@ class ServiceHandler {
         created_by: request.auth.credentials.user_id
       };
 
-      const service = await this.serviceRepository.create(serviceData);
+      const service = await this._service.create(serviceData);
 
       return h.response({
         success: true,
@@ -86,7 +108,7 @@ class ServiceHandler {
       const organizationId = request.auth.credentials.organization_id;
       const updateData = request.payload;
 
-      const service = await this.serviceRepository.update(id, organizationId, updateData);
+      const service = await this._service.update(id, organizationId, updateData);
       if (!service) {
         throw Boom.notFound('Service not found');
       }
@@ -108,7 +130,7 @@ class ServiceHandler {
       const { id } = request.params;
       const organizationId = request.auth.credentials.organization_id;
 
-      const service = await this.serviceRepository.delete(id, organizationId);
+      const service = await this._service.delete(id, organizationId);
       if (!service) {
         throw Boom.notFound('Service not found');
       }
@@ -134,8 +156,8 @@ class ServiceHandler {
       }
 
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sortBy, sortOrder };
-      const services = await this.serviceRepository.search(organizationId, q, {}, pagination);
-      const total = await this.serviceRepository.countSearchServices(organizationId, q, {});
+      const services = await this._service.search(organizationId, q, {}, pagination);
+      const total = await this._service.countSearchServices(organizationId, q, {});
 
       return h.response({
         success: true,
@@ -160,7 +182,7 @@ class ServiceHandler {
       const { is_active } = request.payload;
       const organizationId = request.auth.credentials.organization_id;
 
-      const service = await this.serviceRepository.updateStatus(id, organizationId, is_active);
+      const service = await this._service.updateStatus(id, organizationId, is_active);
       if (!service) {
         throw Boom.notFound('Service not found');
       }
@@ -186,8 +208,8 @@ class ServiceHandler {
       const filters = { parent_id, is_active };
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sortBy, sortOrder };
 
-      const categories = await this.serviceRepository.getCategories(organizationId, filters, pagination);
-      const total = await this.serviceRepository.countCategories(organizationId, filters);
+      const categories = await this._service.getCategories(organizationId, filters, pagination);
+      const total = await this._service.countCategories(organizationId, filters);
 
       return h.response({
         success: true,
@@ -210,7 +232,7 @@ class ServiceHandler {
       const { id } = request.params;
       const organizationId = request.auth.credentials.organization_id;
 
-      const category = await this.serviceRepository.getCategoryById(id, organizationId);
+      const category = await this._service.getCategoryById(id, organizationId);
       if (!category) {
         throw Boom.notFound('Service category not found');
       }
@@ -234,7 +256,7 @@ class ServiceHandler {
         created_by: request.auth.credentials.user_id
       };
 
-      const category = await this.serviceRepository.createCategory(categoryData);
+      const category = await this._service.createCategory(categoryData);
 
       return h.response({
         success: true,
@@ -253,7 +275,7 @@ class ServiceHandler {
       const organizationId = request.auth.credentials.organization_id;
       const updateData = request.payload;
 
-      const category = await this.serviceRepository.updateCategory(id, organizationId, updateData);
+      const category = await this._service.updateCategory(id, organizationId, updateData);
       if (!category) {
         throw Boom.notFound('Service category not found');
       }
@@ -275,7 +297,7 @@ class ServiceHandler {
       const { id } = request.params;
       const organizationId = request.auth.credentials.organization_id;
 
-      const category = await this.serviceRepository.deleteCategory(id, organizationId);
+      const category = await this._service.deleteCategory(id, organizationId);
       if (!category) {
         throw Boom.notFound('Service category not found');
       }
@@ -301,8 +323,8 @@ class ServiceHandler {
         throw Boom.badRequest('Service ID is required');
       }
 
-      const pricing = await this.serviceRepository.getServicePricing(service_id, organizationId);
-      const total = await this.serviceRepository.countServicePricing(service_id, organizationId);
+      const pricing = await this._service.getServicePricing(service_id, organizationId);
+      const total = await this._service.countServicePricing(service_id, organizationId);
 
       return h.response({
         success: true,
@@ -321,7 +343,7 @@ class ServiceHandler {
       const { id } = request.params;
       const organizationId = request.auth.credentials.organization_id;
 
-      const pricing = await this.serviceRepository.getServicePricingById(id, organizationId);
+      const pricing = await this._service.getServicePricingById(id, organizationId);
       if (!pricing) {
         throw Boom.notFound('Service pricing not found');
       }
@@ -345,7 +367,7 @@ class ServiceHandler {
         created_by: request.auth.credentials.user_id
       };
 
-      const pricing = await this.serviceRepository.createServicePricing(pricingData);
+      const pricing = await this._service.createServicePricing(pricingData);
 
       return h.response({
         success: true,
@@ -364,7 +386,7 @@ class ServiceHandler {
       const organizationId = request.auth.credentials.organization_id;
       const updateData = request.payload;
 
-      const pricing = await this.serviceRepository.updateServicePricing(id, organizationId, updateData);
+      const pricing = await this._service.updateServicePricing(id, organizationId, updateData);
       if (!pricing) {
         throw Boom.notFound('Service pricing not found');
       }
@@ -386,7 +408,7 @@ class ServiceHandler {
       const { id } = request.params;
       const organizationId = request.auth.credentials.organization_id;
 
-      const pricing = await this.serviceRepository.deleteServicePricing(id, organizationId);
+      const pricing = await this._service.deleteServicePricing(id, organizationId);
       if (!pricing) {
         throw Boom.notFound('Service pricing not found');
       }
@@ -411,8 +433,8 @@ class ServiceHandler {
       const filters = { category_id, is_active };
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sortBy, sortOrder };
 
-      const templates = await this.serviceRepository.getServiceTemplates(organizationId, filters, pagination);
-      const total = await this.serviceRepository.countServiceTemplates(organizationId, filters);
+      const templates = await this._service.getServiceTemplates(organizationId, filters, pagination);
+      const total = await this._service.countServiceTemplates(organizationId, filters);
 
       return h.response({
         success: true,
@@ -435,7 +457,7 @@ class ServiceHandler {
       const { id } = request.params;
       const organizationId = request.auth.credentials.organization_id;
 
-      const template = await this.serviceRepository.getServiceTemplateById(id, organizationId);
+      const template = await this._service.getServiceTemplateById(id, organizationId);
       if (!template) {
         throw Boom.notFound('Service template not found');
       }
@@ -459,7 +481,7 @@ class ServiceHandler {
         created_by: request.auth.credentials.user_id
       };
 
-      const template = await this.serviceRepository.createServiceTemplate(templateData);
+      const template = await this._service.createServiceTemplate(templateData);
 
       return h.response({
         success: true,
@@ -478,7 +500,7 @@ class ServiceHandler {
       const organizationId = request.auth.credentials.organization_id;
       const updateData = request.payload;
 
-      const template = await this.serviceRepository.updateServiceTemplate(id, organizationId, updateData);
+      const template = await this._service.updateServiceTemplate(id, organizationId, updateData);
       if (!template) {
         throw Boom.notFound('Service template not found');
       }
@@ -500,7 +522,7 @@ class ServiceHandler {
       const { id } = request.params;
       const organizationId = request.auth.credentials.organization_id;
 
-      const template = await this.serviceRepository.deleteServiceTemplate(id, organizationId);
+      const template = await this._service.deleteServiceTemplate(id, organizationId);
       if (!template) {
         throw Boom.notFound('Service template not found');
       }
@@ -522,7 +544,7 @@ class ServiceHandler {
       const organizationId = request.auth.credentials.organization_id;
       const { period = 'month', category_id } = request.query;
 
-      const statistics = await this.serviceRepository.getServiceStatistics(organizationId, { period, category_id });
+      const statistics = await this._service.getServiceStatistics(organizationId, { period, category_id });
 
       return h.response({
         success: true,
@@ -539,7 +561,7 @@ class ServiceHandler {
       const organizationId = request.auth.credentials.organization_id;
       const { period = 'month' } = request.query;
 
-      const statistics = await this.serviceRepository.getServiceCategoryStatistics(organizationId, { period });
+      const statistics = await this._service.getServiceCategoryStatistics(organizationId, { period });
 
       return h.response({
         success: true,
@@ -552,4 +574,4 @@ class ServiceHandler {
   }
 }
 
-module.exports = new ServiceHandler();
+module.exports = ServiceHandler;

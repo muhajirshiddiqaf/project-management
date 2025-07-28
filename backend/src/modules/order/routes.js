@@ -1,23 +1,19 @@
-const orderHandler = require('./handler');
-const orderValidator = require('./validator');
-const { tenantIsolation, roleBasedAccess, permissionBasedAccess } = require('../../middleware');
-
-const routes = [
+const routes = (handler, auth) => [
   // === ORDER CRUD ROUTES ===
 
   // Get all orders
   {
     method: 'GET',
     path: '/orders',
-    handler: orderHandler.getOrders,
+    handler: handler.getOrders,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        query: orderValidator.getOrders
+        query: auth.getOrders
       },
       tags: ['orders']
     }
@@ -27,15 +23,15 @@ const routes = [
   {
     method: 'GET',
     path: '/orders/{id}',
-    handler: orderHandler.getOrderById,
+    handler: handler.getOrderById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        params: orderValidator.getOrderById
+        params: auth.getOrderById
       },
       tags: ['orders']
     }
@@ -45,16 +41,16 @@ const routes = [
   {
     method: 'POST',
     path: '/orders',
-    handler: orderHandler.createOrder,
+    handler: handler.createOrder,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['order:create']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['order:create']) }
       ],
       validate: {
-        payload: orderValidator.createOrder
+        payload: auth.createOrder
       },
       tags: ['orders']
     }
@@ -64,17 +60,17 @@ const routes = [
   {
     method: 'PUT',
     path: '/orders/{id}',
-    handler: orderHandler.updateOrder,
+    handler: handler.updateOrder,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['order:update']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['order:update']) }
       ],
       validate: {
-        params: orderValidator.getOrderById,
-        payload: orderValidator.updateOrder
+        params: auth.getOrderById,
+        payload: auth.updateOrder
       },
       tags: ['orders']
     }
@@ -84,16 +80,16 @@ const routes = [
   {
     method: 'DELETE',
     path: '/orders/{id}',
-    handler: orderHandler.deleteOrder,
+    handler: handler.deleteOrder,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['order:delete']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['order:delete']) }
       ],
       validate: {
-        params: orderValidator.deleteOrder
+        params: auth.deleteOrder
       },
       tags: ['orders']
     }
@@ -103,15 +99,15 @@ const routes = [
   {
     method: 'GET',
     path: '/orders/search',
-    handler: orderHandler.searchOrders,
+    handler: handler.searchOrders,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        query: orderValidator.searchOrders
+        query: auth.searchOrders
       },
       tags: ['orders']
     }
@@ -121,17 +117,17 @@ const routes = [
   {
     method: 'PATCH',
     path: '/orders/{id}/status',
-    handler: orderHandler.updateOrderStatus,
+    handler: handler.updateOrderStatus,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['order:update_status']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['order:update_status']) }
       ],
       validate: {
-        params: orderValidator.getOrderById,
-        payload: orderValidator.updateOrderStatus
+        params: auth.getOrderById,
+        payload: auth.updateOrderStatus
       },
       tags: ['orders']
     }
@@ -141,17 +137,17 @@ const routes = [
   {
     method: 'PATCH',
     path: '/orders/{id}/assign',
-    handler: orderHandler.assignOrder,
+    handler: handler.assignOrder,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['order:assign']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['order:assign']) }
       ],
       validate: {
-        params: orderValidator.getOrderById,
-        payload: orderValidator.assignOrder
+        params: auth.getOrderById,
+        payload: auth.assignOrder
       },
       tags: ['orders']
     }
@@ -163,15 +159,15 @@ const routes = [
   {
     method: 'GET',
     path: '/orders/items',
-    handler: orderHandler.getOrderItems,
+    handler: handler.getOrderItems,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        query: orderValidator.getOrderItems
+        query: auth.getOrderItems
       },
       tags: ['order-items']
     }
@@ -181,15 +177,15 @@ const routes = [
   {
     method: 'GET',
     path: '/orders/items/{id}',
-    handler: orderHandler.getOrderItemById,
+    handler: handler.getOrderItemById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        params: orderValidator.getOrderItemById
+        params: auth.getOrderItemById
       },
       tags: ['order-items']
     }
@@ -199,16 +195,16 @@ const routes = [
   {
     method: 'POST',
     path: '/orders/items',
-    handler: orderHandler.createOrderItem,
+    handler: handler.createOrderItem,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['order:create_item']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['order:create_item']) }
       ],
       validate: {
-        payload: orderValidator.createOrderItem
+        payload: auth.createOrderItem
       },
       tags: ['order-items']
     }
@@ -218,17 +214,17 @@ const routes = [
   {
     method: 'PUT',
     path: '/orders/items/{id}',
-    handler: orderHandler.updateOrderItem,
+    handler: handler.updateOrderItem,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['order:update_item']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['order:update_item']) }
       ],
       validate: {
-        params: orderValidator.getOrderItemById,
-        payload: orderValidator.updateOrderItem
+        params: auth.getOrderItemById,
+        payload: auth.updateOrderItem
       },
       tags: ['order-items']
     }
@@ -238,16 +234,16 @@ const routes = [
   {
     method: 'DELETE',
     path: '/orders/items/{id}',
-    handler: orderHandler.deleteOrderItem,
+    handler: handler.deleteOrderItem,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['order:delete_item']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['order:delete_item']) }
       ],
       validate: {
-        params: orderValidator.deleteOrderItem
+        params: auth.deleteOrderItem
       },
       tags: ['order-items']
     }
@@ -257,15 +253,15 @@ const routes = [
   {
     method: 'GET',
     path: '/orders/totals',
-    handler: orderHandler.calculateOrderTotals,
+    handler: handler.calculateOrderTotals,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        query: orderValidator.calculateOrderTotals
+        query: auth.calculateOrderTotals
       },
       tags: ['order-items']
     }
@@ -275,16 +271,16 @@ const routes = [
   {
     method: 'POST',
     path: '/orders/items/bulk',
-    handler: orderHandler.bulkCreateOrderItems,
+    handler: handler.bulkCreateOrderItems,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['order:create_item']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['order:create_item']) }
       ],
       validate: {
-        payload: orderValidator.bulkCreateOrderItems
+        payload: auth.bulkCreateOrderItems
       },
       tags: ['order-items']
     }
@@ -294,16 +290,16 @@ const routes = [
   {
     method: 'POST',
     path: '/orders/items/import',
-    handler: orderHandler.importOrderItems,
+    handler: handler.importOrderItems,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['order:import_items']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['order:import_items']) }
       ],
       validate: {
-        payload: orderValidator.importOrderItems
+        payload: auth.importOrderItems
       },
       tags: ['order-items']
     }
@@ -313,16 +309,16 @@ const routes = [
   {
     method: 'GET',
     path: '/orders/items/export',
-    handler: orderHandler.exportOrderItems,
+    handler: handler.exportOrderItems,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) },
-        { method: permissionBasedAccess(['order:export_items']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) },
+        //{ method: permissionBasedAccess(['order:export_items']) }
       ],
       validate: {
-        query: orderValidator.exportOrderItems
+        query: auth.exportOrderItems
       },
       tags: ['order-items']
     }

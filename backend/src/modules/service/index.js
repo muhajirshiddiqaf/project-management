@@ -1,15 +1,13 @@
-const serviceRoutes = require('./routes');
-const serviceHandler = require('./handler');
-const ServiceRepository = require('../../infrastructure/repositories/serviceRepository');
+const ServiceHandler = require('./handler');
+const routes = require('./routes');
 
-const serviceModule = {
-  name: 'service',
-  register: async function (server, options) {
-    const db = server.app.db;
-    const serviceRepository = new ServiceRepository(db);
-    serviceHandler.setServiceRepository(serviceRepository);
-    server.route(serviceRoutes);
-  }
+const service = async (server, { service, validator, auth }) => {
+  const serviceHandler = new ServiceHandler(service, validator);
+  server.route(routes(serviceHandler, auth));
 };
 
-module.exports = serviceModule;
+module.exports = {
+  name: 'service',
+  version: '1.0.0',
+  register: service
+};

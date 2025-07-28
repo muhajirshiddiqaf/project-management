@@ -6,12 +6,38 @@ const csv = require('csv-parser');
 const xlsx = require('xlsx');
 
 class OrganizationHandler {
-  constructor() {
-    this.organizationRepository = null;
-  }
+  constructor(service, validator) {
+    this._service = service;
+    this._validator = validator;
 
-  setOrganizationRepository(organizationRepository) {
-    this.organizationRepository = organizationRepository;
+    // Bind all methods to preserve 'this' context
+    this.createOrganization = this.createOrganization.bind(this);
+    this.getOrganizations = this.getOrganizations.bind(this);
+    this.getOrganizationById = this.getOrganizationById.bind(this);
+    this.updateOrganization = this.updateOrganization.bind(this);
+    this.deleteOrganization = this.deleteOrganization.bind(this);
+    this.createSubscriptionPlan = this.createSubscriptionPlan.bind(this);
+    this.getSubscriptionPlans = this.getSubscriptionPlans.bind(this);
+    this.getSubscriptionPlanById = this.getSubscriptionPlanById.bind(this);
+    this.updateSubscriptionPlan = this.updateSubscriptionPlan.bind(this);
+    this.deleteSubscriptionPlan = this.deleteSubscriptionPlan.bind(this);
+    this.assignSubscriptionToOrganization = this.assignSubscriptionToOrganization.bind(this);
+    this.updateOrganizationSubscription = this.updateOrganizationSubscription.bind(this);
+    this.getOrganizationSubscription = this.getOrganizationSubscription.bind(this);
+    this.cancelOrganizationSubscription = this.cancelOrganizationSubscription.bind(this);
+    this.getTenantSettings = this.getTenantSettings.bind(this);
+    this.updateTenantSettings = this.updateTenantSettings.bind(this);
+    this.initiateOnboarding = this.initiateOnboarding.bind(this);
+    this.updateOnboardingProgress = this.updateOnboardingProgress.bind(this);
+    this.getOnboardingStatus = this.getOnboardingStatus.bind(this);
+    this.initiateOffboarding = this.initiateOffboarding.bind(this);
+    this.updateOffboardingProgress = this.updateOffboardingProgress.bind(this);
+    this.getOffboardingStatus = this.getOffboardingStatus.bind(this);
+    this.getOrganizationStatistics = this.getOrganizationStatistics.bind(this);
+    this.bulkUpdateOrganizations = this.bulkUpdateOrganizations.bind(this);
+    this.bulkDeleteOrganizations = this.bulkDeleteOrganizations.bind(this);
+    this.importOrganizations = this.importOrganizations.bind(this);
+    this.exportOrganizations = this.exportOrganizations.bind(this);
   }
 
   // === ORGANIZATION CRUD OPERATIONS ===
@@ -27,15 +53,15 @@ class OrganizationHandler {
       }
 
       // Check if slug is unique
-      const existingOrg = await this.organizationRepository.getOrganizationBySlug(organizationData.slug);
+      const existingOrg = await this._service.getOrganizationBySlug(organizationData.slug);
       if (existingOrg) {
         throw Boom.conflict('Organization slug already exists');
       }
 
-      const organization = await this.organizationRepository.createOrganization(organizationData);
+      const organization = await this._service.createOrganization(organizationData);
 
       // Log activity
-      await this.organizationRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: organization.id,
         user_id: userId,
         action: 'create',
@@ -63,8 +89,8 @@ class OrganizationHandler {
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sort_by, sort_order };
 
       const [organizations, total] = await Promise.all([
-        this.organizationRepository.getOrganizations(filters, pagination),
-        this.organizationRepository.countOrganizations(filters)
+        this._service.getOrganizations(filters, pagination),
+        this._service.countOrganizations(filters)
       ]);
 
       return h.response({
@@ -89,7 +115,7 @@ class OrganizationHandler {
     try {
       const { id } = request.params;
 
-      const organization = await this.organizationRepository.getOrganizationById(id);
+      const organization = await this._service.getOrganizationById(id);
       if (!organization) {
         throw Boom.notFound('Organization not found');
       }
@@ -112,19 +138,19 @@ class OrganizationHandler {
 
       // Check if slug is being updated and ensure uniqueness
       if (updateData.slug) {
-        const existingOrg = await this.organizationRepository.getOrganizationBySlug(updateData.slug);
+        const existingOrg = await this._service.getOrganizationBySlug(updateData.slug);
         if (existingOrg && existingOrg.id !== id) {
           throw Boom.conflict('Organization slug already exists');
         }
       }
 
-      const organization = await this.organizationRepository.updateOrganization(id, updateData);
+      const organization = await this._service.updateOrganization(id, updateData);
       if (!organization) {
         throw Boom.notFound('Organization not found');
       }
 
       // Log activity
-      await this.organizationRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: id,
         user_id: userId,
         action: 'update',
@@ -149,13 +175,13 @@ class OrganizationHandler {
       const userId = request.auth.credentials.userId;
       const { id } = request.params;
 
-      const organization = await this.organizationRepository.deleteOrganization(id);
+      const organization = await this._service.deleteOrganization(id);
       if (!organization) {
         throw Boom.notFound('Organization not found');
       }
 
       // Log activity
-      await this.organizationRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: id,
         user_id: userId,
         action: 'delete',
@@ -181,10 +207,10 @@ class OrganizationHandler {
       const userId = request.auth.credentials.userId;
       const planData = { ...request.payload, created_by: userId };
 
-      const subscriptionPlan = await this.organizationRepository.createSubscriptionPlan(planData);
+      const subscriptionPlan = await this._service.createSubscriptionPlan(planData);
 
       // Log activity
-      await this.organizationRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: null,
         user_id: userId,
         action: 'create',
@@ -212,8 +238,8 @@ class OrganizationHandler {
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sort_by, sort_order };
 
       const [plans, total] = await Promise.all([
-        this.organizationRepository.getSubscriptionPlans(filters, pagination),
-        this.organizationRepository.countSubscriptionPlans(filters)
+        this._service.getSubscriptionPlans(filters, pagination),
+        this._service.countSubscriptionPlans(filters)
       ]);
 
       return h.response({
@@ -238,7 +264,7 @@ class OrganizationHandler {
     try {
       const { id } = request.params;
 
-      const plan = await this.organizationRepository.getSubscriptionPlanById(id);
+      const plan = await this._service.getSubscriptionPlanById(id);
       if (!plan) {
         throw Boom.notFound('Subscription plan not found');
       }
@@ -259,13 +285,13 @@ class OrganizationHandler {
       const { id } = request.params;
       const updateData = request.payload;
 
-      const plan = await this.organizationRepository.updateSubscriptionPlan(id, updateData);
+      const plan = await this._service.updateSubscriptionPlan(id, updateData);
       if (!plan) {
         throw Boom.notFound('Subscription plan not found');
       }
 
       // Log activity
-      await this.organizationRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: null,
         user_id: userId,
         action: 'update',
@@ -290,13 +316,13 @@ class OrganizationHandler {
       const userId = request.auth.credentials.userId;
       const { id } = request.params;
 
-      const plan = await this.organizationRepository.deleteSubscriptionPlan(id);
+      const plan = await this._service.deleteSubscriptionPlan(id);
       if (!plan) {
         throw Boom.notFound('Subscription plan not found');
       }
 
       // Log activity
-      await this.organizationRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: null,
         user_id: userId,
         action: 'delete',
@@ -322,10 +348,10 @@ class OrganizationHandler {
       const userId = request.auth.credentials.userId;
       const subscriptionData = { ...request.payload, assigned_by: userId };
 
-      const subscription = await this.organizationRepository.assignSubscriptionToOrganization(subscriptionData);
+      const subscription = await this._service.assignSubscriptionToOrganization(subscriptionData);
 
       // Log activity
-      await this.organizationRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: subscriptionData.organization_id,
         user_id: userId,
         action: 'assign_subscription',
@@ -351,13 +377,13 @@ class OrganizationHandler {
       const { organization_id } = request.params;
       const updateData = request.payload;
 
-      const subscription = await this.organizationRepository.updateOrganizationSubscription(organization_id, updateData);
+      const subscription = await this._service.updateOrganizationSubscription(organization_id, updateData);
       if (!subscription) {
         throw Boom.notFound('Organization subscription not found');
       }
 
       // Log activity
-      await this.organizationRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id,
         user_id: userId,
         action: 'update_subscription',
@@ -381,7 +407,7 @@ class OrganizationHandler {
     try {
       const { organization_id } = request.params;
 
-      const subscription = await this.organizationRepository.getOrganizationSubscription(organization_id);
+      const subscription = await this._service.getOrganizationSubscription(organization_id);
       if (!subscription) {
         throw Boom.notFound('Organization subscription not found');
       }
@@ -402,14 +428,14 @@ class OrganizationHandler {
       const { organization_id } = request.params;
       const { reason, effective_date } = request.payload;
 
-      const subscription = await this.organizationRepository.cancelOrganizationSubscription(organization_id, {
+      const subscription = await this._service.cancelOrganizationSubscription(organization_id, {
         reason,
         effective_date: effective_date || new Date(),
         cancelled_by: userId
       });
 
       // Log activity
-      await this.organizationRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id,
         user_id: userId,
         action: 'cancel_subscription',
@@ -435,7 +461,7 @@ class OrganizationHandler {
     try {
       const { organization_id } = request.params;
 
-      const settings = await this.organizationRepository.getTenantSettings(organization_id);
+      const settings = await this._service.getTenantSettings(organization_id);
       if (!settings) {
         throw Boom.notFound('Tenant settings not found');
       }
@@ -456,10 +482,10 @@ class OrganizationHandler {
       const { organization_id } = request.params;
       const updateData = request.payload;
 
-      const settings = await this.organizationRepository.updateTenantSettings(organization_id, updateData);
+      const settings = await this._service.updateTenantSettings(organization_id, updateData);
 
       // Log activity
-      await this.organizationRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id,
         user_id: userId,
         action: 'update_settings',
@@ -486,10 +512,10 @@ class OrganizationHandler {
       const userId = request.auth.credentials.userId;
       const onboardingData = { ...request.payload, initiated_by: userId };
 
-      const onboarding = await this.organizationRepository.initiateOnboarding(onboardingData);
+      const onboarding = await this._service.initiateOnboarding(onboardingData);
 
       // Log activity
-      await this.organizationRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: onboardingData.organization_id,
         user_id: userId,
         action: 'initiate_onboarding',
@@ -514,10 +540,10 @@ class OrganizationHandler {
       const userId = request.auth.credentials.userId;
       const progressData = { ...request.payload, updated_by: userId };
 
-      const progress = await this.organizationRepository.updateOnboardingProgress(progressData);
+      const progress = await this._service.updateOnboardingProgress(progressData);
 
       // Log activity
-      await this.organizationRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: progressData.organization_id,
         user_id: userId,
         action: 'update_onboarding',
@@ -541,7 +567,7 @@ class OrganizationHandler {
     try {
       const { organization_id } = request.params;
 
-      const status = await this.organizationRepository.getOnboardingStatus(organization_id);
+      const status = await this._service.getOnboardingStatus(organization_id);
       if (!status) {
         throw Boom.notFound('Onboarding status not found');
       }
@@ -561,10 +587,10 @@ class OrganizationHandler {
       const userId = request.auth.credentials.userId;
       const offboardingData = { ...request.payload, initiated_by: userId };
 
-      const offboarding = await this.organizationRepository.initiateOffboarding(offboardingData);
+      const offboarding = await this._service.initiateOffboarding(offboardingData);
 
       // Log activity
-      await this.organizationRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: offboardingData.organization_id,
         user_id: userId,
         action: 'initiate_offboarding',
@@ -589,10 +615,10 @@ class OrganizationHandler {
       const userId = request.auth.credentials.userId;
       const progressData = { ...request.payload, updated_by: userId };
 
-      const progress = await this.organizationRepository.updateOffboardingProgress(progressData);
+      const progress = await this._service.updateOffboardingProgress(progressData);
 
       // Log activity
-      await this.organizationRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: progressData.organization_id,
         user_id: userId,
         action: 'update_offboarding',
@@ -616,7 +642,7 @@ class OrganizationHandler {
     try {
       const { organization_id } = request.params;
 
-      const status = await this.organizationRepository.getOffboardingStatus(organization_id);
+      const status = await this._service.getOffboardingStatus(organization_id);
       if (!status) {
         throw Boom.notFound('Offboarding status not found');
       }
@@ -637,7 +663,7 @@ class OrganizationHandler {
     try {
       const { organization_id, start_date, end_date, group_by } = request.query;
 
-      const stats = await this.organizationRepository.getOrganizationStatistics({
+      const stats = await this._service.getOrganizationStatistics({
         organization_id,
         start_date,
         end_date,
@@ -661,10 +687,10 @@ class OrganizationHandler {
       const userId = request.auth.credentials.userId;
       const { organization_ids, updates } = request.payload;
 
-      const results = await this.organizationRepository.bulkUpdateOrganizations(organization_ids, updates);
+      const results = await this._service.bulkUpdateOrganizations(organization_ids, updates);
 
       // Log activity
-      await this.organizationRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: null,
         user_id: userId,
         action: 'bulk_update',
@@ -692,10 +718,10 @@ class OrganizationHandler {
       const userId = request.auth.credentials.userId;
       const { organization_ids, force, export_data } = request.payload;
 
-      const results = await this.organizationRepository.bulkDeleteOrganizations(organization_ids, force, export_data);
+      const results = await this._service.bulkDeleteOrganizations(organization_ids, force, export_data);
 
       // Log activity
-      await this.organizationRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: null,
         user_id: userId,
         action: 'bulk_delete',
@@ -729,7 +755,7 @@ class OrganizationHandler {
       const results = await this.processOrganizationImport(file, options);
 
       // Log activity
-      await this.organizationRepository.createActivityLog({
+      await this._service.createActivityLog({
         organization_id: null,
         user_id: userId,
         action: 'import_organizations',
@@ -757,7 +783,7 @@ class OrganizationHandler {
     try {
       const { format, filters } = request.query;
 
-      const organizations = await this.organizationRepository.getOrganizationsForExport(filters);
+      const organizations = await this._service.getOrganizationsForExport(filters);
       const exportData = await this.formatOrganizationExport(organizations, format);
 
       return h.response(exportData.content)
@@ -809,7 +835,7 @@ class OrganizationHandler {
           }
 
           // Check if organization exists
-          const existingOrg = await this.organizationRepository.getOrganizationBySlug(orgData.slug);
+          const existingOrg = await this._service.getOrganizationBySlug(orgData.slug);
 
           if (existingOrg && !options.update_existing) {
             results.errors.push({ row: orgData.row, error: 'Organization already exists' });
@@ -831,9 +857,9 @@ class OrganizationHandler {
           };
 
           if (existingOrg && options.update_existing) {
-            await this.organizationRepository.updateOrganization(existingOrg.id, orgToCreate);
+            await this._service.updateOrganization(existingOrg.id, orgToCreate);
           } else {
-            await this.organizationRepository.createOrganization(orgToCreate);
+            await this._service.createOrganization(orgToCreate);
           }
 
           results.imported++;
@@ -927,4 +953,4 @@ class OrganizationHandler {
   }
 }
 
-module.exports = new OrganizationHandler();
+module.exports = OrganizationHandler;

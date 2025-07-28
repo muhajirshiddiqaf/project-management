@@ -1,13 +1,34 @@
 const Boom = require('@hapi/boom');
 
 class ProjectHandler {
-  constructor() {
-    this.projectRepository = null;
-  }
+  constructor(service, validator) {
+    this._service = service;
+    this._validator = validator;
 
-  // Set repository (dependency injection)
-  setProjectRepository(projectRepository) {
-    this.projectRepository = projectRepository;
+    // Bind all methods to preserve 'this' context
+    this.getProjects = this.getProjects.bind(this);
+    this.getProjectById = this.getProjectById.bind(this);
+    this.createProject = this.createProject.bind(this);
+    this.updateProject = this.updateProject.bind(this);
+    this.deleteProject = this.deleteProject.bind(this);
+    this.searchProjects = this.searchProjects.bind(this);
+    this.updateProjectStatus = this.updateProjectStatus.bind(this);
+    this.assignProject = this.assignProject.bind(this);
+    this.calculateProjectCost = this.calculateProjectCost.bind(this);
+    this.getProjectCostBreakdown = this.getProjectCostBreakdown.bind(this);
+    this.updateProjectCostCalculation = this.updateProjectCostCalculation.bind(this);
+    this.assignTeamToProject = this.assignTeamToProject.bind(this);
+    this.getProjectTeam = this.getProjectTeam.bind(this);
+    this.updateTeamMemberRole = this.updateTeamMemberRole.bind(this);
+    this.removeTeamMember = this.removeTeamMember.bind(this);
+    this.createMilestone = this.createMilestone.bind(this);
+    this.getProjectMilestones = this.getProjectMilestones.bind(this);
+    this.getMilestoneById = this.getMilestoneById.bind(this);
+    this.updateMilestone = this.updateMilestone.bind(this);
+    this.deleteMilestone = this.deleteMilestone.bind(this);
+    this.updateMilestoneStatus = this.updateMilestoneStatus.bind(this);
+    this.getProjectStatistics = this.getProjectStatistics.bind(this);
+    this.getProjectCostStatistics = this.getProjectCostStatistics.bind(this);
   }
 
   // === PROJECT CRUD METHODS ===
@@ -15,10 +36,10 @@ class ProjectHandler {
   // Get all projects
   async getProjects(request, h) {
     try {
-      const { organizationId } = request;
+      const { organizationId } = request.auth.credentials;
       const { page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'desc', status, priority, category, client_id, assigned_to, created_by } = request.query;
 
-      const projects = await this.projectRepository.findAll(organizationId, {
+      const projects = await this._service.findAll(organizationId, {
         page: parseInt(page, 10),
         limit: parseInt(limit, 10),
         sortBy,
@@ -44,10 +65,10 @@ class ProjectHandler {
   // Get project by ID
   async getProjectById(request, h) {
     try {
-      const { organizationId } = request;
+      const { organizationId } = request.auth.credentials;
       const { id } = request.params;
 
-      const project = await this.projectRepository.findById(id, organizationId);
+      const project = await this._service.findById(id, organizationId);
 
       if (!project) {
         throw Boom.notFound('Project not found');
@@ -67,10 +88,13 @@ class ProjectHandler {
   // Create new project
   async createProject(request, h) {
     try {
-      const { organizationId, userId } = request;
+      const { organizationId, userId } = request.auth.credentials;
       const projectData = request.payload;
 
-      const project = await this.projectRepository.create({
+      console.log('Auth credentials:', request.auth.credentials);
+      console.log('Project data:', { ...projectData, organization_id: organizationId, created_by: userId });
+
+      const project = await this._service.create({
         ...projectData,
         organization_id: organizationId,
         created_by: userId
@@ -82,6 +106,7 @@ class ProjectHandler {
         data: project
       }).code(201);
     } catch (error) {
+      console.error('Create project error:', error);
       throw Boom.internal('Failed to create project');
     }
   }
@@ -89,11 +114,11 @@ class ProjectHandler {
   // Update project
   async updateProject(request, h) {
     try {
-      const { organizationId } = request;
+      const { organizationId } = request.auth.credentials;
       const { id } = request.params;
       const updateData = request.payload;
 
-      const project = await this.projectRepository.update(id, organizationId, updateData);
+      const project = await this._service.update(id, organizationId, updateData);
 
       if (!project) {
         throw Boom.notFound('Project not found');
@@ -113,10 +138,10 @@ class ProjectHandler {
   // Delete project
   async deleteProject(request, h) {
     try {
-      const { organizationId } = request;
+      const { organizationId } = request.auth.credentials;
       const { id } = request.params;
 
-      const deleted = await this.projectRepository.delete(id, organizationId);
+      const deleted = await this._service.delete(id, organizationId);
 
       if (!deleted) {
         throw Boom.notFound('Project not found');
@@ -135,10 +160,10 @@ class ProjectHandler {
   // Search projects
   async searchProjects(request, h) {
     try {
-      const { organizationId } = request;
+      const { organizationId } = request.auth.credentials;
       const { q, page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'desc' } = request.query;
 
-      const projects = await this.projectRepository.search(organizationId, q, {
+      const projects = await this._service.search(organizationId, q, {
         page: parseInt(page, 10),
         limit: parseInt(limit, 10),
         sortBy,
@@ -158,11 +183,11 @@ class ProjectHandler {
   // Update project status
   async updateProjectStatus(request, h) {
     try {
-      const { organizationId } = request;
+      const { organizationId } = request.auth.credentials;
       const { id } = request.params;
-      const { status, notes } = request.payload;
+      const { status } = request.payload;
 
-      const project = await this.projectRepository.updateStatus(id, organizationId, status, notes);
+      const project = await this._service.updateStatus(id, organizationId, status);
 
       if (!project) {
         throw Boom.notFound('Project not found');
@@ -182,11 +207,11 @@ class ProjectHandler {
   // Assign project
   async assignProject(request, h) {
     try {
-      const { organizationId } = request;
+      const { organizationId } = request.auth.credentials;
       const { id } = request.params;
       const { assigned_to } = request.payload;
 
-      const project = await this.projectRepository.assign(id, organizationId, assigned_to);
+      const project = await this._service.assign(id, organizationId, assigned_to);
 
       if (!project) {
         throw Boom.notFound('Project not found');
@@ -208,12 +233,13 @@ class ProjectHandler {
   // Calculate project cost
   async calculateProjectCost(request, h) {
     try {
-      const { organizationId } = request;
+      const { organizationId, userId } = request.auth.credentials;
       const costData = request.payload;
 
-      const calculation = await this.projectRepository.calculateCost({
+      const calculation = await this._service.calculateCost({
         ...costData,
-        organization_id: organizationId
+        organization_id: organizationId,
+        created_by: userId
       });
 
       return h.response({
@@ -229,10 +255,9 @@ class ProjectHandler {
   // Get project cost breakdown
   async getProjectCostBreakdown(request, h) {
     try {
-      const { organizationId } = request;
       const { project_id } = request.query;
 
-      const breakdown = await this.projectRepository.getCostBreakdown(project_id, organizationId);
+      const breakdown = await this._service.getCostBreakdown(project_id);
 
       return h.response({
         success: true,
@@ -247,11 +272,11 @@ class ProjectHandler {
   // Update project cost calculation
   async updateProjectCostCalculation(request, h) {
     try {
-      const { organizationId } = request;
+      const { organization_id } = request.auth.credentials;
       const { calculation_id } = request.params;
       const updateData = request.payload;
 
-      const calculation = await this.projectRepository.updateCostCalculation(calculation_id, organizationId, updateData);
+      const calculation = await this._service.updateCostCalculation(calculation_id, organization_id, updateData);
 
       if (!calculation) {
         throw Boom.notFound('Cost calculation not found');
@@ -273,10 +298,10 @@ class ProjectHandler {
   // Assign team to project
   async assignTeamToProject(request, h) {
     try {
-      const { organizationId } = request;
+      const { organization_id } = request.auth.credentials;
       const { project_id, team_members } = request.payload;
 
-      const team = await this.projectRepository.assignTeam(project_id, organizationId, team_members);
+      const team = await this._service.assignTeam(project_id, organization_id, team_members);
 
       return h.response({
         success: true,
@@ -291,10 +316,10 @@ class ProjectHandler {
   // Get project team
   async getProjectTeam(request, h) {
     try {
-      const { organizationId } = request;
+      const { organization_id } = request.auth.credentials;
       const { project_id } = request.query;
 
-      const team = await this.projectRepository.getTeam(project_id, organizationId);
+      const team = await this._service.getTeam(project_id, organization_id);
 
       return h.response({
         success: true,
@@ -309,10 +334,10 @@ class ProjectHandler {
   // Update team member role
   async updateTeamMemberRole(request, h) {
     try {
-      const { organizationId } = request;
+      const { organization_id } = request.auth.credentials;
       const { project_id, user_id, role, hourly_rate, start_date, end_date } = request.payload;
 
-      const member = await this.projectRepository.updateTeamMember(project_id, user_id, organizationId, {
+      const member = await this._service.updateTeamMember(project_id, user_id, organization_id, {
         role,
         hourly_rate,
         start_date,
@@ -337,10 +362,10 @@ class ProjectHandler {
   // Remove team member
   async removeTeamMember(request, h) {
     try {
-      const { organizationId } = request;
+      const { organization_id } = request.auth.credentials;
       const { project_id, user_id } = request.payload;
 
-      const removed = await this.projectRepository.removeTeamMember(project_id, user_id, organizationId);
+      const removed = await this._service.removeTeamMember(project_id, user_id, organization_id);
 
       if (!removed) {
         throw Boom.notFound('Team member not found');
@@ -361,12 +386,12 @@ class ProjectHandler {
   // Create milestone
   async createMilestone(request, h) {
     try {
-      const { organizationId } = request;
+      const { organization_id } = request.auth.credentials;
       const milestoneData = request.payload;
 
-      const milestone = await this.projectRepository.createMilestone({
+      const milestone = await this._service.createMilestone({
         ...milestoneData,
-        organization_id: organizationId
+        organization_id: organization_id
       });
 
       return h.response({
@@ -382,10 +407,10 @@ class ProjectHandler {
   // Get project milestones
   async getProjectMilestones(request, h) {
     try {
-      const { organizationId } = request;
+      const { organization_id } = request.auth.credentials;
       const { project_id, status, page = 1, limit = 10 } = request.query;
 
-      const milestones = await this.projectRepository.getMilestones(project_id, organizationId, {
+      const milestones = await this._service.getMilestones(project_id, organization_id, {
         status,
         page: parseInt(page, 10),
         limit: parseInt(limit, 10)
@@ -404,10 +429,10 @@ class ProjectHandler {
   // Get milestone by ID
   async getMilestoneById(request, h) {
     try {
-      const { organizationId } = request;
+      const { organization_id } = request.auth.credentials;
       const { id } = request.params;
 
-      const milestone = await this.projectRepository.getMilestoneById(id, organizationId);
+      const milestone = await this._service.getMilestoneById(id, organization_id);
 
       if (!milestone) {
         throw Boom.notFound('Milestone not found');
@@ -427,11 +452,11 @@ class ProjectHandler {
   // Update milestone
   async updateMilestone(request, h) {
     try {
-      const { organizationId } = request;
+      const { organization_id } = request.auth.credentials;
       const { id } = request.params;
       const updateData = request.payload;
 
-      const milestone = await this.projectRepository.updateMilestone(id, organizationId, updateData);
+      const milestone = await this._service.updateMilestone(id, organization_id, updateData);
 
       if (!milestone) {
         throw Boom.notFound('Milestone not found');
@@ -451,10 +476,10 @@ class ProjectHandler {
   // Delete milestone
   async deleteMilestone(request, h) {
     try {
-      const { organizationId } = request;
+      const { organization_id } = request.auth.credentials;
       const { id } = request.params;
 
-      const deleted = await this.projectRepository.deleteMilestone(id, organizationId);
+      const deleted = await this._service.deleteMilestone(id, organization_id);
 
       if (!deleted) {
         throw Boom.notFound('Milestone not found');
@@ -473,11 +498,11 @@ class ProjectHandler {
   // Update milestone status
   async updateMilestoneStatus(request, h) {
     try {
-      const { organizationId } = request;
+      const { organization_id } = request.auth.credentials;
       const { id } = request.params;
       const { status, completion_notes } = request.payload;
 
-      const milestone = await this.projectRepository.updateMilestoneStatus(id, organizationId, status, completion_notes);
+      const milestone = await this._service.updateMilestoneStatus(id, organization_id, status, completion_notes);
 
       if (!milestone) {
         throw Boom.notFound('Milestone not found');
@@ -499,9 +524,9 @@ class ProjectHandler {
   // Get project statistics
   async getProjectStatistics(request, h) {
     try {
-      const { organizationId } = request;
+      const { organizationId } = request.auth.credentials;
 
-      const statistics = await this.projectRepository.getStatistics(organizationId);
+      const statistics = await this._service.getStatistics(organizationId);
 
       return h.response({
         success: true,
@@ -516,10 +541,9 @@ class ProjectHandler {
   // Get project cost statistics
   async getProjectCostStatistics(request, h) {
     try {
-      const { organizationId } = request;
       const { project_id } = request.query;
 
-      const statistics = await this.projectRepository.getCostStatistics(project_id, organizationId);
+      const statistics = await this._service.getCostStatistics(project_id);
 
       return h.response({
         success: true,
@@ -532,4 +556,4 @@ class ProjectHandler {
   }
 }
 
-module.exports = new ProjectHandler();
+module.exports = ProjectHandler;

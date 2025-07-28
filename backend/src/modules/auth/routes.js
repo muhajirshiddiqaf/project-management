@@ -1,18 +1,13 @@
-const Joi = require('@hapi/joi');
-const authHandler = require('./handler');
-const authValidator = require('./validator');
-const { tenantIsolation, roleBasedAccess } = require('../../middleware');
-
-const routes = [
+const routes = (handler, auth) => [
   // === BASIC AUTH ROUTES ===
   {
     method: 'POST',
-    path: '/register',
-    handler: authHandler.register,
+    path: '/auth/register',
+    handler: handler.register,
     options: {
       auth: false,
       validate: {
-        payload: authValidator.register
+        payload: auth.register
       },
       tags: ['auth']
     }
@@ -20,12 +15,12 @@ const routes = [
 
   {
     method: 'POST',
-    path: '/login',
-    handler: authHandler.login,
+    path: '/auth/login',
+    handler: handler.login,
     options: {
       auth: false,
       validate: {
-        payload: authValidator.login
+        payload: auth.login
       },
       tags: ['auth']
     }
@@ -33,12 +28,12 @@ const routes = [
 
   {
     method: 'POST',
-    path: '/refresh-token',
-    handler: authHandler.refreshToken,
+    path: '/auth/refresh-token',
+    handler: handler.refreshToken,
     options: {
       auth: false,
       validate: {
-        payload: authValidator.refreshToken
+        payload: auth.refreshToken
       },
       tags: ['auth']
     }
@@ -46,13 +41,13 @@ const routes = [
 
   {
     method: 'POST',
-    path: '/logout',
-    handler: authHandler.logout,
+    path: '/auth/logout',
+    handler: handler.logout,
     options: {
       auth: 'jwt',
-      pre: [{ method: tenantIsolation }],
+      auth: "jwt",
       validate: {
-        payload: authValidator.logout
+        payload: auth.logout
       },
       tags: ['auth']
     }
@@ -61,12 +56,12 @@ const routes = [
   // === PASSWORD MANAGEMENT ===
   {
     method: 'POST',
-    path: '/forgot-password',
-    handler: authHandler.forgotPassword,
+    path: '/auth/forgot-password',
+    handler: handler.forgotPassword,
     options: {
       auth: false,
       validate: {
-        payload: authValidator.forgotPassword
+        payload: auth.forgotPassword
       },
       tags: ['auth']
     }
@@ -74,12 +69,12 @@ const routes = [
 
   {
     method: 'POST',
-    path: '/reset-password',
-    handler: authHandler.resetPassword,
+    path: '/auth/reset-password',
+    handler: handler.resetPassword,
     options: {
       auth: false,
       validate: {
-        payload: authValidator.resetPassword
+        payload: auth.resetPassword
       },
       tags: ['auth']
     }
@@ -87,13 +82,13 @@ const routes = [
 
   {
     method: 'PUT',
-    path: '/change-password',
-    handler: authHandler.changePassword,
+    path: '/auth/change-password',
+    handler: handler.changePassword,
     options: {
       auth: 'jwt',
-      pre: [{ method: tenantIsolation }],
+      auth: "jwt",
       validate: {
-        payload: authValidator.changePassword
+        payload: auth.changePassword
       },
       tags: ['auth']
     }
@@ -102,24 +97,24 @@ const routes = [
   // === PROFILE MANAGEMENT ===
   {
     method: 'GET',
-    path: '/profile',
-    handler: authHandler.getProfile,
+    path: '/auth/profile',
+    handler: handler.getProfile,
     options: {
       auth: 'jwt',
-      pre: [{ method: tenantIsolation }],
+      auth: "jwt",
       tags: ['auth']
     }
   },
 
   {
     method: 'PUT',
-    path: '/profile',
-    handler: authHandler.updateProfile,
+    path: '/auth/profile',
+    handler: handler.updateProfile,
     options: {
       auth: 'jwt',
-      pre: [{ method: tenantIsolation }],
+      auth: "jwt",
       validate: {
-        payload: authValidator.updateProfile
+        payload: auth.updateProfile
       },
       tags: ['auth']
     }
@@ -128,13 +123,13 @@ const routes = [
   // === 2FA ROUTES ===
   {
     method: 'POST',
-    path: '/2fa/setup',
-    handler: authHandler.setup2FA,
+    path: '/auth/2fa/setup',
+    handler: handler.setup2FA,
     options: {
       auth: 'jwt',
-      pre: [{ method: tenantIsolation }],
+      auth: "jwt",
       validate: {
-        payload: authValidator.setup2FA
+        payload: auth.setup2FA
       },
       tags: ['2fa']
     }
@@ -142,12 +137,12 @@ const routes = [
 
   {
     method: 'POST',
-    path: '/2fa/verify',
-    handler: authHandler.verify2FA,
+    path: '/auth/2fa/verify',
+    handler: handler.verify2FA,
     options: {
       auth: false,
       validate: {
-        payload: authValidator.verify2FA
+        payload: auth.verify2FA
       },
       tags: ['2fa']
     }
@@ -155,13 +150,13 @@ const routes = [
 
   {
     method: 'POST',
-    path: '/2fa/enable',
-    handler: authHandler.enable2FA,
+    path: '/auth/2fa/enable',
+    handler: handler.enable2FA,
     options: {
       auth: 'jwt',
-      pre: [{ method: tenantIsolation }],
+      auth: "jwt",
       validate: {
-        payload: authValidator.enable2FA
+        payload: auth.enable2FA
       },
       tags: ['2fa']
     }
@@ -169,13 +164,13 @@ const routes = [
 
   {
     method: 'POST',
-    path: '/2fa/disable',
-    handler: authHandler.disable2FA,
+    path: '/auth/2fa/disable',
+    handler: handler.disable2FA,
     options: {
       auth: 'jwt',
-      pre: [{ method: tenantIsolation }],
+      auth: "jwt",
       validate: {
-        payload: authValidator.disable2FA
+        payload: auth.disable2FA
       },
       tags: ['2fa']
     }
@@ -183,13 +178,23 @@ const routes = [
 
   {
     method: 'GET',
-    path: '/2fa/qr-code',
-    handler: authHandler.generateQRCode,
+    path: '/auth/2fa/qr-code',
+    handler: handler.generateQRCode,
     options: {
       auth: 'jwt',
-      pre: [{ method: tenantIsolation }],
+      auth: "jwt",
+      tags: ['2fa']
+    }
+  },
+
+  {
+    method: 'POST',
+    path: '/auth/2fa/verify-token',
+    handler: handler.verify2FAToken,
+    options: {
+      auth: false,
       validate: {
-        payload: authValidator.generateQRCode
+        payload: auth.verify2FAToken
       },
       tags: ['2fa']
     }
@@ -197,25 +202,12 @@ const routes = [
 
   {
     method: 'POST',
-    path: '/2fa/verify-token',
-    handler: authHandler.verify2FAToken,
+    path: '/auth/2fa/resend',
+    handler: handler.resend2FAToken,
     options: {
       auth: false,
       validate: {
-        payload: authValidator.verify2FAToken
-      },
-      tags: ['2fa']
-    }
-  },
-
-  {
-    method: 'POST',
-    path: '/2fa/resend',
-    handler: authHandler.resend2FAToken,
-    options: {
-      auth: false,
-      validate: {
-        payload: authValidator.resend2FAToken
+        payload: auth.resend2FAToken
       },
       tags: ['2fa']
     }
@@ -223,13 +215,24 @@ const routes = [
 
   {
     method: 'GET',
-    path: '/2fa/status',
-    handler: authHandler.get2FAStatus,
+    path: '/auth/2fa/status',
+    handler: handler.get2FAStatus,
     options: {
       auth: 'jwt',
-      pre: [{ method: tenantIsolation }],
+      auth: "jwt",
+      tags: ['2fa']
+    }
+  },
+
+  {
+    method: 'POST',
+    path: '/auth/2fa/backup-codes',
+    handler: handler.backupCodes,
+    options: {
+      auth: 'jwt',
+      auth: "jwt",
       validate: {
-        payload: authValidator.get2FAStatus
+        payload: auth.backupCodes
       },
       tags: ['2fa']
     }
@@ -237,26 +240,12 @@ const routes = [
 
   {
     method: 'POST',
-    path: '/2fa/backup-codes',
-    handler: authHandler.backupCodes,
-    options: {
-      auth: 'jwt',
-      pre: [{ method: tenantIsolation }],
-      validate: {
-        payload: authValidator.backupCodes
-      },
-      tags: ['2fa']
-    }
-  },
-
-  {
-    method: 'POST',
-    path: '/2fa/verify-backup',
-    handler: authHandler.verifyBackupCode,
+    path: '/auth/2fa/verify-backup',
+    handler: handler.verifyBackupCode,
     options: {
       auth: false,
       validate: {
-        payload: authValidator.verifyBackupCode
+        payload: auth.verifyBackupCode
       },
       tags: ['2fa']
     }
@@ -265,12 +254,12 @@ const routes = [
   // === 2FA RECOVERY ===
   {
     method: 'POST',
-    path: '/2fa/recovery/initiate',
-    handler: authHandler.initiate2FARecovery,
+    path: '/auth/2fa/recovery/initiate',
+    handler: handler.initiate2FARecovery,
     options: {
       auth: false,
       validate: {
-        payload: authValidator.initiate2FARecovery
+        payload: auth.initiate2FARecovery
       },
       tags: ['2fa']
     }
@@ -278,12 +267,12 @@ const routes = [
 
   {
     method: 'POST',
-    path: '/2fa/recovery/complete',
-    handler: authHandler.complete2FARecovery,
+    path: '/auth/2fa/recovery/complete',
+    handler: handler.complete2FARecovery,
     options: {
       auth: false,
       validate: {
-        payload: authValidator.complete2FARecovery
+        payload: auth.complete2FARecovery
       },
       tags: ['2fa']
     }
@@ -292,27 +281,24 @@ const routes = [
   // === 2FA SETTINGS ===
   {
     method: 'GET',
-    path: '/2fa/settings',
-    handler: authHandler.get2FASettings,
+    path: '/auth/2fa/settings',
+    handler: handler.get2FASettings,
     options: {
       auth: 'jwt',
-      pre: [{ method: tenantIsolation }],
-      validate: {
-        payload: authValidator.get2FASettings
-      },
+      auth: "jwt",
       tags: ['2fa']
     }
   },
 
   {
     method: 'PUT',
-    path: '/2fa/settings',
-    handler: authHandler.update2FASettings,
+    path: '/auth/2fa/settings',
+    handler: handler.update2FASettings,
     options: {
       auth: 'jwt',
-      pre: [{ method: tenantIsolation }],
+      auth: "jwt",
       validate: {
-        payload: authValidator.update2FASettings
+        payload: auth.update2FASettings
       },
       tags: ['2fa']
     }
@@ -321,27 +307,24 @@ const routes = [
   // === 2FA DEVICE MANAGEMENT ===
   {
     method: 'GET',
-    path: '/2fa/devices',
-    handler: authHandler.get2FADevices,
+    path: '/auth/2fa/devices',
+    handler: handler.get2FADevices,
     options: {
       auth: 'jwt',
-      pre: [{ method: tenantIsolation }],
-      validate: {
-        payload: authValidator.get2FADevices
-      },
+      auth: "jwt",
       tags: ['2fa']
     }
   },
 
   {
     method: 'DELETE',
-    path: '/2fa/devices/{device_id}',
-    handler: authHandler.revoke2FADevice,
+    path: '/auth/2fa/devices/{device_id}',
+    handler: handler.revoke2FADevice,
     options: {
       auth: 'jwt',
-      pre: [{ method: tenantIsolation }],
+      auth: "jwt",
       validate: {
-        params: authValidator.revoke2FADevice
+        params: auth.revoke2FADevice
       },
       tags: ['2fa']
     }
@@ -350,13 +333,13 @@ const routes = [
   // === 2FA LOGS ===
   {
     method: 'GET',
-    path: '/2fa/logs',
-    handler: authHandler.get2FALogs,
+    path: '/auth/2fa/logs',
+    handler: handler.get2FALogs,
     options: {
       auth: 'jwt',
-      pre: [{ method: tenantIsolation }],
+      auth: "jwt",
       validate: {
-        query: authValidator.get2FALogs
+        query: auth.get2FALogs
       },
       tags: ['2fa']
     }

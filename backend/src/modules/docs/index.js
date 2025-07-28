@@ -1,15 +1,13 @@
-const docsRoutes = require('./routes');
-const docsHandler = require('./handler');
-const DocsRepository = require('../../infrastructure/repositories/docsRepository');
+const DocsHandler = require('./handler');
+const routes = require('./routes');
 
-const docsModule = {
-  name: 'docs',
-  register: async function (server, options) {
-    const db = server.app.db;
-    const docsRepository = new DocsRepository(db);
-    docsHandler.setDocsRepository(docsRepository);
-    server.route(docsRoutes);
-  }
+const docs = async (server, { service, validator, auth }) => {
+  const docsHandler = new DocsHandler(service, validator);
+  server.route(routes(docsHandler, auth));
 };
 
-module.exports = docsModule;
+module.exports = {
+  name: 'docs',
+  version: '1.0.0',
+  register: docs
+};

@@ -1,22 +1,18 @@
-const userHandler = require('./handler');
-const userValidator = require('./validator');
-const { tenantIsolation, roleBasedAccess, permissionBasedAccess } = require('../../middleware');
-
-const routes = [
+const routes = (handler, auth) => [
   // === USER CRUD OPERATIONS ROUTES ===
   {
     method: 'POST',
     path: '/users',
-    handler: userHandler.createUser,
+    handler: handler.createUser,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['users:create']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['users:create']) }
       ],
       validate: {
-        payload: userValidator.createUser
+        payload: auth.createUser
       },
       tags: ['users']
     }
@@ -24,15 +20,15 @@ const routes = [
   {
     method: 'GET',
     path: '/users',
-    handler: userHandler.getUsers,
+    handler: handler.getUsers,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: userValidator.getUsers
+        query: auth.getUsers
       },
       tags: ['users']
     }
@@ -40,15 +36,15 @@ const routes = [
   {
     method: 'GET',
     path: '/users/{id}',
-    handler: userHandler.getUserById,
+    handler: handler.getUserById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        params: userValidator.getUserById
+        params: auth.getUserById
       },
       tags: ['users']
     }
@@ -56,17 +52,17 @@ const routes = [
   {
     method: 'PUT',
     path: '/users/{id}',
-    handler: userHandler.updateUser,
+    handler: handler.updateUser,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['users:update']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['users:update']) }
       ],
       validate: {
-        params: userValidator.getUserById,
-        payload: userValidator.updateUser
+        params: auth.getUserById,
+        payload: auth.updateUser
       },
       tags: ['users']
     }
@@ -74,16 +70,16 @@ const routes = [
   {
     method: 'DELETE',
     path: '/users/{id}',
-    handler: userHandler.deleteUser,
+    handler: handler.deleteUser,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['users:delete']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['users:delete']) }
       ],
       validate: {
-        params: userValidator.deleteUser
+        params: auth.deleteUser
       },
       tags: ['users']
     }
@@ -93,16 +89,16 @@ const routes = [
   {
     method: 'POST',
     path: '/roles',
-    handler: userHandler.createRole,
+    handler: handler.createRole,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['roles:create']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['roles:create']) }
       ],
       validate: {
-        payload: userValidator.createRole
+        payload: auth.createRole
       },
       tags: ['roles']
     }
@@ -110,15 +106,15 @@ const routes = [
   {
     method: 'GET',
     path: '/roles',
-    handler: userHandler.getRoles,
+    handler: handler.getRoles,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: userValidator.getRoles
+        query: auth.getRoles
       },
       tags: ['roles']
     }
@@ -126,15 +122,15 @@ const routes = [
   {
     method: 'GET',
     path: '/roles/{id}',
-    handler: userHandler.getRoleById,
+    handler: handler.getRoleById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        params: userValidator.getRoleById
+        params: auth.getRoleById
       },
       tags: ['roles']
     }
@@ -142,17 +138,17 @@ const routes = [
   {
     method: 'PUT',
     path: '/roles/{id}',
-    handler: userHandler.updateRole,
+    handler: handler.updateRole,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['roles:update']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['roles:update']) }
       ],
       validate: {
-        params: userValidator.getRoleById,
-        payload: userValidator.updateRole
+        params: auth.getRoleById,
+        payload: auth.updateRole
       },
       tags: ['roles']
     }
@@ -160,16 +156,16 @@ const routes = [
   {
     method: 'DELETE',
     path: '/roles/{id}',
-    handler: userHandler.deleteRole,
+    handler: handler.deleteRole,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['roles:delete']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['roles:delete']) }
       ],
       validate: {
-        params: userValidator.deleteRole
+        params: auth.deleteRole
       },
       tags: ['roles']
     }
@@ -177,16 +173,16 @@ const routes = [
   {
     method: 'POST',
     path: '/users/assign-role',
-    handler: userHandler.assignRoleToUser,
+    handler: handler.assignRoleToUser,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['users:assign_role']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['users:assign_role']) }
       ],
       validate: {
-        payload: userValidator.assignRoleToUser
+        payload: auth.assignRoleToUser
       },
       tags: ['users', 'roles']
     }
@@ -194,16 +190,16 @@ const routes = [
   {
     method: 'DELETE',
     path: '/users/remove-role',
-    handler: userHandler.removeRoleFromUser,
+    handler: handler.removeRoleFromUser,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['users:remove_role']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['users:remove_role']) }
       ],
       validate: {
-        payload: userValidator.removeRoleFromUser
+        payload: auth.removeRoleFromUser
       },
       tags: ['users', 'roles']
     }
@@ -211,15 +207,15 @@ const routes = [
   {
     method: 'GET',
     path: '/users/{user_id}/roles',
-    handler: userHandler.getUserRoles,
+    handler: handler.getUserRoles,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        params: userValidator.getUserRoles
+        params: auth.getUserRoles
       },
       tags: ['users', 'roles']
     }
@@ -229,16 +225,16 @@ const routes = [
   {
     method: 'POST',
     path: '/permissions',
-    handler: userHandler.createPermission,
+    handler: handler.createPermission,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['permissions:create']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['permissions:create']) }
       ],
       validate: {
-        payload: userValidator.createPermission
+        payload: auth.createPermission
       },
       tags: ['permissions']
     }
@@ -246,15 +242,15 @@ const routes = [
   {
     method: 'GET',
     path: '/permissions',
-    handler: userHandler.getPermissions,
+    handler: handler.getPermissions,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: userValidator.getPermissions
+        query: auth.getPermissions
       },
       tags: ['permissions']
     }
@@ -262,15 +258,15 @@ const routes = [
   {
     method: 'GET',
     path: '/permissions/{id}',
-    handler: userHandler.getPermissionById,
+    handler: handler.getPermissionById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        params: userValidator.getPermissionById
+        params: auth.getPermissionById
       },
       tags: ['permissions']
     }
@@ -278,17 +274,17 @@ const routes = [
   {
     method: 'PUT',
     path: '/permissions/{id}',
-    handler: userHandler.updatePermission,
+    handler: handler.updatePermission,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['permissions:update']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['permissions:update']) }
       ],
       validate: {
-        params: userValidator.getPermissionById,
-        payload: userValidator.updatePermission
+        params: auth.getPermissionById,
+        payload: auth.updatePermission
       },
       tags: ['permissions']
     }
@@ -296,16 +292,16 @@ const routes = [
   {
     method: 'DELETE',
     path: '/permissions/{id}',
-    handler: userHandler.deletePermission,
+    handler: handler.deletePermission,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['permissions:delete']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['permissions:delete']) }
       ],
       validate: {
-        params: userValidator.deletePermission
+        params: auth.deletePermission
       },
       tags: ['permissions']
     }
@@ -315,15 +311,15 @@ const routes = [
   {
     method: 'GET',
     path: '/user-activity-logs',
-    handler: userHandler.getUserActivityLogs,
+    handler: handler.getUserActivityLogs,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: userValidator.getUserActivityLogs
+        query: auth.getUserActivityLogs
       },
       tags: ['user-activity-logs']
     }
@@ -331,15 +327,15 @@ const routes = [
   {
     method: 'GET',
     path: '/user-activity-logs/{id}',
-    handler: userHandler.getActivityLogById,
+    handler: handler.getActivityLogById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        params: userValidator.getActivityLogById
+        params: auth.getActivityLogById
       },
       tags: ['user-activity-logs']
     }
@@ -349,11 +345,11 @@ const routes = [
   {
     method: 'POST',
     path: '/users/password-reset/initiate',
-    handler: userHandler.initiatePasswordReset,
+    handler: handler.initiatePasswordReset,
     options: {
       auth: false,
       validate: {
-        payload: userValidator.initiatePasswordReset
+        payload: auth.initiatePasswordReset
       },
       tags: ['password-reset']
     }
@@ -361,11 +357,11 @@ const routes = [
   {
     method: 'POST',
     path: '/users/password-reset/reset',
-    handler: userHandler.resetPassword,
+    handler: handler.resetPassword,
     options: {
       auth: false,
       validate: {
-        payload: userValidator.resetPassword
+        payload: auth.resetPassword
       },
       tags: ['password-reset']
     }
@@ -373,11 +369,11 @@ const routes = [
   {
     method: 'POST',
     path: '/users/password-reset/verify',
-    handler: userHandler.verifyPasswordResetToken,
+    handler: handler.verifyPasswordResetToken,
     options: {
       auth: false,
       validate: {
-        payload: userValidator.verifyPasswordResetToken
+        payload: auth.verifyPasswordResetToken
       },
       tags: ['password-reset']
     }
@@ -385,14 +381,14 @@ const routes = [
   {
     method: 'POST',
     path: '/users/change-password',
-    handler: userHandler.changePassword,
+    handler: handler.changePassword,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation }
+        //{ method: tenantIsolation }
       ],
       validate: {
-        payload: userValidator.changePassword
+        payload: auth.changePassword
       },
       tags: ['password-reset']
     }
@@ -402,14 +398,14 @@ const routes = [
   {
     method: 'PUT',
     path: '/users/profile',
-    handler: userHandler.updateProfile,
+    handler: handler.updateProfile,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation }
+        //{ method: tenantIsolation }
       ],
       validate: {
-        payload: userValidator.updateProfile
+        payload: auth.updateProfile
       },
       tags: ['user-profile']
     }
@@ -417,14 +413,14 @@ const routes = [
   {
     method: 'POST',
     path: '/users/avatar',
-    handler: userHandler.uploadAvatar,
+    handler: handler.uploadAvatar,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation }
+        //{ method: tenantIsolation }
       ],
       validate: {
-        payload: userValidator.uploadAvatar
+        payload: auth.uploadAvatar
       },
       tags: ['user-profile']
     }
@@ -434,15 +430,15 @@ const routes = [
   {
     method: 'GET',
     path: '/user-sessions',
-    handler: userHandler.getUserSessions,
+    handler: handler.getUserSessions,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: userValidator.getUserSessions
+        query: auth.getUserSessions
       },
       tags: ['user-sessions']
     }
@@ -450,15 +446,15 @@ const routes = [
   {
     method: 'DELETE',
     path: '/user-sessions/{session_id}',
-    handler: userHandler.revokeSession,
+    handler: handler.revokeSession,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        params: userValidator.revokeSession
+        params: auth.revokeSession
       },
       tags: ['user-sessions']
     }
@@ -466,15 +462,15 @@ const routes = [
   {
     method: 'DELETE',
     path: '/users/{user_id}/sessions',
-    handler: userHandler.revokeAllSessions,
+    handler: handler.revokeAllSessions,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        params: userValidator.revokeAllSessions
+        params: auth.revokeAllSessions
       },
       tags: ['user-sessions']
     }
@@ -484,15 +480,15 @@ const routes = [
   {
     method: 'GET',
     path: '/user-statistics',
-    handler: userHandler.getUserStatistics,
+    handler: handler.getUserStatistics,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: userValidator.getUserStatistics
+        query: auth.getUserStatistics
       },
       tags: ['user-statistics']
     }
@@ -502,16 +498,16 @@ const routes = [
   {
     method: 'PUT',
     path: '/users/bulk-update',
-    handler: userHandler.bulkUpdateUsers,
+    handler: handler.bulkUpdateUsers,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['users:bulk_update']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['users:bulk_update']) }
       ],
       validate: {
-        payload: userValidator.bulkUpdateUsers
+        payload: auth.bulkUpdateUsers
       },
       tags: ['users', 'bulk-operations']
     }
@@ -519,16 +515,16 @@ const routes = [
   {
     method: 'DELETE',
     path: '/users/bulk-delete',
-    handler: userHandler.bulkDeleteUsers,
+    handler: handler.bulkDeleteUsers,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['users:bulk_delete']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['users:bulk_delete']) }
       ],
       validate: {
-        payload: userValidator.bulkDeleteUsers
+        payload: auth.bulkDeleteUsers
       },
       tags: ['users', 'bulk-operations']
     }
@@ -538,16 +534,16 @@ const routes = [
   {
     method: 'POST',
     path: '/users/import',
-    handler: userHandler.importUsers,
+    handler: handler.importUsers,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['users:import']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['users:import']) }
       ],
       validate: {
-        payload: userValidator.importUsers
+        payload: auth.importUsers
       },
       tags: ['users', 'import-export']
     }
@@ -555,16 +551,16 @@ const routes = [
   {
     method: 'GET',
     path: '/users/export',
-    handler: userHandler.exportUsers,
+    handler: handler.exportUsers,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['users:export']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['users:export']) }
       ],
       validate: {
-        query: userValidator.exportUsers
+        query: auth.exportUsers
       },
       tags: ['users', 'import-export']
     }
@@ -574,14 +570,14 @@ const routes = [
   {
     method: 'GET',
     path: '/user-notifications',
-    handler: userHandler.getUserNotifications,
+    handler: handler.getUserNotifications,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation }
+        //{ method: tenantIsolation }
       ],
       validate: {
-        query: userValidator.getUserNotifications
+        query: auth.getUserNotifications
       },
       tags: ['user-notifications']
     }
@@ -589,14 +585,14 @@ const routes = [
   {
     method: 'PUT',
     path: '/user-notifications/{notification_id}/read',
-    handler: userHandler.markNotificationAsRead,
+    handler: handler.markNotificationAsRead,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation }
+        //{ method: tenantIsolation }
       ],
       validate: {
-        params: userValidator.markNotificationAsRead
+        params: auth.markNotificationAsRead
       },
       tags: ['user-notifications']
     }
@@ -604,14 +600,14 @@ const routes = [
   {
     method: 'PUT',
     path: '/user-notifications/read-all',
-    handler: userHandler.markAllNotificationsAsRead,
+    handler: handler.markAllNotificationsAsRead,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation }
+        //{ method: tenantIsolation }
       ],
       validate: {
-        payload: userValidator.markAllNotificationsAsRead
+        payload: auth.markAllNotificationsAsRead
       },
       tags: ['user-notifications']
     }
@@ -621,29 +617,26 @@ const routes = [
   {
     method: 'GET',
     path: '/user-preferences',
-    handler: userHandler.getUserPreferences,
+    handler: handler.getUserPreferences,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation }
+        //{ method: tenantIsolation }
       ],
-      validate: {
-        payload: userValidator.getUserPreferences
-      },
       tags: ['user-preferences']
     }
   },
   {
     method: 'PUT',
     path: '/user-preferences',
-    handler: userHandler.updateUserPreferences,
+    handler: handler.updateUserPreferences,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation }
+        //{ method: tenantIsolation }
       ],
       validate: {
-        payload: userValidator.updateUserPreferences
+        payload: auth.updateUserPreferences
       },
       tags: ['user-preferences']
     }

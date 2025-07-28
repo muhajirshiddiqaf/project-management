@@ -8,19 +8,20 @@ const authSchemas = {
   }),
 
   register: Joi.object({
-    name: Joi.string().min(2).max(100).required(),
     email: Joi.string().email().required(),
     password: Joi.string().min(6).required(),
-    organization_name: Joi.string().min(2).max(100).required(),
-    organization_domain: Joi.string().domain().optional()
+    firstName: Joi.string().min(2).max(100).required(),
+    lastName: Joi.string().min(2).max(100).required(),
+    organizationName: Joi.string().min(2).max(100).required(),
+    organizationSlug: Joi.string().min(2).max(50).optional()
   }),
 
   refreshToken: Joi.object({
-    refresh_token: Joi.string().required()
+    refreshToken: Joi.string().required()
   }),
 
   logout: Joi.object({
-    refresh_token: Joi.string().required()
+    refreshToken: Joi.string().required()
   }),
 
   forgotPassword: Joi.object({
@@ -29,19 +30,17 @@ const authSchemas = {
 
   resetPassword: Joi.object({
     token: Joi.string().required(),
-    password: Joi.string().min(6).required()
+    newPassword: Joi.string().min(6).required()
   }),
 
   changePassword: Joi.object({
-    current_password: Joi.string().required(),
-    new_password: Joi.string().min(6).required()
+    currentPassword: Joi.string().required(),
+    newPassword: Joi.string().min(6).required()
   }),
 
   updateProfile: Joi.object({
-    name: Joi.string().min(2).max(100).optional(),
-    email: Joi.string().email().optional(),
-    phone: Joi.string().optional(),
-    avatar: Joi.string().uri().optional()
+    firstName: Joi.string().min(2).max(100).optional(),
+    lastName: Joi.string().min(2).max(100).optional()
   }),
 
   // === NEW 2FA SCHEMAS ===
@@ -50,6 +49,7 @@ const authSchemas = {
   }),
 
   verify2FA: Joi.object({
+    userId: Joi.string().uuid().required(),
     token: Joi.string().length(6).pattern(/^[0-9]+$/).required()
   }),
 
@@ -58,7 +58,7 @@ const authSchemas = {
   }),
 
   disable2FA: Joi.object({
-    password: Joi.string().required()
+    token: Joi.string().length(6).pattern(/^[0-9]+$/).required()
   }),
 
   generateQRCode: Joi.object({
@@ -66,11 +66,12 @@ const authSchemas = {
   }),
 
   verify2FAToken: Joi.object({
+    userId: Joi.string().uuid().required(),
     token: Joi.string().length(6).pattern(/^[0-9]+$/).required()
   }),
 
   resend2FAToken: Joi.object({
-    // No payload required for resending 2FA token
+    email: Joi.string().email().required()
   }),
 
   get2FAStatus: Joi.object({
@@ -82,7 +83,8 @@ const authSchemas = {
   }),
 
   verifyBackupCode: Joi.object({
-    backup_code: Joi.string().length(10).pattern(/^[A-Z0-9]+$/).required()
+    backup_code: Joi.string().length(10).pattern(/^[A-Z0-9]+$/).required(),
+    email: Joi.string().email().required()
   }),
 
   // === 2FA RECOVERY SCHEMAS ===

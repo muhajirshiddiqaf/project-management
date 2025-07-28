@@ -1,22 +1,13 @@
-const projectRoutes = require('./routes');
-const projectHandler = require('./handler');
-const ProjectRepository = require('../../infrastructure/repositories/projectRepository');
+const ProjectHandler = require('./handler');
+const routes = require('./routes');
 
-const projectModule = {
-  name: 'project',
-  register: async function (server, options) {
-    // Get database connection
-    const db = server.app.db;
-
-    // Create repository instance
-    const projectRepository = new ProjectRepository(db);
-
-    // Inject repository into handler
-    projectHandler.setProjectRepository(projectRepository);
-
-    // Register routes
-    server.route(projectRoutes);
-  }
+const project = async (server, { service, validator, auth }) => {
+  const projectHandler = new ProjectHandler(service, validator);
+  server.route(routes(projectHandler, auth));
 };
 
-module.exports = projectModule;
+module.exports = {
+  name: 'project',
+  version: '1.0.0',
+  register: project
+};

@@ -1,13 +1,23 @@
 const Boom = require('@hapi/boom');
 
 class TicketHandler {
-  constructor() {
-    this.ticketRepository = null;
-  }
+  constructor(service, validator) {
+    this._service = service;
+    this._validator = validator;
 
-  // Set repository (dependency injection)
-  setTicketRepository(ticketRepository) {
-    this.ticketRepository = ticketRepository;
+    // Bind all methods to preserve 'this' context
+    this.getTickets = this.getTickets.bind(this);
+    this.getTicketById = this.getTicketById.bind(this);
+    this.createTicket = this.createTicket.bind(this);
+    this.updateTicket = this.updateTicket.bind(this);
+    this.deleteTicket = this.deleteTicket.bind(this);
+    this.searchTickets = this.searchTickets.bind(this);
+    this.getTicketMessages = this.getTicketMessages.bind(this);
+    this.getTicketMessageById = this.getTicketMessageById.bind(this);
+    this.createTicketMessage = this.createTicketMessage.bind(this);
+    this.updateTicketMessage = this.updateTicketMessage.bind(this);
+    this.deleteTicketMessage = this.deleteTicketMessage.bind(this);
+    this.updateTicketStatus = this.updateTicketStatus.bind(this);
   }
 
   // Get all tickets
@@ -16,7 +26,7 @@ class TicketHandler {
       const { organizationId } = request;
       const { page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'desc', status, priority, category, client_id, project_id, assigned_to, created_by } = request.query;
 
-      const tickets = await this.ticketRepository.findAll(organizationId, {
+      const tickets = await this._service.findAll(organizationId, {
         page: parseInt(page, 10),
         limit: parseInt(limit, 10),
         sortBy,
@@ -46,7 +56,7 @@ class TicketHandler {
       const { organizationId } = request;
       const { id } = request.params;
 
-      const ticket = await this.ticketRepository.findById(id, organizationId);
+      const ticket = await this._service.findById(id, organizationId);
 
       if (!ticket) {
         throw Boom.notFound('Ticket not found');
@@ -69,7 +79,7 @@ class TicketHandler {
       const { organizationId, userId } = request;
       const ticketData = request.payload;
 
-      const ticket = await this.ticketRepository.create({
+      const ticket = await this._service.create({
         ...ticketData,
         organization_id: organizationId,
         created_by: userId
@@ -92,7 +102,7 @@ class TicketHandler {
       const { id } = request.params;
       const updateData = request.payload;
 
-      const ticket = await this.ticketRepository.update(id, organizationId, updateData);
+      const ticket = await this._service.update(id, organizationId, updateData);
 
       if (!ticket) {
         throw Boom.notFound('Ticket not found');
@@ -115,7 +125,7 @@ class TicketHandler {
       const { organizationId } = request;
       const { id } = request.params;
 
-      const deleted = await this.ticketRepository.delete(id, organizationId);
+      const deleted = await this._service.delete(id, organizationId);
 
       if (!deleted) {
         throw Boom.notFound('Ticket not found');
@@ -137,7 +147,7 @@ class TicketHandler {
       const { organizationId } = request;
       const { q, page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'desc' } = request.query;
 
-      const tickets = await this.ticketRepository.search(organizationId, q, {
+      const tickets = await this._service.search(organizationId, q, {
         page: parseInt(page, 10),
         limit: parseInt(limit, 10),
         sortBy,
@@ -161,7 +171,7 @@ class TicketHandler {
       const { id } = request.params;
       const { status, notes } = request.payload;
 
-      const ticket = await this.ticketRepository.updateStatus(id, organizationId, status, notes);
+      const ticket = await this._service.updateStatus(id, organizationId, status, notes);
 
       if (!ticket) {
         throw Boom.notFound('Ticket not found');
@@ -185,7 +195,7 @@ class TicketHandler {
       const { id } = request.params;
       const { assigned_to } = request.payload;
 
-      const ticket = await this.ticketRepository.assign(id, organizationId, assigned_to);
+      const ticket = await this._service.assign(id, organizationId, assigned_to);
 
       if (!ticket) {
         throw Boom.notFound('Ticket not found');
@@ -208,7 +218,7 @@ class TicketHandler {
       const { organizationId, userId } = request;
       const { ticket_id, content, is_internal, attachments } = request.payload;
 
-      const comment = await this.ticketRepository.addComment(ticket_id, organizationId, {
+      const comment = await this._service.addComment(ticket_id, organizationId, {
         content,
         is_internal,
         attachments,
@@ -231,7 +241,7 @@ class TicketHandler {
       const { organizationId } = request;
       const { ticket_id, page = 1, limit = 10 } = request.query;
 
-      const comments = await this.ticketRepository.getComments(ticket_id, organizationId, {
+      const comments = await this._service.getComments(ticket_id, organizationId, {
         page: parseInt(page, 10),
         limit: parseInt(limit, 10)
       });
@@ -251,7 +261,7 @@ class TicketHandler {
     try {
       const { organizationId } = request;
 
-      const statistics = await this.ticketRepository.getStatistics(organizationId);
+      const statistics = await this._service.getStatistics(organizationId);
 
       return h.response({
         success: true,
@@ -271,7 +281,7 @@ class TicketHandler {
       const { organizationId } = request;
       const { ticket_id, message_type, is_internal, parent_message_id, page = 1, limit = 10 } = request.query;
 
-      const messages = await this.ticketRepository.getMessages(ticket_id, organizationId, {
+      const messages = await this._service.getMessages(ticket_id, organizationId, {
         message_type,
         is_internal,
         parent_message_id,
@@ -295,7 +305,7 @@ class TicketHandler {
       const { organizationId } = request;
       const { id } = request.params;
 
-      const message = await this.ticketRepository.getMessageById(id, organizationId);
+      const message = await this._service.getMessageById(id, organizationId);
 
       if (!message) {
         throw Boom.notFound('Ticket message not found');
@@ -318,7 +328,7 @@ class TicketHandler {
       const { organizationId, userId } = request;
       const messageData = request.payload;
 
-      const message = await this.ticketRepository.createMessage({
+      const message = await this._service.createMessage({
         ...messageData,
         organization_id: organizationId,
         created_by: userId
@@ -341,7 +351,7 @@ class TicketHandler {
       const { id } = request.params;
       const updateData = request.payload;
 
-      const message = await this.ticketRepository.updateMessage(id, organizationId, updateData);
+      const message = await this._service.updateMessage(id, organizationId, updateData);
 
       if (!message) {
         throw Boom.notFound('Ticket message not found');
@@ -364,7 +374,7 @@ class TicketHandler {
       const { organizationId } = request;
       const { id } = request.params;
 
-      const deleted = await this.ticketRepository.deleteMessage(id, organizationId);
+      const deleted = await this._service.deleteMessage(id, organizationId);
 
       if (!deleted) {
         throw Boom.notFound('Ticket message not found');
@@ -386,7 +396,7 @@ class TicketHandler {
       const { organizationId, userId } = request;
       const { ticket_id, parent_message_id, content, message_type, is_internal, attachments } = request.payload;
 
-      const reply = await this.ticketRepository.replyToMessage(ticket_id, parent_message_id, organizationId, {
+      const reply = await this._service.replyToMessage(ticket_id, parent_message_id, organizationId, {
         content,
         message_type,
         is_internal,
@@ -410,7 +420,7 @@ class TicketHandler {
       const { organizationId, userId } = request;
       const { message_id } = request.payload;
 
-      const result = await this.ticketRepository.markMessageAsRead(message_id, organizationId, userId);
+      const result = await this._service.markMessageAsRead(message_id, organizationId, userId);
 
       return h.response({
         success: true,
@@ -428,7 +438,7 @@ class TicketHandler {
       const { organizationId } = request;
       const { message_id, include_internal } = request.query;
 
-      const thread = await this.ticketRepository.getMessageThread(message_id, organizationId, include_internal);
+      const thread = await this._service.getMessageThread(message_id, organizationId, include_internal);
 
       return h.response({
         success: true,
@@ -446,7 +456,7 @@ class TicketHandler {
       const { organizationId, userId } = request;
       const { ticket_id, messages } = request.payload;
 
-      const createdMessages = await this.ticketRepository.bulkCreateMessages(ticket_id, organizationId, messages, userId);
+      const createdMessages = await this._service.bulkCreateMessages(ticket_id, organizationId, messages, userId);
 
       return h.response({
         success: true,
@@ -467,7 +477,7 @@ class TicketHandler {
       const { organizationId } = request;
       const { ticket_id, file } = request.payload;
 
-      const result = await this.ticketRepository.importMessages(ticket_id, organizationId, file);
+      const result = await this._service.importMessages(ticket_id, organizationId, file);
 
       return h.response({
         success: true,
@@ -485,7 +495,7 @@ class TicketHandler {
       const { organizationId } = request;
       const { ticket_id, format = 'csv', include_internal } = request.query;
 
-      const result = await this.ticketRepository.exportMessages(ticket_id, organizationId, format, include_internal);
+      const result = await this._service.exportMessages(ticket_id, organizationId, format, include_internal);
 
       return h.response(result.data)
         .header('Content-Type', result.contentType)
@@ -496,4 +506,4 @@ class TicketHandler {
   }
 }
 
-module.exports = new TicketHandler();
+module.exports = TicketHandler;

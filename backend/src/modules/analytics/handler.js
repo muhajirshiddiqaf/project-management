@@ -2,13 +2,27 @@ const Boom = require('@hapi/boom');
 const moment = require('moment');
 
 class AnalyticsHandler {
-  constructor() {
-    this.analyticsRepository = null;
-  }
+  constructor(service, validator) {
+    this._service = service;
+    this._validator = validator;
 
-  // Set repository (dependency injection)
-  setAnalyticsRepository(analyticsRepository) {
-    this.analyticsRepository = analyticsRepository;
+    // Bind all methods to preserve 'this' context
+    this.getDashboardOverview = this.getDashboardOverview.bind(this);
+    this.getRevenueAnalytics = this.getRevenueAnalytics.bind(this);
+    this.getClientAnalytics = this.getClientAnalytics.bind(this);
+    this.getOrderAnalytics = this.getOrderAnalytics.bind(this);
+    this.getTicketAnalytics = this.getTicketAnalytics.bind(this);
+    this.getProjectAnalytics = this.getProjectAnalytics.bind(this);
+    this.getServiceAnalytics = this.getServiceAnalytics.bind(this);
+    this.getQuotationAnalytics = this.getQuotationAnalytics.bind(this);
+    this.getInvoiceAnalytics = this.getInvoiceAnalytics.bind(this);
+    this.getPerformanceMetrics = this.getPerformanceMetrics.bind(this);
+    this.getGrowthAnalytics = this.getGrowthAnalytics.bind(this);
+    this.getCustomAnalytics = this.getCustomAnalytics.bind(this);
+    this.exportAnalyticsData = this.exportAnalyticsData.bind(this);
+    this.getRealTimeDashboard = this.getRealTimeDashboard.bind(this);
+    this.getActivityFeed = this.getActivityFeed.bind(this);
+    this.getAlertsAndNotifications = this.getAlertsAndNotifications.bind(this);
   }
 
   // === DASHBOARD OVERVIEW METHODS ===
@@ -18,7 +32,7 @@ class AnalyticsHandler {
       const organizationId = request.auth.credentials.organization_id;
 
       const filters = { period, start_date, end_date };
-      const overview = await this.analyticsRepository.getDashboardOverview(organizationId, filters);
+      const overview = await this._service.getDashboardOverview(organizationId, filters);
 
       return h.response({
         success: true,
@@ -37,7 +51,7 @@ class AnalyticsHandler {
       const organizationId = request.auth.credentials.organization_id;
 
       const filters = { period, start_date, end_date, group_by, include_projections };
-      const analytics = await this.analyticsRepository.getRevenueAnalytics(organizationId, filters);
+      const analytics = await this._service.getRevenueAnalytics(organizationId, filters);
 
       return h.response({
         success: true,
@@ -56,7 +70,7 @@ class AnalyticsHandler {
       const organizationId = request.auth.credentials.organization_id;
 
       const filters = { period, start_date, end_date, group_by, include_activity };
-      const analytics = await this.analyticsRepository.getClientAnalytics(organizationId, filters);
+      const analytics = await this._service.getClientAnalytics(organizationId, filters);
 
       return h.response({
         success: true,
@@ -75,7 +89,7 @@ class AnalyticsHandler {
       const organizationId = request.auth.credentials.organization_id;
 
       const filters = { period, start_date, end_date, status, group_by };
-      const analytics = await this.analyticsRepository.getOrderAnalytics(organizationId, filters);
+      const analytics = await this._service.getOrderAnalytics(organizationId, filters);
 
       return h.response({
         success: true,
@@ -94,7 +108,7 @@ class AnalyticsHandler {
       const organizationId = request.auth.credentials.organization_id;
 
       const filters = { period, start_date, end_date, priority, status, group_by };
-      const analytics = await this.analyticsRepository.getTicketAnalytics(organizationId, filters);
+      const analytics = await this._service.getTicketAnalytics(organizationId, filters);
 
       return h.response({
         success: true,
@@ -113,7 +127,7 @@ class AnalyticsHandler {
       const organizationId = request.auth.credentials.organization_id;
 
       const filters = { period, start_date, end_date, status, group_by };
-      const analytics = await this.analyticsRepository.getProjectAnalytics(organizationId, filters);
+      const analytics = await this._service.getProjectAnalytics(organizationId, filters);
 
       return h.response({
         success: true,
@@ -132,7 +146,7 @@ class AnalyticsHandler {
       const organizationId = request.auth.credentials.organization_id;
 
       const filters = { period, start_date, end_date, category_id, group_by };
-      const analytics = await this.analyticsRepository.getServiceAnalytics(organizationId, filters);
+      const analytics = await this._service.getServiceAnalytics(organizationId, filters);
 
       return h.response({
         success: true,
@@ -151,7 +165,7 @@ class AnalyticsHandler {
       const organizationId = request.auth.credentials.organization_id;
 
       const filters = { period, start_date, end_date, status, group_by };
-      const analytics = await this.analyticsRepository.getQuotationAnalytics(organizationId, filters);
+      const analytics = await this._service.getQuotationAnalytics(organizationId, filters);
 
       return h.response({
         success: true,
@@ -170,7 +184,7 @@ class AnalyticsHandler {
       const organizationId = request.auth.credentials.organization_id;
 
       const filters = { period, start_date, end_date, status, group_by };
-      const analytics = await this.analyticsRepository.getInvoiceAnalytics(organizationId, filters);
+      const analytics = await this._service.getInvoiceAnalytics(organizationId, filters);
 
       return h.response({
         success: true,
@@ -189,7 +203,7 @@ class AnalyticsHandler {
       const organizationId = request.auth.credentials.organization_id;
 
       const filters = { period, start_date, end_date, include_comparison };
-      const metrics = await this.analyticsRepository.getPerformanceMetrics(organizationId, filters);
+      const metrics = await this._service.getPerformanceMetrics(organizationId, filters);
 
       return h.response({
         success: true,
@@ -208,7 +222,7 @@ class AnalyticsHandler {
       const organizationId = request.auth.credentials.organization_id;
 
       const filters = { period, start_date, end_date, metric, include_forecast };
-      const analytics = await this.analyticsRepository.getGrowthAnalytics(organizationId, filters);
+      const analytics = await this._service.getGrowthAnalytics(organizationId, filters);
 
       return h.response({
         success: true,
@@ -226,7 +240,7 @@ class AnalyticsHandler {
       const { query_type, filters = {}, group_by = [], sort_by, sort_order = 'desc', limit = 100 } = request.payload;
       const organizationId = request.auth.credentials.organization_id;
 
-      const analytics = await this.analyticsRepository.getCustomAnalytics(organizationId, {
+      const analytics = await this._service.getCustomAnalytics(organizationId, {
         query_type,
         filters,
         group_by,
@@ -251,7 +265,7 @@ class AnalyticsHandler {
       const { query_type, format = 'csv', filters = {}, include_headers = true } = request.payload;
       const organizationId = request.auth.credentials.organization_id;
 
-      const exportData = await this.analyticsRepository.exportAnalyticsData(organizationId, {
+      const exportData = await this._service.exportAnalyticsData(organizationId, {
         query_type,
         format,
         filters,
@@ -279,7 +293,7 @@ class AnalyticsHandler {
       const { include_activity = true, include_alerts = true, refresh_interval = 30 } = request.query;
       const organizationId = request.auth.credentials.organization_id;
 
-      const dashboard = await this.analyticsRepository.getRealTimeDashboard(organizationId, {
+      const dashboard = await this._service.getRealTimeDashboard(organizationId, {
         include_activity,
         include_alerts,
         refresh_interval
@@ -303,8 +317,8 @@ class AnalyticsHandler {
       const filters = { activity_type, user_id, start_date, end_date };
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10) };
 
-      const activities = await this.analyticsRepository.getActivityFeed(organizationId, filters, pagination);
-      const total = await this.analyticsRepository.countActivityFeed(organizationId, filters);
+      const activities = await this._service.getActivityFeed(organizationId, filters, pagination);
+      const total = await this._service.countActivityFeed(organizationId, filters);
 
       return h.response({
         success: true,
@@ -330,8 +344,8 @@ class AnalyticsHandler {
       const filters = { alert_type, priority, status };
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10) };
 
-      const alerts = await this.analyticsRepository.getAlertsAndNotifications(organizationId, filters, pagination);
-      const total = await this.analyticsRepository.countAlertsAndNotifications(organizationId, filters);
+      const alerts = await this._service.getAlertsAndNotifications(organizationId, filters, pagination);
+      const total = await this._service.countAlertsAndNotifications(organizationId, filters);
 
       return h.response({
         success: true,
@@ -364,4 +378,4 @@ class AnalyticsHandler {
   }
 }
 
-module.exports = new AnalyticsHandler();
+module.exports = AnalyticsHandler;

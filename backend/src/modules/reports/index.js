@@ -1,15 +1,13 @@
-const reportsRoutes = require('./routes');
-const reportsHandler = require('./handler');
-const ReportsRepository = require('../../infrastructure/repositories/reportsRepository');
+const ReportsHandler = require('./handler');
+const routes = require('./routes');
 
-const reportsModule = {
-  name: 'reports',
-  register: async function (server, options) {
-    const db = server.app.db;
-    const reportsRepository = new ReportsRepository(db);
-    reportsHandler.setReportsRepository(reportsRepository);
-    server.route(reportsRoutes);
-  }
+const reports = async (server, { service, validator, auth }) => {
+  const reportsHandler = new ReportsHandler(service, validator);
+  server.route(routes(reportsHandler, auth));
 };
 
-module.exports = reportsModule;
+module.exports = {
+  name: 'reports',
+  version: '1.0.0',
+  register: reports
+};

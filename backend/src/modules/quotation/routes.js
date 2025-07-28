@@ -1,21 +1,17 @@
-const quotationHandler = require('./handler');
-const quotationValidator = require('./validator');
-const { tenantIsolation, roleBasedAccess, permissionBasedAccess } = require('../../middleware');
-
-const routes = [
+const routes = (handler, auth) => [
   // === QUOTATION CRUD ROUTES ===
   {
     method: 'GET',
     path: '/quotations',
-    handler: quotationHandler.getQuotations,
+    handler: handler.getQuotations,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        query: quotationValidator.getQuotations
+        query: auth.getQuotations
       },
       tags: ['quotations']
     }
@@ -23,15 +19,15 @@ const routes = [
   {
     method: 'GET',
     path: '/quotations/{id}',
-    handler: quotationHandler.getQuotationById,
+    handler: handler.getQuotationById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        params: quotationValidator.getQuotationById
+        params: auth.getQuotationById
       },
       tags: ['quotations']
     }
@@ -39,16 +35,16 @@ const routes = [
   {
     method: 'POST',
     path: '/quotations',
-    handler: quotationHandler.createQuotation,
+    handler: handler.createQuotation,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['quotation:create']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['quotation:create']) }
       ],
       validate: {
-        payload: quotationValidator.createQuotation
+        payload: auth.createQuotation
       },
       tags: ['quotations']
     }
@@ -56,17 +52,17 @@ const routes = [
   {
     method: 'PUT',
     path: '/quotations/{id}',
-    handler: quotationHandler.updateQuotation,
+    handler: handler.updateQuotation,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['quotation:update']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['quotation:update']) }
       ],
       validate: {
-        params: quotationValidator.getQuotationById,
-        payload: quotationValidator.updateQuotation
+        params: auth.getQuotationById,
+        payload: auth.updateQuotation
       },
       tags: ['quotations']
     }
@@ -74,16 +70,16 @@ const routes = [
   {
     method: 'DELETE',
     path: '/quotations/{id}',
-    handler: quotationHandler.deleteQuotation,
+    handler: handler.deleteQuotation,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['quotation:delete']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['quotation:delete']) }
       ],
       validate: {
-        params: quotationValidator.deleteQuotation
+        params: auth.deleteQuotation
       },
       tags: ['quotations']
     }
@@ -91,15 +87,15 @@ const routes = [
   {
     method: 'GET',
     path: '/quotations/search',
-    handler: quotationHandler.searchQuotations,
+    handler: handler.searchQuotations,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        query: quotationValidator.searchQuotations
+        query: auth.searchQuotations
       },
       tags: ['quotations']
     }
@@ -107,17 +103,17 @@ const routes = [
   {
     method: 'PUT',
     path: '/quotations/{id}/status',
-    handler: quotationHandler.updateQuotationStatus,
+    handler: handler.updateQuotationStatus,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['quotation:update_status']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['quotation:update_status']) }
       ],
       validate: {
-        params: quotationValidator.getQuotationById,
-        payload: quotationValidator.updateQuotationStatus
+        params: auth.getQuotationById,
+        payload: auth.updateQuotationStatus
       },
       tags: ['quotations']
     }
@@ -125,17 +121,17 @@ const routes = [
   {
     method: 'POST',
     path: '/quotations/{id}/send',
-    handler: quotationHandler.sendQuotation,
+    handler: handler.sendQuotation,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['quotation:send']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['quotation:send']) }
       ],
       validate: {
-        params: quotationValidator.getQuotationById,
-        payload: quotationValidator.sendQuotation
+        params: auth.getQuotationById,
+        payload: auth.sendQuotation
       },
       tags: ['quotations']
     }
@@ -143,16 +139,16 @@ const routes = [
   {
     method: 'POST',
     path: '/quotations/generate-from-project',
-    handler: quotationHandler.generateFromProject,
+    handler: handler.generateFromProject,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['quotation:generate']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['quotation:generate']) }
       ],
       validate: {
-        payload: quotationValidator.generateFromProject
+        payload: auth.generateFromProject
       },
       tags: ['quotations']
     }
@@ -162,15 +158,15 @@ const routes = [
   {
     method: 'GET',
     path: '/quotations/items',
-    handler: quotationHandler.getQuotationItems,
+    handler: handler.getQuotationItems,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        query: quotationValidator.getQuotationItems
+        query: auth.getQuotationItems
       },
       tags: ['quotation-items']
     }
@@ -178,15 +174,15 @@ const routes = [
   {
     method: 'GET',
     path: '/quotations/items/{id}',
-    handler: quotationHandler.getQuotationItemById,
+    handler: handler.getQuotationItemById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        params: quotationValidator.getQuotationItemById
+        params: auth.getQuotationItemById
       },
       tags: ['quotation-items']
     }
@@ -194,16 +190,16 @@ const routes = [
   {
     method: 'POST',
     path: '/quotations/items',
-    handler: quotationHandler.createQuotationItem,
+    handler: handler.createQuotationItem,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['quotation:create_item']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['quotation:create_item']) }
       ],
       validate: {
-        payload: quotationValidator.createQuotationItem
+        payload: auth.createQuotationItem
       },
       tags: ['quotation-items']
     }
@@ -211,17 +207,17 @@ const routes = [
   {
     method: 'PUT',
     path: '/quotations/items/{id}',
-    handler: quotationHandler.updateQuotationItem,
+    handler: handler.updateQuotationItem,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['quotation:update_item']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['quotation:update_item']) }
       ],
       validate: {
-        params: quotationValidator.getQuotationItemById,
-        payload: quotationValidator.updateQuotationItem
+        params: auth.getQuotationItemById,
+        payload: auth.updateQuotationItem
       },
       tags: ['quotation-items']
     }
@@ -229,16 +225,16 @@ const routes = [
   {
     method: 'DELETE',
     path: '/quotations/items/{id}',
-    handler: quotationHandler.deleteQuotationItem,
+    handler: handler.deleteQuotationItem,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['quotation:delete_item']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['quotation:delete_item']) }
       ],
       validate: {
-        params: quotationValidator.deleteQuotationItem
+        params: auth.deleteQuotationItem
       },
       tags: ['quotation-items']
     }
@@ -248,17 +244,17 @@ const routes = [
   {
     method: 'POST',
     path: '/quotations/{id}/approve',
-    handler: quotationHandler.approveQuotation,
+    handler: handler.approveQuotation,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['quotation:approve']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['quotation:approve']) }
       ],
       validate: {
-        params: quotationValidator.getQuotationById,
-        payload: quotationValidator.approveQuotation
+        params: auth.getQuotationById,
+        payload: auth.approveQuotation
       },
       tags: ['quotation-approval']
     }
@@ -266,17 +262,17 @@ const routes = [
   {
     method: 'POST',
     path: '/quotations/{id}/reject',
-    handler: quotationHandler.rejectQuotation,
+    handler: handler.rejectQuotation,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['quotation:reject']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['quotation:reject']) }
       ],
       validate: {
-        params: quotationValidator.getQuotationById,
-        payload: quotationValidator.rejectQuotation
+        params: auth.getQuotationById,
+        payload: auth.rejectQuotation
       },
       tags: ['quotation-approval']
     }
@@ -286,15 +282,15 @@ const routes = [
   {
     method: 'GET',
     path: '/quotations/statistics',
-    handler: quotationHandler.getQuotationStatistics,
+    handler: handler.getQuotationStatistics,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: quotationValidator.getQuotationStatistics
+        query: auth.getQuotationStatistics
       },
       tags: ['quotation-statistics']
     }
@@ -302,15 +298,15 @@ const routes = [
   {
     method: 'GET',
     path: '/quotations/items-statistics',
-    handler: quotationHandler.getQuotationItemsStatistics,
+    handler: handler.getQuotationItemsStatistics,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: quotationValidator.getQuotationItemsStatistics
+        query: auth.getQuotationItemsStatistics
       },
       tags: ['quotation-statistics']
     }
@@ -320,52 +316,35 @@ const routes = [
   {
     method: 'GET',
     path: '/quotations/calculate-totals',
-    handler: quotationHandler.calculateQuotationTotals,
+    handler: handler.calculateQuotationTotals,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        query: quotationValidator.calculateQuotationTotals
+        query: auth.calculateQuotationTotals
       },
       tags: ['quotations']
     }
   },
 
-  // === QUOTATION GENERATION FROM PROJECT ROUTES ===
-  {
-    method: 'POST',
-    path: '/quotations/generate-from-project',
-    handler: quotationHandler.generateQuotationFromProject,
-    options: {
-      auth: 'jwt',
-      pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['quotation:generate']) }
-      ],
-      validate: {
-        payload: quotationValidator.generateQuotationFromProject
-      },
-      tags: ['quotations']
-    }
-  },
+
 
   // === QUOTATION TEMPLATES ROUTES ===
   {
     method: 'GET',
     path: '/quotation-templates',
-    handler: quotationHandler.getQuotationTemplates,
+    handler: handler.getQuotationTemplates,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        query: quotationValidator.getQuotationTemplates
+        query: auth.getQuotationTemplates
       },
       tags: ['quotation-templates']
     }
@@ -374,16 +353,16 @@ const routes = [
   {
     method: 'POST',
     path: '/quotation-templates',
-    handler: quotationHandler.createQuotationTemplate,
+    handler: handler.createQuotationTemplate,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['quotation:create_template']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['quotation:create_template']) }
       ],
       validate: {
-        payload: quotationValidator.createQuotationTemplate
+        payload: auth.createQuotationTemplate
       },
       tags: ['quotation-templates']
     }
@@ -392,15 +371,15 @@ const routes = [
   {
     method: 'GET',
     path: '/quotation-templates/{id}',
-    handler: quotationHandler.getQuotationTemplateById,
+    handler: handler.getQuotationTemplateById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        params: quotationValidator.getQuotationTemplateById
+        params: auth.getQuotationTemplateById
       },
       tags: ['quotation-templates']
     }
@@ -409,17 +388,17 @@ const routes = [
   {
     method: 'PUT',
     path: '/quotation-templates/{id}',
-    handler: quotationHandler.updateQuotationTemplate,
+    handler: handler.updateQuotationTemplate,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['quotation:update_template']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['quotation:update_template']) }
       ],
       validate: {
-        params: quotationValidator.getQuotationTemplateById,
-        payload: quotationValidator.updateQuotationTemplate
+        params: auth.getQuotationTemplateById,
+        payload: auth.updateQuotationTemplate
       },
       tags: ['quotation-templates']
     }
@@ -428,16 +407,16 @@ const routes = [
   {
     method: 'DELETE',
     path: '/quotation-templates/{id}',
-    handler: quotationHandler.deleteQuotationTemplate,
+    handler: handler.deleteQuotationTemplate,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['quotation:delete_template']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['quotation:delete_template']) }
       ],
       validate: {
-        params: quotationValidator.deleteQuotationTemplate
+        params: auth.deleteQuotationTemplate
       },
       tags: ['quotation-templates']
     }
@@ -447,17 +426,17 @@ const routes = [
   {
     method: 'POST',
     path: '/quotations/{id}/submit-for-approval',
-    handler: quotationHandler.submitQuotationForApproval,
+    handler: handler.submitQuotationForApproval,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['quotation:submit_approval']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['quotation:submit_approval']) }
       ],
       validate: {
-        params: quotationValidator.getQuotationById,
-        payload: quotationValidator.submitQuotationForApproval
+        params: auth.getQuotationById,
+        payload: auth.submitQuotationForApproval
       },
       tags: ['quotation-approval']
     }
@@ -466,15 +445,15 @@ const routes = [
   {
     method: 'GET',
     path: '/approval-requests',
-    handler: quotationHandler.getApprovalRequests,
+    handler: handler.getApprovalRequests,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: quotationValidator.getApprovalRequests
+        query: auth.getApprovalRequests
       },
       tags: ['quotation-approval']
     }

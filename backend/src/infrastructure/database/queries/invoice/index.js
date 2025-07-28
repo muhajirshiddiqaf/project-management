@@ -16,7 +16,7 @@ const findAll = `
     AND ($4::uuid IS NULL OR i.project_id = $4)
     AND ($5::text IS NULL OR i.payment_method = $5)
     AND ($6::uuid IS NULL OR i.created_by = $6)
-  ORDER BY i.${sortBy} ${sortOrder}
+  ORDER BY i.created_at DESC
   LIMIT $7 OFFSET $8
 `;
 
@@ -80,7 +80,7 @@ const searchInvoices = `
       c.name ILIKE $2 OR
       c.email ILIKE $2
     )
-  ORDER BY i.${sortBy} ${sortOrder}
+  ORDER BY i.created_at DESC
   LIMIT $3 OFFSET $4
 `;
 

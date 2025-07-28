@@ -5,60 +5,74 @@ const clientQueries = {
   // Find all clients
   findAllClients: `
     SELECT * FROM clients
-    WHERE organization_id = $1 AND is_active = true
-    ORDER BY $2 $3
-    LIMIT $4 OFFSET $5
+    WHERE organization_id = $1
+    ORDER BY created_at DESC
+    LIMIT $2 OFFSET $3
   `,
 
   // Count clients
   countClients: `
     SELECT COUNT(*) FROM clients
-    WHERE organization_id = $1 AND is_active = true
+    WHERE organization_id = $1
   `,
 
   // Find client by ID
   findClientById: `
     SELECT * FROM clients
-    WHERE id = $1 AND organization_id = $2 AND is_active = true
+    WHERE id = $1 AND organization_id = $2
   `,
 
   // Create client
   createClient: `
-    INSERT INTO clients (name, email, phone, address, company, website, notes, organization_id)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    INSERT INTO clients (
+      organization_id, name, company_name, email, phone, address,
+      city, state, country, postal_code, website, industry,
+      client_type, status, source, notes, tags
+    )
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+    RETURNING *
+  `,
+
+  // Update client
+  updateClient: `
+    UPDATE clients
+    SET name = $3, company_name = $4, email = $5, phone = $6, address = $7,
+        city = $8, state = $9, country = $10, postal_code = $11, website = $12,
+        industry = $13, client_type = $14, status = $15, source = $16, notes = $17, tags = $18,
+        updated_at = NOW()
+    WHERE id = $1 AND organization_id = $2
     RETURNING *
   `,
 
   // Delete client
   deleteClient: `
-    UPDATE clients
-    SET is_active = false, updated_at = NOW()
-    WHERE id = $1 AND organization_id = $2 AND is_active = true
+    DELETE FROM clients
+    WHERE id = $1 AND organization_id = $2
     RETURNING *
   `,
 
   // Search clients
   searchClients: `
     SELECT * FROM clients
-    WHERE organization_id = $1 AND is_active = true
+    WHERE organization_id = $1
       AND (
         name ILIKE $2 OR
         email ILIKE $2 OR
-        company ILIKE $2 OR
+        company_name ILIKE $2 OR
         phone ILIKE $2
       )
-    ORDER BY $3 $4
-    LIMIT $5 OFFSET $6
+    ORDER BY created_at DESC
+    LIMIT $3 OFFSET $4
   `,
 
   // Count search clients
   countSearchClients: `
     SELECT COUNT(*) FROM clients
-    WHERE organization_id = $1 AND is_active = true
+    WHERE organization_id = $1
       AND (
         name ILIKE $2 OR
         email ILIKE $2 OR
-        company ILIKE $2 OR
+        company_name ILIKE $2 OR
         phone ILIKE $2
       )
   `,
@@ -70,15 +84,15 @@ const clientQueries = {
     SELECT cc.*, c.name as client_name, c.email as client_email
     FROM client_contacts cc
     JOIN clients c ON cc.client_id = c.id
-    WHERE cc.client_id = $1 AND cc.organization_id = $2 AND cc.is_active = true
+    WHERE cc.client_id = $1
     ORDER BY cc.is_primary DESC, cc.created_at DESC
-    LIMIT $3 OFFSET $4
+    LIMIT $2 OFFSET $3
   `,
 
   // Count client contacts
   countClientContacts: `
     SELECT COUNT(*) FROM client_contacts
-    WHERE client_id = $1 AND organization_id = $2 AND is_active = true
+    WHERE client_id = $1
   `,
 
   // Find client contact by ID
@@ -86,16 +100,15 @@ const clientQueries = {
     SELECT cc.*, c.name as client_name, c.email as client_email
     FROM client_contacts cc
     JOIN clients c ON cc.client_id = c.id
-    WHERE cc.id = $1 AND cc.organization_id = $2 AND cc.is_active = true
+    WHERE cc.id = $1
   `,
 
   // Create client contact
   createClientContact: `
     INSERT INTO client_contacts (
-      client_id, name, email, phone, position, department,
-      is_primary, notes, organization_id
+      client_id, name, email, phone, position, is_primary
     )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    VALUES ($1, $2, $3, $4, $5, $6)
     RETURNING *
   `,
 

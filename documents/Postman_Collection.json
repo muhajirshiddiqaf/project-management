@@ -1,13 +1,18 @@
 {
   "info": {
-    "name": "Project Management & Quotation System API",
-    "description": "Complete API collection for Project Management and Quotation System with all modules including Authentication, Organizations, Users, Clients, Projects, Quotations, Orders, Tickets, Invoices, Services, Cost Calculations, Email/PDF Management, Subscriptions, and Data Migration",
+    "name": "SaaS Project Management & Quotation System API",
+    "description": "Complete API collection for SaaS Project Management and Quotation System with multi-tenancy support. Includes Authentication, Organizations, Users, Clients, Projects, Quotations, Orders, Tickets, Invoices, Services, Analytics, Reports, Email/PDF Management, and Data Migration modules.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     {
       "key": "base_url",
       "value": "http://localhost:3000/api",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
       "type": "string"
     },
     {
@@ -69,7 +74,7 @@
   "item": [
     {
       "name": "🔐 Authentication",
-      "description": "User authentication and authorization endpoints",
+      "description": "User authentication and authorization endpoints with JWT support",
       "item": [
         {
           "name": "Register User",

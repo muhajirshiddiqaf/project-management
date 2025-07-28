@@ -1,15 +1,13 @@
-const emailRoutes = require('./routes');
-const emailHandler = require('./handler');
-const EmailRepository = require('../../infrastructure/repositories/emailRepository');
+const EmailHandler = require('./handler');
+const routes = require('./routes');
 
-const emailModule = {
-  name: 'email',
-  register: async function (server, options) {
-    const db = server.app.db;
-    const emailRepository = new EmailRepository(db);
-    emailHandler.setEmailRepository(emailRepository);
-    server.route(emailRoutes);
-  }
+const email = async (server, { service, validator, auth }) => {
+  const emailHandler = new EmailHandler(service, validator);
+  server.route(routes(emailHandler, auth));
 };
 
-module.exports = emailModule;
+module.exports = {
+  name: 'email',
+  version: '1.0.0',
+  register: email
+};

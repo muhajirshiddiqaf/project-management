@@ -1,22 +1,13 @@
-const invoiceRoutes = require('./routes');
-const invoiceHandler = require('./handler');
-const InvoiceRepository = require('../../infrastructure/repositories/invoiceRepository');
+const InvoiceHandler = require('./handler');
+const routes = require('./routes');
 
-const invoiceModule = {
-  name: 'invoice',
-  register: async function (server, options) {
-    // Get database connection
-    const db = server.app.db;
-
-    // Create repository instance
-    const invoiceRepository = new InvoiceRepository(db);
-
-    // Inject repository into handler
-    invoiceHandler.setInvoiceRepository(invoiceRepository);
-
-    // Register routes
-    server.route(invoiceRoutes);
-  }
+const invoice = async (server, { service, validator, auth }) => {
+  const invoiceHandler = new InvoiceHandler(service, validator);
+  server.route(routes(invoiceHandler, auth));
 };
 
-module.exports = invoiceModule;
+module.exports = {
+  name: 'invoice',
+  version: '1.0.0',
+  register: invoice
+};

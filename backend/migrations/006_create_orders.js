@@ -67,11 +67,6 @@ exports.up = pgm => {
       references: '"orders"',
       onDelete: 'CASCADE'
     },
-    service_id: {
-      type: 'uuid',
-      references: '"services"',
-      onDelete: 'SET NULL'
-    },
     name: { type: 'varchar(255)', notNull: true },
     description: { type: 'text' },
     quantity: { type: 'decimal(10,2)', default: 1 },

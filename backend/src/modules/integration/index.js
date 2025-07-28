@@ -21,7 +21,7 @@ const integrationPlugin = {
     server.route(routes);
 
     // Log plugin registration
-    console.log('Integration module registered successfully');
+    console.log('✅ Integration module registered with multi-tenant support');
   }
 };
 

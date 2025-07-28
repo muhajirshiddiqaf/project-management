@@ -5,13 +5,27 @@ const path = require('path');
 const archiver = require('archiver');
 
 class ReportsHandler {
-  constructor() {
-    this.reportsRepository = null;
-  }
+  constructor(service, validator) {
+    this._service = service;
+    this._validator = validator;
 
-  // Set repository (dependency injection)
-  setReportsRepository(reportsRepository) {
-    this.reportsRepository = reportsRepository;
+    // Bind all methods to preserve 'this' context
+    this.generateReport = this.generateReport.bind(this);
+    this.getScheduledReports = this.getScheduledReports.bind(this);
+    this.getScheduledReportById = this.getScheduledReportById.bind(this);
+    this.createScheduledReport = this.createScheduledReport.bind(this);
+    this.updateScheduledReport = this.updateScheduledReport.bind(this);
+    this.deleteScheduledReport = this.deleteScheduledReport.bind(this);
+    this.getReportTemplates = this.getReportTemplates.bind(this);
+    this.getReportTemplateById = this.getReportTemplateById.bind(this);
+    this.createReportTemplate = this.createReportTemplate.bind(this);
+    this.updateReportTemplate = this.updateReportTemplate.bind(this);
+    this.deleteReportTemplate = this.deleteReportTemplate.bind(this);
+    this.getReportHistory = this.getReportHistory.bind(this);
+    this.getReportById = this.getReportById.bind(this);
+    this.downloadReport = this.downloadReport.bind(this);
+    this.exportReportData = this.exportReportData.bind(this);
+    this.bulkGenerateReports = this.bulkGenerateReports.bind(this);
   }
 
   // === REPORT GENERATION METHODS ===
@@ -21,7 +35,7 @@ class ReportsHandler {
       const organizationId = request.auth.credentials.organization_id;
 
       // Create report record
-      const reportRecord = await this.reportsRepository.createReportRecord({
+      const reportRecord = await this._service.createReportRecord({
         organization_id: organizationId,
         report_type,
         format,
@@ -80,7 +94,7 @@ class ReportsHandler {
       }
 
       // Update report record
-      await this.reportsRepository.updateReportRecord(reportId, organizationId, {
+      await this._service.updateReportRecord(reportId, organizationId, {
         status: 'completed',
         file_path: filePath,
         file_size: Buffer.byteLength(reportContent),
@@ -89,7 +103,7 @@ class ReportsHandler {
 
     } catch (error) {
       console.error('Error generating report:', error);
-      await this.reportsRepository.updateReportRecord(reportId, organizationId, {
+      await this._service.updateReportRecord(reportId, organizationId, {
         status: 'failed',
         error_message: error.message,
         completed_at: new Date()
@@ -106,8 +120,8 @@ class ReportsHandler {
       const filters = { report_type, is_active };
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sortBy, sortOrder };
 
-      const reports = await this.reportsRepository.getScheduledReports(organizationId, filters, pagination);
-      const total = await this.reportsRepository.countScheduledReports(organizationId, filters);
+      const reports = await this._service.getScheduledReports(organizationId, filters, pagination);
+      const total = await this._service.countScheduledReports(organizationId, filters);
 
       return h.response({
         success: true,
@@ -130,7 +144,7 @@ class ReportsHandler {
       const { id } = request.params;
       const organizationId = request.auth.credentials.organization_id;
 
-      const report = await this.reportsRepository.getScheduledReportById(id, organizationId);
+      const report = await this._service.getScheduledReportById(id, organizationId);
       if (!report) {
         throw Boom.notFound('Scheduled report not found');
       }
@@ -154,7 +168,7 @@ class ReportsHandler {
         created_by: request.auth.credentials.user_id
       };
 
-      const report = await this.reportsRepository.createScheduledReport(reportData);
+      const report = await this._service.createScheduledReport(reportData);
 
       return h.response({
         success: true,
@@ -173,7 +187,7 @@ class ReportsHandler {
       const organizationId = request.auth.credentials.organization_id;
       const updateData = request.payload;
 
-      const report = await this.reportsRepository.updateScheduledReport(id, organizationId, updateData);
+      const report = await this._service.updateScheduledReport(id, organizationId, updateData);
       if (!report) {
         throw Boom.notFound('Scheduled report not found');
       }
@@ -195,7 +209,7 @@ class ReportsHandler {
       const { id } = request.params;
       const organizationId = request.auth.credentials.organization_id;
 
-      const report = await this.reportsRepository.deleteScheduledReport(id, organizationId);
+      const report = await this._service.deleteScheduledReport(id, organizationId);
       if (!report) {
         throw Boom.notFound('Scheduled report not found');
       }
@@ -220,8 +234,8 @@ class ReportsHandler {
       const filters = { report_type, is_active };
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sortBy, sortOrder };
 
-      const templates = await this.reportsRepository.getReportTemplates(organizationId, filters, pagination);
-      const total = await this.reportsRepository.countReportTemplates(organizationId, filters);
+      const templates = await this._service.getReportTemplates(organizationId, filters, pagination);
+      const total = await this._service.countReportTemplates(organizationId, filters);
 
       return h.response({
         success: true,
@@ -244,7 +258,7 @@ class ReportsHandler {
       const { id } = request.params;
       const organizationId = request.auth.credentials.organization_id;
 
-      const template = await this.reportsRepository.getReportTemplateById(id, organizationId);
+      const template = await this._service.getReportTemplateById(id, organizationId);
       if (!template) {
         throw Boom.notFound('Report template not found');
       }
@@ -268,7 +282,7 @@ class ReportsHandler {
         created_by: request.auth.credentials.user_id
       };
 
-      const template = await this.reportsRepository.createReportTemplate(templateData);
+      const template = await this._service.createReportTemplate(templateData);
 
       return h.response({
         success: true,
@@ -287,7 +301,7 @@ class ReportsHandler {
       const organizationId = request.auth.credentials.organization_id;
       const updateData = request.payload;
 
-      const template = await this.reportsRepository.updateReportTemplate(id, organizationId, updateData);
+      const template = await this._service.updateReportTemplate(id, organizationId, updateData);
       if (!template) {
         throw Boom.notFound('Report template not found');
       }
@@ -309,7 +323,7 @@ class ReportsHandler {
       const { id } = request.params;
       const organizationId = request.auth.credentials.organization_id;
 
-      const template = await this.reportsRepository.deleteReportTemplate(id, organizationId);
+      const template = await this._service.deleteReportTemplate(id, organizationId);
       if (!template) {
         throw Boom.notFound('Report template not found');
       }
@@ -334,8 +348,8 @@ class ReportsHandler {
       const filters = { report_type, status, start_date, end_date };
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sortBy, sortOrder };
 
-      const reports = await this.reportsRepository.getReportHistory(organizationId, filters, pagination);
-      const total = await this.reportsRepository.countReportHistory(organizationId, filters);
+      const reports = await this._service.getReportHistory(organizationId, filters, pagination);
+      const total = await this._service.countReportHistory(organizationId, filters);
 
       return h.response({
         success: true,
@@ -358,7 +372,7 @@ class ReportsHandler {
       const { id } = request.params;
       const organizationId = request.auth.credentials.organization_id;
 
-      const report = await this.reportsRepository.getReportById(id, organizationId);
+      const report = await this._service.getReportById(id, organizationId);
       if (!report) {
         throw Boom.notFound('Report not found');
       }
@@ -379,7 +393,7 @@ class ReportsHandler {
       const { id } = request.params;
       const organizationId = request.auth.credentials.organization_id;
 
-      const report = await this.reportsRepository.getReportById(id, organizationId);
+      const report = await this._service.getReportById(id, organizationId);
       if (!report) {
         throw Boom.notFound('Report not found');
       }
@@ -436,7 +450,7 @@ class ReportsHandler {
 
       const reportIds = [];
       const reportPromises = reports.map(async (reportConfig) => {
-        const reportRecord = await this.reportsRepository.createReportRecord({
+        const reportRecord = await this._service.createReportRecord({
           organization_id: organizationId,
           report_type: reportConfig.report_type,
           format: reportConfig.format,
@@ -481,7 +495,7 @@ class ReportsHandler {
   // === HELPER METHODS ===
   async getReportData(organizationId, reportType, filters = {}) {
     // Get data based on report type using analytics repository
-    const analyticsRepository = this.reportsRepository.getAnalyticsRepository();
+    const analyticsRepository = this._service.getAnalyticsRepository();
 
     switch (reportType) {
       case 'revenue':
@@ -507,7 +521,7 @@ class ReportsHandler {
 
   async generatePDFReport(data, options = {}) {
     // Generate PDF report using PDF module
-    const pdfHandler = this.reportsRepository.getPDFHandler();
+    const pdfHandler = this._service.getPDFHandler();
     return await pdfHandler.generatePDFContent(null, data, options);
   }
 
@@ -593,4 +607,4 @@ class ReportsHandler {
   }
 }
 
-module.exports = new ReportsHandler();
+module.exports = ReportsHandler;

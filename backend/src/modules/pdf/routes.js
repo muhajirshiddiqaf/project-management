@@ -1,22 +1,18 @@
-const pdfHandler = require('./handler');
-const pdfValidator = require('./validator');
-const { tenantIsolation, roleBasedAccess, permissionBasedAccess } = require('../../middleware');
-
-const routes = [
+const routes = (handler, auth) => [
   // === PDF GENERATION ROUTES ===
   {
     method: 'POST',
     path: '/pdfs/generate',
-    handler: pdfHandler.generatePDF,
+    handler: handler.generatePDF,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['pdf:generate']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['pdf:generate']) }
       ],
       validate: {
-        payload: pdfValidator.generatePDF
+        payload: auth.generatePDF
       },
       tags: ['pdfs']
     }
@@ -24,16 +20,16 @@ const routes = [
   {
     method: 'POST',
     path: '/pdfs/generate-quotation',
-    handler: pdfHandler.generateQuotationPDF,
+    handler: handler.generateQuotationPDF,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['pdf:generate_quotation']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['pdf:generate_quotation']) }
       ],
       validate: {
-        payload: pdfValidator.generateQuotationPDF
+        payload: auth.generateQuotationPDF
       },
       tags: ['pdfs']
     }
@@ -41,16 +37,16 @@ const routes = [
   {
     method: 'POST',
     path: '/pdfs/generate-invoice',
-    handler: pdfHandler.generateInvoicePDF,
+    handler: handler.generateInvoicePDF,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['pdf:generate_invoice']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['pdf:generate_invoice']) }
       ],
       validate: {
-        payload: pdfValidator.generateInvoicePDF
+        payload: auth.generateInvoicePDF
       },
       tags: ['pdfs']
     }
@@ -60,15 +56,15 @@ const routes = [
   {
     method: 'GET',
     path: '/pdf-templates',
-    handler: pdfHandler.getPDFTemplates,
+    handler: handler.getPDFTemplates,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        query: pdfValidator.getPDFTemplates
+        query: auth.getPDFTemplates
       },
       tags: ['pdf-templates']
     }
@@ -76,15 +72,15 @@ const routes = [
   {
     method: 'GET',
     path: '/pdf-templates/{id}',
-    handler: pdfHandler.getPDFTemplateById,
+    handler: handler.getPDFTemplateById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        params: pdfValidator.getPDFTemplateById
+        params: auth.getPDFTemplateById
       },
       tags: ['pdf-templates']
     }
@@ -92,16 +88,16 @@ const routes = [
   {
     method: 'POST',
     path: '/pdf-templates',
-    handler: pdfHandler.createPDFTemplate,
+    handler: handler.createPDFTemplate,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['pdf:create_template']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['pdf:create_template']) }
       ],
       validate: {
-        payload: pdfValidator.createPDFTemplate
+        payload: auth.createPDFTemplate
       },
       tags: ['pdf-templates']
     }
@@ -109,17 +105,17 @@ const routes = [
   {
     method: 'PUT',
     path: '/pdf-templates/{id}',
-    handler: pdfHandler.updatePDFTemplate,
+    handler: handler.updatePDFTemplate,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['pdf:update_template']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['pdf:update_template']) }
       ],
       validate: {
-        params: pdfValidator.getPDFTemplateById,
-        payload: pdfValidator.updatePDFTemplate
+        params: auth.getPDFTemplateById,
+        payload: auth.updatePDFTemplate
       },
       tags: ['pdf-templates']
     }
@@ -127,16 +123,16 @@ const routes = [
   {
     method: 'DELETE',
     path: '/pdf-templates/{id}',
-    handler: pdfHandler.deletePDFTemplate,
+    handler: handler.deletePDFTemplate,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['pdf:delete_template']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['pdf:delete_template']) }
       ],
       validate: {
-        params: pdfValidator.deletePDFTemplate
+        params: auth.deletePDFTemplate
       },
       tags: ['pdf-templates']
     }
@@ -146,16 +142,16 @@ const routes = [
   {
     method: 'POST',
     path: '/pdfs/compress',
-    handler: pdfHandler.compressPDF,
+    handler: handler.compressPDF,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['pdf:compress']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['pdf:compress']) }
       ],
       validate: {
-        payload: pdfValidator.compressPDF
+        payload: auth.compressPDF
       },
       tags: ['pdf-compression']
     }
@@ -165,16 +161,16 @@ const routes = [
   {
     method: 'POST',
     path: '/pdfs/sign',
-    handler: pdfHandler.signPDF,
+    handler: handler.signPDF,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['pdf:sign']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['pdf:sign']) }
       ],
       validate: {
-        payload: pdfValidator.signPDF
+        payload: auth.signPDF
       },
       tags: ['pdf-signatures']
     }
@@ -182,15 +178,15 @@ const routes = [
   {
     method: 'POST',
     path: '/pdfs/verify-signature',
-    handler: pdfHandler.verifyPDFSignature,
+    handler: handler.verifyPDFSignature,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        payload: pdfValidator.verifyPDFSignature
+        payload: auth.verifyPDFSignature
       },
       tags: ['pdf-signatures']
     }
@@ -200,16 +196,16 @@ const routes = [
   {
     method: 'POST',
     path: '/pdfs/merge',
-    handler: pdfHandler.mergePDFs,
+    handler: handler.mergePDFs,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['pdf:merge']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['pdf:merge']) }
       ],
       validate: {
-        payload: pdfValidator.mergePDFs
+        payload: auth.mergePDFs
       },
       tags: ['pdf-merge']
     }
@@ -219,15 +215,15 @@ const routes = [
   {
     method: 'GET',
     path: '/pdfs/statistics',
-    handler: pdfHandler.getPDFStatistics,
+    handler: handler.getPDFStatistics,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: pdfValidator.getPDFStatistics
+        query: auth.getPDFStatistics
       },
       tags: ['pdf-statistics']
     }
@@ -235,15 +231,15 @@ const routes = [
   {
     method: 'GET',
     path: '/pdf-templates/statistics',
-    handler: pdfHandler.getPDFTemplateStatistics,
+    handler: handler.getPDFTemplateStatistics,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: pdfValidator.getPDFTemplateStatistics
+        query: auth.getPDFTemplateStatistics
       },
       tags: ['pdf-statistics']
     }

@@ -1,21 +1,17 @@
-const organizationHandler = require('./handler');
-const organizationValidator = require('./validator');
-const { roleBasedAccess, permissionBasedAccess } = require('../../middleware');
-
-const routes = [
+const routes = (handler, auth) => [
   // === ORGANIZATION CRUD OPERATIONS ROUTES ===
   {
     method: 'POST',
     path: '/organizations',
-    handler: organizationHandler.createOrganization,
+    handler: handler.createOrganization,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['organizations:create']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['organizations:create']) }
       ],
       validate: {
-        payload: organizationValidator.createOrganization
+        payload: auth.createOrganization
       },
       tags: ['organizations']
     }
@@ -23,14 +19,14 @@ const routes = [
   {
     method: 'GET',
     path: '/organizations',
-    handler: organizationHandler.getOrganizations,
+    handler: handler.getOrganizations,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin', 'manager']) }
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: organizationValidator.getOrganizations
+        query: auth.getOrganizations
       },
       tags: ['organizations']
     }
@@ -38,14 +34,14 @@ const routes = [
   {
     method: 'GET',
     path: '/organizations/{id}',
-    handler: organizationHandler.getOrganizationById,
+    handler: handler.getOrganizationById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin', 'manager']) }
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        params: organizationValidator.getOrganizationById
+        params: auth.getOrganizationById
       },
       tags: ['organizations']
     }
@@ -53,16 +49,16 @@ const routes = [
   {
     method: 'PUT',
     path: '/organizations/{id}',
-    handler: organizationHandler.updateOrganization,
+    handler: handler.updateOrganization,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['organizations:update']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['organizations:update']) }
       ],
       validate: {
-        params: organizationValidator.getOrganizationById,
-        payload: organizationValidator.updateOrganization
+        params: auth.getOrganizationById,
+        payload: auth.updateOrganization
       },
       tags: ['organizations']
     }
@@ -70,15 +66,15 @@ const routes = [
   {
     method: 'DELETE',
     path: '/organizations/{id}',
-    handler: organizationHandler.deleteOrganization,
+    handler: handler.deleteOrganization,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['organizations:delete']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['organizations:delete']) }
       ],
       validate: {
-        params: organizationValidator.deleteOrganization
+        params: auth.deleteOrganization
       },
       tags: ['organizations']
     }
@@ -88,15 +84,15 @@ const routes = [
   {
     method: 'POST',
     path: '/subscription-plans',
-    handler: organizationHandler.createSubscriptionPlan,
+    handler: handler.createSubscriptionPlan,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['subscription_plans:create']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['subscription_plans:create']) }
       ],
       validate: {
-        payload: organizationValidator.createSubscriptionPlan
+        payload: auth.createSubscriptionPlan
       },
       tags: ['subscription-plans']
     }
@@ -104,14 +100,14 @@ const routes = [
   {
     method: 'GET',
     path: '/subscription-plans',
-    handler: organizationHandler.getSubscriptionPlans,
+    handler: handler.getSubscriptionPlans,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin', 'manager']) }
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: organizationValidator.getSubscriptionPlans
+        query: auth.getSubscriptionPlans
       },
       tags: ['subscription-plans']
     }
@@ -119,14 +115,14 @@ const routes = [
   {
     method: 'GET',
     path: '/subscription-plans/{id}',
-    handler: organizationHandler.getSubscriptionPlanById,
+    handler: handler.getSubscriptionPlanById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin', 'manager']) }
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        params: organizationValidator.getSubscriptionPlanById
+        params: auth.getSubscriptionPlanById
       },
       tags: ['subscription-plans']
     }
@@ -134,16 +130,16 @@ const routes = [
   {
     method: 'PUT',
     path: '/subscription-plans/{id}',
-    handler: organizationHandler.updateSubscriptionPlan,
+    handler: handler.updateSubscriptionPlan,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['subscription_plans:update']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['subscription_plans:update']) }
       ],
       validate: {
-        params: organizationValidator.getSubscriptionPlanById,
-        payload: organizationValidator.updateSubscriptionPlan
+        params: auth.getSubscriptionPlanById,
+        payload: auth.updateSubscriptionPlan
       },
       tags: ['subscription-plans']
     }
@@ -151,15 +147,15 @@ const routes = [
   {
     method: 'DELETE',
     path: '/subscription-plans/{id}',
-    handler: organizationHandler.deleteSubscriptionPlan,
+    handler: handler.deleteSubscriptionPlan,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['subscription_plans:delete']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['subscription_plans:delete']) }
       ],
       validate: {
-        params: organizationValidator.deleteSubscriptionPlan
+        params: auth.deleteSubscriptionPlan
       },
       tags: ['subscription-plans']
     }
@@ -169,15 +165,15 @@ const routes = [
   {
     method: 'POST',
     path: '/organizations/assign-subscription',
-    handler: organizationHandler.assignSubscriptionToOrganization,
+    handler: handler.assignSubscriptionToOrganization,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['organizations:assign_subscription']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['organizations:assign_subscription']) }
       ],
       validate: {
-        payload: organizationValidator.assignSubscriptionToOrganization
+        payload: auth.assignSubscriptionToOrganization
       },
       tags: ['organizations', 'subscriptions']
     }
@@ -185,16 +181,16 @@ const routes = [
   {
     method: 'PUT',
     path: '/organizations/{organization_id}/subscription',
-    handler: organizationHandler.updateOrganizationSubscription,
+    handler: handler.updateOrganizationSubscription,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['organizations:update_subscription']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['organizations:update_subscription']) }
       ],
       validate: {
-        params: organizationValidator.getOrganizationSubscription,
-        payload: organizationValidator.updateOrganizationSubscription
+        params: auth.getOrganizationSubscription,
+        payload: auth.updateOrganizationSubscription
       },
       tags: ['organizations', 'subscriptions']
     }
@@ -202,14 +198,14 @@ const routes = [
   {
     method: 'GET',
     path: '/organizations/{organization_id}/subscription',
-    handler: organizationHandler.getOrganizationSubscription,
+    handler: handler.getOrganizationSubscription,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin', 'manager']) }
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        params: organizationValidator.getOrganizationSubscription
+        params: auth.getOrganizationSubscription
       },
       tags: ['organizations', 'subscriptions']
     }
@@ -217,16 +213,16 @@ const routes = [
   {
     method: 'POST',
     path: '/organizations/{organization_id}/cancel-subscription',
-    handler: organizationHandler.cancelOrganizationSubscription,
+    handler: handler.cancelOrganizationSubscription,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['organizations:cancel_subscription']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['organizations:cancel_subscription']) }
       ],
       validate: {
-        params: organizationValidator.getOrganizationSubscription,
-        payload: organizationValidator.cancelOrganizationSubscription
+        params: auth.getOrganizationSubscription,
+        payload: auth.cancelOrganizationSubscription
       },
       tags: ['organizations', 'subscriptions']
     }
@@ -236,14 +232,14 @@ const routes = [
   {
     method: 'GET',
     path: '/organizations/{organization_id}/settings',
-    handler: organizationHandler.getTenantSettings,
+    handler: handler.getTenantSettings,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin', 'manager']) }
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        params: organizationValidator.getTenantSettings
+        params: auth.getTenantSettings
       },
       tags: ['organizations', 'settings']
     }
@@ -251,16 +247,16 @@ const routes = [
   {
     method: 'PUT',
     path: '/organizations/{organization_id}/settings',
-    handler: organizationHandler.updateTenantSettings,
+    handler: handler.updateTenantSettings,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['organizations:update_settings']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['organizations:update_settings']) }
       ],
       validate: {
-        params: organizationValidator.getTenantSettings,
-        payload: organizationValidator.updateTenantSettings
+        params: auth.getTenantSettings,
+        payload: auth.updateTenantSettings
       },
       tags: ['organizations', 'settings']
     }
@@ -270,15 +266,15 @@ const routes = [
   {
     method: 'POST',
     path: '/organizations/initiate-onboarding',
-    handler: organizationHandler.initiateOnboarding,
+    handler: handler.initiateOnboarding,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['organizations:initiate_onboarding']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['organizations:initiate_onboarding']) }
       ],
       validate: {
-        payload: organizationValidator.initiateOnboarding
+        payload: auth.initiateOnboarding
       },
       tags: ['organizations', 'onboarding']
     }
@@ -286,15 +282,15 @@ const routes = [
   {
     method: 'PUT',
     path: '/organizations/update-onboarding',
-    handler: organizationHandler.updateOnboardingProgress,
+    handler: handler.updateOnboardingProgress,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['organizations:update_onboarding']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['organizations:update_onboarding']) }
       ],
       validate: {
-        payload: organizationValidator.updateOnboardingProgress
+        payload: auth.updateOnboardingProgress
       },
       tags: ['organizations', 'onboarding']
     }
@@ -302,14 +298,14 @@ const routes = [
   {
     method: 'GET',
     path: '/organizations/{organization_id}/onboarding-status',
-    handler: organizationHandler.getOnboardingStatus,
+    handler: handler.getOnboardingStatus,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin', 'manager']) }
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        params: organizationValidator.getOnboardingStatus
+        params: auth.getOnboardingStatus
       },
       tags: ['organizations', 'onboarding']
     }
@@ -319,15 +315,15 @@ const routes = [
   {
     method: 'POST',
     path: '/organizations/initiate-offboarding',
-    handler: organizationHandler.initiateOffboarding,
+    handler: handler.initiateOffboarding,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['organizations:initiate_offboarding']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['organizations:initiate_offboarding']) }
       ],
       validate: {
-        payload: organizationValidator.initiateOffboarding
+        payload: auth.initiateOffboarding
       },
       tags: ['organizations', 'offboarding']
     }
@@ -335,15 +331,15 @@ const routes = [
   {
     method: 'PUT',
     path: '/organizations/update-offboarding',
-    handler: organizationHandler.updateOffboardingProgress,
+    handler: handler.updateOffboardingProgress,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['organizations:update_offboarding']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['organizations:update_offboarding']) }
       ],
       validate: {
-        payload: organizationValidator.updateOffboardingProgress
+        payload: auth.updateOffboardingProgress
       },
       tags: ['organizations', 'offboarding']
     }
@@ -351,14 +347,14 @@ const routes = [
   {
     method: 'GET',
     path: '/organizations/{organization_id}/offboarding-status',
-    handler: organizationHandler.getOffboardingStatus,
+    handler: handler.getOffboardingStatus,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin', 'manager']) }
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        params: organizationValidator.getOffboardingStatus
+        params: auth.getOffboardingStatus
       },
       tags: ['organizations', 'offboarding']
     }
@@ -368,14 +364,14 @@ const routes = [
   {
     method: 'GET',
     path: '/organizations/statistics',
-    handler: organizationHandler.getOrganizationStatistics,
+    handler: handler.getOrganizationStatistics,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin', 'manager']) }
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: organizationValidator.getOrganizationStatistics
+        query: auth.getOrganizationStatistics
       },
       tags: ['organizations', 'statistics']
     }
@@ -385,15 +381,15 @@ const routes = [
   {
     method: 'PUT',
     path: '/organizations/bulk-update',
-    handler: organizationHandler.bulkUpdateOrganizations,
+    handler: handler.bulkUpdateOrganizations,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['organizations:bulk_update']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['organizations:bulk_update']) }
       ],
       validate: {
-        payload: organizationValidator.bulkUpdateOrganizations
+        payload: auth.bulkUpdateOrganizations
       },
       tags: ['organizations', 'bulk-operations']
     }
@@ -401,15 +397,15 @@ const routes = [
   {
     method: 'DELETE',
     path: '/organizations/bulk-delete',
-    handler: organizationHandler.bulkDeleteOrganizations,
+    handler: handler.bulkDeleteOrganizations,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['organizations:bulk_delete']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['organizations:bulk_delete']) }
       ],
       validate: {
-        payload: organizationValidator.bulkDeleteOrganizations
+        payload: auth.bulkDeleteOrganizations
       },
       tags: ['organizations', 'bulk-operations']
     }
@@ -419,15 +415,15 @@ const routes = [
   {
     method: 'POST',
     path: '/organizations/import',
-    handler: organizationHandler.importOrganizations,
+    handler: handler.importOrganizations,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['organizations:import']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['organizations:import']) }
       ],
       validate: {
-        payload: organizationValidator.importOrganizations
+        payload: auth.importOrganizations
       },
       tags: ['organizations', 'import-export']
     }
@@ -435,15 +431,15 @@ const routes = [
   {
     method: 'GET',
     path: '/organizations/export',
-    handler: organizationHandler.exportOrganizations,
+    handler: handler.exportOrganizations,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['organizations:export']) }
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['organizations:export']) }
       ],
       validate: {
-        query: organizationValidator.exportOrganizations
+        query: auth.exportOrganizations
       },
       tags: ['organizations', 'import-export']
     }

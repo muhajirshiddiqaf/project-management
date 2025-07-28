@@ -1,15 +1,13 @@
-const pdfRoutes = require('./routes');
-const pdfHandler = require('./handler');
-const PDFRepository = require('../../infrastructure/repositories/pdfRepository');
+const PdfHandler = require('./handler');
+const routes = require('./routes');
 
-const pdfModule = {
-  name: 'pdf',
-  register: async function (server, options) {
-    const db = server.app.db;
-    const pdfRepository = new PDFRepository(db);
-    pdfHandler.setPDFRepository(pdfRepository);
-    server.route(pdfRoutes);
-  }
+const pdf = async (server, { service, validator, auth }) => {
+  const pdfHandler = new PdfHandler(service, validator);
+  server.route(routes(pdfHandler, auth));
 };
 
-module.exports = pdfModule;
+module.exports = {
+  name: 'pdf',
+  version: '1.0.0',
+  register: pdf
+};

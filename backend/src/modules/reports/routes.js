@@ -1,22 +1,18 @@
-const reportsHandler = require('./handler');
-const reportsValidator = require('./validator');
-const { tenantIsolation, roleBasedAccess, permissionBasedAccess } = require('../../middleware');
-
-const routes = [
+const routes = (handler, auth) => [
   // === REPORT GENERATION ROUTES ===
   {
     method: 'POST',
     path: '/reports/generate',
-    handler: reportsHandler.generateReport,
+    handler: handler.generateReport,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['reports:generate']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['reports:generate']) }
       ],
       validate: {
-        payload: reportsValidator.generateReport
+        payload: auth.generateReport
       },
       tags: ['reports']
     }
@@ -26,15 +22,15 @@ const routes = [
   {
     method: 'GET',
     path: '/scheduled-reports',
-    handler: reportsHandler.getScheduledReports,
+    handler: handler.getScheduledReports,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: reportsValidator.getScheduledReports
+        query: auth.getScheduledReports
       },
       tags: ['scheduled-reports']
     }
@@ -42,15 +38,15 @@ const routes = [
   {
     method: 'GET',
     path: '/scheduled-reports/{id}',
-    handler: reportsHandler.getScheduledReportById,
+    handler: handler.getScheduledReportById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        params: reportsValidator.getScheduledReportById
+        params: auth.getScheduledReportById
       },
       tags: ['scheduled-reports']
     }
@@ -58,16 +54,16 @@ const routes = [
   {
     method: 'POST',
     path: '/scheduled-reports',
-    handler: reportsHandler.createScheduledReport,
+    handler: handler.createScheduledReport,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['reports:create_scheduled']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['reports:create_scheduled']) }
       ],
       validate: {
-        payload: reportsValidator.createScheduledReport
+        payload: auth.createScheduledReport
       },
       tags: ['scheduled-reports']
     }
@@ -75,17 +71,17 @@ const routes = [
   {
     method: 'PUT',
     path: '/scheduled-reports/{id}',
-    handler: reportsHandler.updateScheduledReport,
+    handler: handler.updateScheduledReport,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['reports:update_scheduled']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['reports:update_scheduled']) }
       ],
       validate: {
-        params: reportsValidator.getScheduledReportById,
-        payload: reportsValidator.updateScheduledReport
+        params: auth.getScheduledReportById,
+        payload: auth.updateScheduledReport
       },
       tags: ['scheduled-reports']
     }
@@ -93,16 +89,16 @@ const routes = [
   {
     method: 'DELETE',
     path: '/scheduled-reports/{id}',
-    handler: reportsHandler.deleteScheduledReport,
+    handler: handler.deleteScheduledReport,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['reports:delete_scheduled']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['reports:delete_scheduled']) }
       ],
       validate: {
-        params: reportsValidator.deleteScheduledReport
+        params: auth.deleteScheduledReport
       },
       tags: ['scheduled-reports']
     }
@@ -112,15 +108,15 @@ const routes = [
   {
     method: 'GET',
     path: '/report-templates',
-    handler: reportsHandler.getReportTemplates,
+    handler: handler.getReportTemplates,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: reportsValidator.getReportTemplates
+        query: auth.getReportTemplates
       },
       tags: ['report-templates']
     }
@@ -128,15 +124,15 @@ const routes = [
   {
     method: 'GET',
     path: '/report-templates/{id}',
-    handler: reportsHandler.getReportTemplateById,
+    handler: handler.getReportTemplateById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        params: reportsValidator.getReportTemplateById
+        params: auth.getReportTemplateById
       },
       tags: ['report-templates']
     }
@@ -144,16 +140,16 @@ const routes = [
   {
     method: 'POST',
     path: '/report-templates',
-    handler: reportsHandler.createReportTemplate,
+    handler: handler.createReportTemplate,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['reports:create_template']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['reports:create_template']) }
       ],
       validate: {
-        payload: reportsValidator.createReportTemplate
+        payload: auth.createReportTemplate
       },
       tags: ['report-templates']
     }
@@ -161,17 +157,17 @@ const routes = [
   {
     method: 'PUT',
     path: '/report-templates/{id}',
-    handler: reportsHandler.updateReportTemplate,
+    handler: handler.updateReportTemplate,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['reports:update_template']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['reports:update_template']) }
       ],
       validate: {
-        params: reportsValidator.getReportTemplateById,
-        payload: reportsValidator.updateReportTemplate
+        params: auth.getReportTemplateById,
+        payload: auth.updateReportTemplate
       },
       tags: ['report-templates']
     }
@@ -179,16 +175,16 @@ const routes = [
   {
     method: 'DELETE',
     path: '/report-templates/{id}',
-    handler: reportsHandler.deleteReportTemplate,
+    handler: handler.deleteReportTemplate,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['reports:delete_template']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['reports:delete_template']) }
       ],
       validate: {
-        params: reportsValidator.deleteReportTemplate
+        params: auth.deleteReportTemplate
       },
       tags: ['report-templates']
     }
@@ -198,15 +194,15 @@ const routes = [
   {
     method: 'GET',
     path: '/reports/history',
-    handler: reportsHandler.getReportHistory,
+    handler: handler.getReportHistory,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: reportsValidator.getReportHistory
+        query: auth.getReportHistory
       },
       tags: ['reports']
     }
@@ -214,15 +210,15 @@ const routes = [
   {
     method: 'GET',
     path: '/reports/{id}',
-    handler: reportsHandler.getReportById,
+    handler: handler.getReportById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        params: reportsValidator.getReportById
+        params: auth.getReportById
       },
       tags: ['reports']
     }
@@ -230,15 +226,15 @@ const routes = [
   {
     method: 'GET',
     path: '/reports/{id}/download',
-    handler: reportsHandler.downloadReport,
+    handler: handler.downloadReport,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        params: reportsValidator.downloadReport
+        params: auth.downloadReport
       },
       tags: ['reports']
     }
@@ -248,16 +244,16 @@ const routes = [
   {
     method: 'POST',
     path: '/reports/export',
-    handler: reportsHandler.exportReportData,
+    handler: handler.exportReportData,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['reports:export']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['reports:export']) }
       ],
       validate: {
-        payload: reportsValidator.exportReportData
+        payload: auth.exportReportData
       },
       tags: ['reports']
     }
@@ -267,16 +263,16 @@ const routes = [
   {
     method: 'POST',
     path: '/reports/bulk-generate',
-    handler: reportsHandler.bulkGenerateReports,
+    handler: handler.bulkGenerateReports,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['reports:bulk_generate']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['reports:bulk_generate']) }
       ],
       validate: {
-        payload: reportsValidator.bulkGenerateReports
+        payload: auth.bulkGenerateReports
       },
       tags: ['reports']
     }

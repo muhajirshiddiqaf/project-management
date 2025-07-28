@@ -1,31 +1,13 @@
-const Hapi = require('@hapi/hapi');
+const OrderHandler = require('./handler');
+const routes = require('./routes');
 
-// Import routes
-const orderRoutes = require('./routes');
-
-// Import handler
-const orderHandler = require('./handler');
-
-// Import repositories
-const { OrderRepository } = require('../../infrastructure/repositories');
-
-// Order module registration
-const register = async (server, options) => {
-  // Register routes
-  server.route(orderRoutes);
-
-  // Inject database into repositories
-  const orderRepository = new OrderRepository(server.app.db);
-
-  // Inject repository into handler
-  orderHandler.setOrderRepository(orderRepository);
-
-  console.log('✅ Order module registered with multi-tenant support');
+const order = async (server, { service, validator, auth }) => {
+  const orderHandler = new OrderHandler(service, validator);
+  server.route(routes(orderHandler, auth));
 };
 
-const name = 'order';
-
 module.exports = {
-  register,
-  name
+  name: 'order',
+  version: '1.0.0',
+  register: order
 };

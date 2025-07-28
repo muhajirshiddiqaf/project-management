@@ -1,21 +1,17 @@
-const systemHandler = require('./handler');
-const systemValidator = require('./validator');
-const { roleBasedAccess, permissionBasedAccess } = require('../../middleware');
-
-const routes = [
+const routes = (handler, auth) => [
   // === GENERAL SYSTEM SETTINGS ROUTES ===
   {
     method: 'GET',
     path: '/system/settings/general',
-    handler: systemHandler.getGeneralSettings,
+    handler: handler.getGeneralSettings,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['system:read']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['system:read']) }
       ],
       validate: {
-        query: systemValidator.getGeneralSettings
+        query: auth.getGeneralSettings
       },
       tags: ['system', 'settings']
     }
@@ -23,15 +19,15 @@ const routes = [
   {
     method: 'PUT',
     path: '/system/settings/general',
-    handler: systemHandler.updateGeneralSettings,
+    handler: handler.updateGeneralSettings,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['system:update']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['system:update']) }
       ],
       validate: {
-        payload: systemValidator.updateGeneralSettings
+        payload: auth.updateGeneralSettings
       },
       tags: ['system', 'settings']
     }
@@ -41,15 +37,15 @@ const routes = [
   {
     method: 'GET',
     path: '/system/settings/notifications',
-    handler: systemHandler.getNotificationSettings,
+    handler: handler.getNotificationSettings,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['system:read']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['system:read']) }
       ],
       validate: {
-        query: systemValidator.getNotificationSettings
+        query: auth.getNotificationSettings
       },
       tags: ['system', 'settings']
     }
@@ -57,15 +53,15 @@ const routes = [
   {
     method: 'PUT',
     path: '/system/settings/notifications',
-    handler: systemHandler.updateNotificationSettings,
+    handler: handler.updateNotificationSettings,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['system:update']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['system:update']) }
       ],
       validate: {
-        payload: systemValidator.updateNotificationSettings
+        payload: auth.updateNotificationSettings
       },
       tags: ['system', 'settings']
     }
@@ -75,15 +71,15 @@ const routes = [
   {
     method: 'GET',
     path: '/system/settings/integrations',
-    handler: systemHandler.getIntegrationSettings,
+    handler: handler.getIntegrationSettings,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['system:read']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['system:read']) }
       ],
       validate: {
-        query: systemValidator.getIntegrationSettings
+        query: auth.getIntegrationSettings
       },
       tags: ['system', 'settings']
     }
@@ -91,15 +87,15 @@ const routes = [
   {
     method: 'PUT',
     path: '/system/settings/integrations',
-    handler: systemHandler.updateIntegrationSettings,
+    handler: handler.updateIntegrationSettings,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['system:update']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['system:update']) }
       ],
       validate: {
-        payload: systemValidator.updateIntegrationSettings
+        payload: auth.updateIntegrationSettings
       },
       tags: ['system', 'settings']
     }
@@ -109,15 +105,15 @@ const routes = [
   {
     method: 'GET',
     path: '/system/audit-logs',
-    handler: systemHandler.getAuditLogs,
+    handler: handler.getAuditLogs,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['audit:read']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['audit:read']) }
       ],
       validate: {
-        query: systemValidator.getAuditLogs
+        query: auth.getAuditLogs
       },
       tags: ['system', 'audit']
     }
@@ -125,15 +121,15 @@ const routes = [
   {
     method: 'GET',
     path: '/system/audit-logs/{id}',
-    handler: systemHandler.getAuditLogById,
+    handler: handler.getAuditLogById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['audit:read']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['audit:read']) }
       ],
       validate: {
-        params: systemValidator.getAuditLogById
+        params: auth.getAuditLogById
       },
       tags: ['system', 'audit']
     }
@@ -141,15 +137,15 @@ const routes = [
   {
     method: 'GET',
     path: '/system/audit-logs/export',
-    handler: systemHandler.exportAuditLogs,
+    handler: handler.exportAuditLogs,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['audit:export']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['audit:export']) }
       ],
       validate: {
-        query: systemValidator.exportAuditLogs
+        query: auth.exportAuditLogs
       },
       tags: ['system', 'audit']
     }
@@ -159,15 +155,15 @@ const routes = [
   {
     method: 'GET',
     path: '/system/health',
-    handler: systemHandler.getSystemHealth,
+    handler: handler.getSystemHealth,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['system:read']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['system:read']) }
       ],
       validate: {
-        query: systemValidator.getSystemHealth
+        query: auth.getSystemHealth
       },
       tags: ['system', 'health']
     }
@@ -175,15 +171,15 @@ const routes = [
   {
     method: 'GET',
     path: '/system/metrics',
-    handler: systemHandler.getSystemMetrics,
+    handler: handler.getSystemMetrics,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['system:read']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['system:read']) }
       ],
       validate: {
-        query: systemValidator.getSystemMetrics
+        query: auth.getSystemMetrics
       },
       tags: ['system', 'metrics']
     }
@@ -193,15 +189,15 @@ const routes = [
   {
     method: 'POST',
     path: '/system/backups',
-    handler: systemHandler.createBackup,
+    handler: handler.createBackup,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['backup:create']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['backup:create']) }
       ],
       validate: {
-        payload: systemValidator.createBackup
+        payload: auth.createBackup
       },
       tags: ['system', 'backup']
     }
@@ -209,15 +205,15 @@ const routes = [
   {
     method: 'GET',
     path: '/system/backups',
-    handler: systemHandler.getBackups,
+    handler: handler.getBackups,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['backup:read']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['backup:read']) }
       ],
       validate: {
-        query: systemValidator.getBackups
+        query: auth.getBackups
       },
       tags: ['system', 'backup']
     }
@@ -225,15 +221,15 @@ const routes = [
   {
     method: 'GET',
     path: '/system/backups/{id}',
-    handler: systemHandler.getBackupById,
+    handler: handler.getBackupById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['backup:read']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['backup:read']) }
       ],
       validate: {
-        params: systemValidator.getBackupById
+        params: auth.getBackupById
       },
       tags: ['system', 'backup']
     }
@@ -241,15 +237,15 @@ const routes = [
   {
     method: 'GET',
     path: '/system/backups/{id}/download',
-    handler: systemHandler.downloadBackup,
+    handler: handler.downloadBackup,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['backup:download']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['backup:download']) }
       ],
       validate: {
-        params: systemValidator.downloadBackup
+        params: auth.downloadBackup
       },
       tags: ['system', 'backup']
     }
@@ -257,15 +253,15 @@ const routes = [
   {
     method: 'DELETE',
     path: '/system/backups/{id}',
-    handler: systemHandler.deleteBackup,
+    handler: handler.deleteBackup,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['backup:delete']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['backup:delete']) }
       ],
       validate: {
-        params: systemValidator.deleteBackup
+        params: auth.deleteBackup
       },
       tags: ['system', 'backup']
     }
@@ -273,16 +269,16 @@ const routes = [
   {
     method: 'POST',
     path: '/system/backups/{id}/restore',
-    handler: systemHandler.restoreBackup,
+    handler: handler.restoreBackup,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['backup:restore']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['backup:restore']) }
       ],
       validate: {
-        params: systemValidator.getBackupById,
-        payload: systemValidator.restoreBackup
+        params: auth.getBackupById,
+        payload: auth.restoreBackup
       },
       tags: ['system', 'backup']
     }
@@ -292,15 +288,15 @@ const routes = [
   {
     method: 'POST',
     path: '/system/maintenance/start',
-    handler: systemHandler.startMaintenance,
+    handler: handler.startMaintenance,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['maintenance:manage']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['maintenance:manage']) }
       ],
       validate: {
-        payload: systemValidator.startMaintenance
+        payload: auth.startMaintenance
       },
       tags: ['system', 'maintenance']
     }
@@ -308,15 +304,15 @@ const routes = [
   {
     method: 'POST',
     path: '/system/maintenance/end',
-    handler: systemHandler.endMaintenance,
+    handler: handler.endMaintenance,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['maintenance:manage']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['maintenance:manage']) }
       ],
       validate: {
-        payload: systemValidator.endMaintenance
+        payload: auth.endMaintenance
       },
       tags: ['system', 'maintenance']
     }
@@ -324,15 +320,15 @@ const routes = [
   {
     method: 'GET',
     path: '/system/maintenance/status',
-    handler: systemHandler.getMaintenanceStatus,
+    handler: handler.getMaintenanceStatus,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['maintenance:read']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['maintenance:read']) }
       ],
       validate: {
-        query: systemValidator.getMaintenanceStatus
+        query: auth.getMaintenanceStatus
       },
       tags: ['system', 'maintenance']
     }
@@ -342,15 +338,15 @@ const routes = [
   {
     method: 'GET',
     path: '/system/updates/check',
-    handler: systemHandler.checkForUpdates,
+    handler: handler.checkForUpdates,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['updates:read']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['updates:read']) }
       ],
       validate: {
-        query: systemValidator.checkForUpdates
+        query: auth.checkForUpdates
       },
       tags: ['system', 'updates']
     }
@@ -358,15 +354,15 @@ const routes = [
   {
     method: 'GET',
     path: '/system/updates/history',
-    handler: systemHandler.getUpdateHistory,
+    handler: handler.getUpdateHistory,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['updates:read']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['updates:read']) }
       ],
       validate: {
-        query: systemValidator.getUpdateHistory
+        query: auth.getUpdateHistory
       },
       tags: ['system', 'updates']
     }
@@ -374,15 +370,15 @@ const routes = [
   {
     method: 'POST',
     path: '/system/updates/install',
-    handler: systemHandler.installUpdate,
+    handler: handler.installUpdate,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['updates:install']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['updates:install']) }
       ],
       validate: {
-        payload: systemValidator.installUpdate
+        payload: auth.installUpdate
       },
       tags: ['system', 'updates']
     }
@@ -392,15 +388,15 @@ const routes = [
   {
     method: 'GET',
     path: '/system/configuration',
-    handler: systemHandler.getSystemConfiguration,
+    handler: handler.getSystemConfiguration,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['system:read']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['system:read']) }
       ],
       validate: {
-        query: systemValidator.getSystemConfiguration
+        query: auth.getSystemConfiguration
       },
       tags: ['system', 'configuration']
     }
@@ -408,15 +404,15 @@ const routes = [
   {
     method: 'PUT',
     path: '/system/configuration',
-    handler: systemHandler.updateSystemConfiguration,
+    handler: handler.updateSystemConfiguration,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['system:update']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['system:update']) }
       ],
       validate: {
-        payload: systemValidator.updateSystemConfiguration
+        payload: auth.updateSystemConfiguration
       },
       tags: ['system', 'configuration']
     }
@@ -424,15 +420,15 @@ const routes = [
   {
     method: 'POST',
     path: '/system/configuration/reset',
-    handler: systemHandler.resetSystemConfiguration,
+    handler: handler.resetSystemConfiguration,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['system:reset']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['system:reset']) }
       ],
       validate: {
-        payload: systemValidator.resetSystemConfiguration
+        payload: auth.resetSystemConfiguration
       },
       tags: ['system', 'configuration']
     }
@@ -442,15 +438,15 @@ const routes = [
   {
     method: 'GET',
     path: '/system/statistics',
-    handler: systemHandler.getSystemStatistics,
+    handler: handler.getSystemStatistics,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['system:read']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['system:read']) }
       ],
       validate: {
-        query: systemValidator.getSystemStatistics
+        query: auth.getSystemStatistics
       },
       tags: ['system', 'statistics']
     }
@@ -460,15 +456,15 @@ const routes = [
   {
     method: 'POST',
     path: '/system/diagnostics/run',
-    handler: systemHandler.runSystemDiagnostics,
+    handler: handler.runSystemDiagnostics,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['diagnostics:run']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['diagnostics:run']) }
       ],
       validate: {
-        payload: systemValidator.runSystemDiagnostics
+        payload: auth.runSystemDiagnostics
       },
       tags: ['system', 'diagnostics']
     }
@@ -476,15 +472,15 @@ const routes = [
   {
     method: 'GET',
     path: '/system/diagnostics/reports/{id}',
-    handler: systemHandler.getDiagnosticReport,
+    handler: handler.getDiagnosticReport,
     options: {
       auth: 'jwt',
       pre: [
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['diagnostics:read']) }
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['diagnostics:read']) }
       ],
       validate: {
-        params: systemValidator.getDiagnosticReport
+        params: auth.getDiagnosticReport
       },
       tags: ['system', 'diagnostics']
     }

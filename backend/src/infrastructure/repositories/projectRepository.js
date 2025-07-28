@@ -12,14 +12,10 @@ class ProjectRepository {
     const {
       page = 1,
       limit = 10,
-      sortBy = 'created_at',
-      sortOrder = 'desc',
       status,
       priority,
-      category,
       client_id,
-      assigned_to,
-      created_by
+      assigned_to
     } = options;
 
     const offset = (page - 1) * limit;
@@ -29,24 +25,18 @@ class ProjectRepository {
         organizationId,
         status,
         priority,
-        category,
         client_id,
         assigned_to,
-        created_by,
         limit,
-        offset,
-        sortBy,
-        sortOrder
+        offset
       ]);
 
       const countResult = await this.db.query(queries.project.countProjects, [
         organizationId,
         status,
         priority,
-        category,
         client_id,
-        assigned_to,
-        created_by
+        assigned_to
       ]);
 
       return {
@@ -77,22 +67,16 @@ class ProjectRepository {
   async create(projectData) {
     try {
       const result = await this.db.query(queries.project.createProject, [
-        projectData.title,
+        projectData.name,
         projectData.description,
         projectData.client_id,
         projectData.status,
         projectData.priority,
-        projectData.category,
         projectData.start_date,
         projectData.end_date,
         projectData.budget,
-        projectData.currency,
         projectData.assigned_to,
-        projectData.tags,
-        projectData.attachments,
-        projectData.notes,
-        projectData.organization_id,
-        projectData.created_by
+        projectData.organization_id
       ]);
 
       return result.rows[0];
@@ -125,7 +109,7 @@ class ProjectRepository {
       const query = `
         UPDATE projects
         SET ${setClause.join(', ')}, updated_at = $${paramIndex}
-        WHERE organization_id = $${paramIndex + 1} AND id = $${paramIndex + 2} AND is_active = true
+        WHERE organization_id = $${paramIndex + 1} AND id = $${paramIndex + 2}
         RETURNING *
       `;
 
@@ -148,7 +132,7 @@ class ProjectRepository {
 
   // Search projects
   async search(organizationId, searchTerm, options = {}) {
-    const { page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'desc' } = options;
+    const { page = 1, limit = 10 } = options;
     const offset = (page - 1) * limit;
 
     try {
@@ -156,9 +140,7 @@ class ProjectRepository {
         organizationId,
         searchTerm,
         limit,
-        offset,
-        sortBy,
-        sortOrder
+        offset
       ]);
 
       const countResult = await this.db.query(queries.project.countSearchProjects, [
@@ -181,13 +163,12 @@ class ProjectRepository {
   }
 
   // Update project status
-  async updateStatus(id, organizationId, status, notes) {
+  async updateStatus(id, organizationId, status) {
     try {
       const result = await this.db.query(queries.project.updateProjectStatus, [
         id,
         organizationId,
-        status,
-        notes
+        status
       ]);
       return result.rows[0] || null;
     } catch (error) {
@@ -216,97 +197,59 @@ class ProjectRepository {
     try {
       const {
         project_id,
-        services,
-        materials,
-        overhead_percentage,
-        profit_margin_percentage,
-        tax_rate,
-        discount_percentage,
-        organization_id
+        labor_cost = 0,
+        material_cost = 0,
+        overhead_cost = 0,
+        profit_margin = 0,
+        tax_rate = 0,
+        discount_rate = 0,
+        currency = 'USD',
+        notes,
+        created_by
       } = costData;
 
-      // Calculate services cost
-      let servicesCost = 0;
-      const serviceDetails = [];
-      for (const service of services) {
-        const serviceCost = service.quantity * service.unit_price;
-        servicesCost += serviceCost;
-        serviceDetails.push({
-          ...service,
-          total_cost: serviceCost
-        });
-      }
-
-      // Calculate materials cost
-      let materialsCost = 0;
-      const materialDetails = [];
-      if (materials && materials.length > 0) {
-        for (const material of materials) {
-          const materialCost = material.quantity * material.unit_price;
-          materialsCost += materialCost;
-          materialDetails.push({
-            ...material,
-            total_cost: materialCost
-          });
-        }
-      }
-
       // Calculate totals
-      const subtotal = servicesCost + materialsCost;
-      const overheadAmount = (subtotal * overhead_percentage) / 100;
-      const subtotalWithOverhead = subtotal + overheadAmount;
-      const profitAmount = (subtotalWithOverhead * profit_margin_percentage) / 100;
-      const subtotalWithProfit = subtotalWithOverhead + profitAmount;
-      const discountAmount = (subtotalWithProfit * discount_percentage) / 100;
-      const subtotalAfterDiscount = subtotalWithProfit - discountAmount;
-      const taxAmount = (subtotalAfterDiscount * tax_rate) / 100;
-      const grandTotal = subtotalAfterDiscount + taxAmount;
+      const total_cost = labor_cost + material_cost + overhead_cost;
+      const profit_amount = (total_cost * profit_margin) / 100;
+      const discount_amount = (total_cost * discount_rate) / 100;
+      const tax_amount = (total_cost * tax_rate) / 100;
+      const final_price = total_cost + profit_amount - discount_amount + tax_amount;
 
       // Save calculation to database
       const result = await this.db.query(queries.project.createProjectCostCalculation, [
         project_id,
-        JSON.stringify(serviceDetails),
-        JSON.stringify(materialDetails),
-        servicesCost,
-        materialsCost,
-        subtotal,
-        overhead_percentage,
-        overheadAmount,
-        subtotalWithOverhead,
-        profit_margin_percentage,
-        profitAmount,
-        subtotalWithProfit,
-        discount_percentage,
-        discountAmount,
-        subtotalAfterDiscount,
+        labor_cost,
+        material_cost,
+        overhead_cost,
+        profit_margin,
+        profit_amount,
         tax_rate,
-        taxAmount,
-        grandTotal,
-        organization_id
+        tax_amount,
+        discount_rate,
+        discount_amount,
+        total_cost,
+        final_price,
+        currency,
+        notes,
+        created_by
       ]);
 
       return {
         calculation_id: result.rows[0].id,
         project_id,
-        services: serviceDetails,
-        materials: materialDetails,
-        calculations: {
-          services_cost: servicesCost,
-          materials_cost: materialsCost,
-          subtotal,
-          overhead_percentage,
-          overhead_amount: overheadAmount,
-          subtotal_with_overhead: subtotalWithOverhead,
-          profit_margin_percentage,
-          profit_amount: profitAmount,
-          subtotal_with_profit: subtotalWithProfit,
-          discount_percentage,
-          discount_amount: discountAmount,
-          subtotal_after_discount: subtotalAfterDiscount,
-          tax_rate,
-          tax_amount: taxAmount,
-          grand_total: grandTotal
-        }
+        labor_cost,
+        material_cost,
+        overhead_cost,
+        profit_margin,
+        profit_amount,
+        tax_rate,
+        tax_amount,
+        discount_rate,
+        discount_amount,
+        total_cost,
+        final_price,
+        currency,
+        notes
       };
     } catch (error) {
       throw error;
@@ -314,11 +257,10 @@ class ProjectRepository {
   }
 
   // Get project cost breakdown
-  async getCostBreakdown(projectId, organizationId) {
+  async getCostBreakdown(projectId) {
     try {
       const result = await this.db.query(queries.project.getProjectCostBreakdown, [
-        projectId,
-        organizationId
+        projectId
       ]);
 
       if (result.rows.length === 0) {
@@ -329,25 +271,19 @@ class ProjectRepository {
       return {
         calculation_id: calculation.id,
         project_id: calculation.project_id,
-        services: JSON.parse(calculation.services || '[]'),
-        materials: JSON.parse(calculation.materials || '[]'),
-        calculations: {
-          services_cost: parseFloat(calculation.services_cost),
-          materials_cost: parseFloat(calculation.materials_cost),
-          subtotal: parseFloat(calculation.subtotal),
-          overhead_percentage: parseFloat(calculation.overhead_percentage),
-          overhead_amount: parseFloat(calculation.overhead_amount),
-          subtotal_with_overhead: parseFloat(calculation.subtotal_with_overhead),
-          profit_margin_percentage: parseFloat(calculation.profit_margin_percentage),
-          profit_amount: parseFloat(calculation.profit_amount),
-          subtotal_with_profit: parseFloat(calculation.subtotal_with_profit),
-          discount_percentage: parseFloat(calculation.discount_percentage),
-          discount_amount: parseFloat(calculation.discount_amount),
-          subtotal_after_discount: parseFloat(calculation.subtotal_after_discount),
-          tax_rate: parseFloat(calculation.tax_rate),
-          tax_amount: parseFloat(calculation.tax_amount),
-          grand_total: parseFloat(calculation.grand_total)
-        },
+        labor_cost: parseFloat(calculation.labor_cost),
+        material_cost: parseFloat(calculation.material_cost),
+        overhead_cost: parseFloat(calculation.overhead_cost),
+        profit_margin: parseFloat(calculation.profit_margin),
+        profit_amount: parseFloat(calculation.profit_amount),
+        tax_rate: parseFloat(calculation.tax_rate),
+        tax_amount: parseFloat(calculation.tax_amount),
+        discount_rate: parseFloat(calculation.discount_rate),
+        discount_amount: parseFloat(calculation.discount_amount),
+        total_cost: parseFloat(calculation.total_cost),
+        final_price: parseFloat(calculation.final_price),
+        currency: calculation.currency,
+        notes: calculation.notes,
         created_at: calculation.created_at,
         updated_at: calculation.updated_at
       };
@@ -603,11 +539,10 @@ class ProjectRepository {
   }
 
   // Get project cost statistics
-  async getCostStatistics(projectId, organizationId) {
+  async getCostStatistics(projectId) {
     try {
       const result = await this.db.query(queries.project.getProjectCostStatistics, [
-        projectId,
-        organizationId
+        projectId
       ]);
       return result.rows[0] || null;
     } catch (error) {

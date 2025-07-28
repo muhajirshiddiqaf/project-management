@@ -21,11 +21,10 @@ const orderQueries = {
       AND ($2::text IS NULL OR o.status = $2)
       AND ($3::text IS NULL OR o.priority = $3)
       AND ($4::uuid IS NULL OR o.client_id = $4)
-      AND ($5::uuid IS NULL OR o.project_id = $5)
-      AND ($6::uuid IS NULL OR o.assigned_to = $6)
+      AND ($5::uuid IS NULL OR o.assigned_to = $5)
     GROUP BY o.id, c.name, c.email, u.first_name, u.last_name, p.name
-    ORDER BY o.$7 $8
-    LIMIT $9 OFFSET $10
+    ORDER BY o.created_at DESC
+    LIMIT $6 OFFSET $7
   `,
 
   // Count orders
@@ -35,8 +34,7 @@ const orderQueries = {
       AND ($2::text IS NULL OR status = $2)
       AND ($3::text IS NULL OR priority = $3)
       AND ($4::uuid IS NULL OR client_id = $4)
-      AND ($5::uuid IS NULL OR project_id = $5)
-      AND ($6::uuid IS NULL OR assigned_to = $6)
+      AND ($5::uuid IS NULL OR assigned_to = $5)
   `,
 
   // Find order by ID
@@ -94,8 +92,8 @@ const orderQueries = {
         p.name ILIKE $2
       )
     GROUP BY o.id, c.name, c.email, u.first_name, u.last_name, p.name
-    ORDER BY o.$3 $4
-    LIMIT $5 OFFSET $6
+    ORDER BY o.created_at DESC
+    LIMIT $3 OFFSET $4
   `,
 
   // Count search orders

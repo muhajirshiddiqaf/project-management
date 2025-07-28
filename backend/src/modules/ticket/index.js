@@ -1,31 +1,13 @@
-const Hapi = require('@hapi/hapi');
+const TicketHandler = require('./handler');
+const routes = require('./routes');
 
-// Import routes
-const ticketRoutes = require('./routes');
-
-// Import handler
-const ticketHandler = require('./handler');
-
-// Import repositories
-const { TicketRepository } = require('../../infrastructure/repositories');
-
-// Ticket module registration
-const register = async (server, options) => {
-  // Register routes
-  server.route(ticketRoutes);
-
-  // Inject database into repositories
-  const ticketRepository = new TicketRepository(server.app.db);
-
-  // Inject repository into handler
-  ticketHandler.setTicketRepository(ticketRepository);
-
-  console.log('✅ Ticket module registered with multi-tenant support');
+const ticket = async (server, { service, validator, auth }) => {
+  const ticketHandler = new TicketHandler(service, validator);
+  server.route(routes(ticketHandler, auth));
 };
 
-const name = 'ticket';
-
 module.exports = {
-  register,
-  name
+  name: 'ticket',
+  version: '1.0.0',
+  register: ticket
 };

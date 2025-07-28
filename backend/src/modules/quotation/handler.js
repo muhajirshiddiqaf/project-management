@@ -1,13 +1,21 @@
 const Boom = require('@hapi/boom');
 
 class QuotationHandler {
-  constructor() {
-    this.quotationRepository = null;
-  }
+  constructor(service, validator) {
+    this._service = service;
+    this._validator = validator;
 
-  // Set repository (dependency injection)
-  setQuotationRepository(quotationRepository) {
-    this.quotationRepository = quotationRepository;
+    // Bind all methods to preserve 'this' context
+    this.getQuotations = this.getQuotations.bind(this);
+    this.getQuotationById = this.getQuotationById.bind(this);
+    this.createQuotation = this.createQuotation.bind(this);
+    this.updateQuotation = this.updateQuotation.bind(this);
+    this.deleteQuotation = this.deleteQuotation.bind(this);
+    this.searchQuotations = this.searchQuotations.bind(this);
+    this.sendQuotation = this.sendQuotation.bind(this);
+    this.approveQuotation = this.approveQuotation.bind(this);
+    this.rejectQuotation = this.rejectQuotation.bind(this);
+    this.generateFromProject = this.generateFromProject.bind(this);
   }
 
   // === QUOTATION CRUD METHODS ===
@@ -19,8 +27,8 @@ class QuotationHandler {
       const filters = { status, client_id };
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sortBy, sortOrder };
 
-      const quotations = await this.quotationRepository.findAll(organizationId, filters, pagination);
-      const total = await this.quotationRepository.countQuotations(organizationId, filters);
+      const quotations = await this._service.findAll(organizationId, filters, pagination);
+      const total = await this._service.countQuotations(organizationId, filters);
 
       return h.response({
         success: true,
@@ -43,7 +51,7 @@ class QuotationHandler {
       const { id } = request.params;
       const organizationId = request.auth.credentials.organization_id;
 
-      const quotation = await this.quotationRepository.findById(id, organizationId);
+      const quotation = await this._service.findById(id, organizationId);
       if (!quotation) {
         throw Boom.notFound('Quotation not found');
       }
@@ -70,11 +78,11 @@ class QuotationHandler {
 
       // Generate quotation number if not provided
       if (!quotationData.quotation_number) {
-        const numberResult = await this.quotationRepository.generateQuotationNumber(quotationData.organization_id);
+        const numberResult = await this._service.generateQuotationNumber(quotationData.organization_id);
         quotationData.quotation_number = numberResult.quotation_number;
       }
 
-      const quotation = await this.quotationRepository.create(quotationData);
+      const quotation = await this._service.create(quotationData);
 
       return h.response({
         success: true,
@@ -93,7 +101,7 @@ class QuotationHandler {
       const organizationId = request.auth.credentials.organization_id;
       const updateData = request.payload;
 
-      const quotation = await this.quotationRepository.update(id, organizationId, updateData);
+      const quotation = await this._service.update(id, organizationId, updateData);
       if (!quotation) {
         throw Boom.notFound('Quotation not found');
       }
@@ -115,7 +123,7 @@ class QuotationHandler {
       const { id } = request.params;
       const organizationId = request.auth.credentials.organization_id;
 
-      const quotation = await this.quotationRepository.delete(id, organizationId);
+      const quotation = await this._service.delete(id, organizationId);
       if (!quotation) {
         throw Boom.notFound('Quotation not found');
       }
@@ -141,8 +149,8 @@ class QuotationHandler {
       }
 
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sortBy, sortOrder };
-      const quotations = await this.quotationRepository.search(organizationId, q, {}, pagination);
-      const total = await this.quotationRepository.countSearchQuotations(organizationId, q, {});
+      const quotations = await this._service.search(organizationId, q, {}, pagination);
+      const total = await this._service.countSearchQuotations(organizationId, q, {});
 
       return h.response({
         success: true,
@@ -168,7 +176,7 @@ class QuotationHandler {
       const organizationId = request.auth.credentials.organization_id;
       const userId = request.auth.credentials.user_id;
 
-      const quotation = await this.quotationRepository.updateStatus(id, organizationId, status, userId);
+      const quotation = await this._service.updateStatus(id, organizationId, status, userId);
       if (!quotation) {
         throw Boom.notFound('Quotation not found');
       }
@@ -191,7 +199,7 @@ class QuotationHandler {
       const organizationId = request.auth.credentials.organization_id;
       const userId = request.auth.credentials.user_id;
 
-      const quotation = await this.quotationRepository.approveQuotation(id, organizationId, userId);
+      const quotation = await this._service.approveQuotation(id, organizationId, userId);
       if (!quotation) {
         throw Boom.notFound('Quotation not found');
       }
@@ -208,6 +216,35 @@ class QuotationHandler {
     }
   }
 
+  // Reject quotation
+  async rejectQuotation(request, h) {
+    try {
+      const { id } = request.params;
+      const { reason, comments } = request.payload;
+      const organizationId = request.auth.credentials.organization_id;
+      const userId = request.auth.credentials.user_id;
+
+      const quotation = await this._service.rejectQuotation(id, organizationId, userId, {
+        reason,
+        comments
+      });
+
+      if (!quotation) {
+        throw Boom.notFound('Quotation not found');
+      }
+
+      return h.response({
+        success: true,
+        message: 'Quotation rejected successfully',
+        data: quotation
+      }).code(200);
+    } catch (error) {
+      if (error.isBoom) throw error;
+      console.error('Error rejecting quotation:', error);
+      throw Boom.internal('Failed to reject quotation');
+    }
+  }
+
   // === QUOTATION ITEMS METHODS ===
   async getQuotationItems(request, h) {
     try {
@@ -218,8 +255,8 @@ class QuotationHandler {
         throw Boom.badRequest('Quotation ID is required');
       }
 
-      const items = await this.quotationRepository.getQuotationItems(quotation_id, organizationId);
-      const total = await this.quotationRepository.countQuotationItems(quotation_id, organizationId);
+      const items = await this._service.getQuotationItems(quotation_id, organizationId);
+      const total = await this._service.countQuotationItems(quotation_id, organizationId);
 
       return h.response({
         success: true,
@@ -243,7 +280,7 @@ class QuotationHandler {
         throw Boom.badRequest('Quotation ID is required');
       }
 
-      const item = await this.quotationRepository.getQuotationItemById(id, quotation_id, organizationId);
+      const item = await this._service.getQuotationItemById(id, quotation_id, organizationId);
       if (!item) {
         throw Boom.notFound('Quotation item not found');
       }
@@ -266,7 +303,7 @@ class QuotationHandler {
         quotation_id: request.payload.quotation_id
       };
 
-      const item = await this.quotationRepository.createQuotationItem(itemData);
+      const item = await this._service.createQuotationItem(itemData);
 
       return h.response({
         success: true,
@@ -290,7 +327,7 @@ class QuotationHandler {
         throw Boom.badRequest('Quotation ID is required');
       }
 
-      const item = await this.quotationRepository.updateQuotationItem(id, quotation_id, organizationId, updateData);
+      const item = await this._service.updateQuotationItem(id, quotation_id, organizationId, updateData);
       if (!item) {
         throw Boom.notFound('Quotation item not found');
       }
@@ -317,7 +354,7 @@ class QuotationHandler {
         throw Boom.badRequest('Quotation ID is required');
       }
 
-      const item = await this.quotationRepository.deleteQuotationItem(id, quotation_id, organizationId);
+      const item = await this._service.deleteQuotationItem(id, quotation_id, organizationId);
       if (!item) {
         throw Boom.notFound('Quotation item not found');
       }
@@ -343,7 +380,7 @@ class QuotationHandler {
         throw Boom.badRequest('Quotation ID is required');
       }
 
-      const totals = await this.quotationRepository.calculateQuotationTotals(quotation_id, organizationId);
+      const totals = await this._service.calculateQuotationTotals(quotation_id, organizationId);
 
       return h.response({
         success: true,
@@ -376,7 +413,7 @@ class QuotationHandler {
       const quotationData = await this.buildQuotationFromProject(project, template, organizationId, userId);
 
       // Create quotation
-      const quotation = await this.quotationRepository.create(quotationData);
+      const quotation = await this._service.create(quotationData);
 
       // Generate quotation items from project costs
       await this.generateQuotationItemsFromProject(quotation.id, project, organizationId);
@@ -393,14 +430,63 @@ class QuotationHandler {
     }
   }
 
+  // Generate quotation from project
+  async generateFromProject(request, h) {
+    try {
+      const { project_id, template_id, include_materials = true, include_labor = true } = request.payload;
+      const organizationId = request.auth.credentials.organization_id;
+      const userId = request.auth.credentials.user_id;
+
+      // Get project details
+      const project = await this.getProjectDetails(project_id, organizationId);
+      if (!project) {
+        throw Boom.notFound('Project not found');
+      }
+
+      // Get quotation template if specified
+      let template = null;
+      if (template_id) {
+        template = await this.getQuotationTemplate(template_id, organizationId);
+        if (!template) {
+          throw Boom.notFound('Quotation template not found');
+        }
+      }
+
+      // Build quotation from project
+      const quotationData = await this.buildQuotationFromProject(project, template, organizationId, userId);
+
+      // Create quotation
+      const quotation = await this._service.create(quotationData);
+
+      // Generate quotation items from project if requested
+      if (include_materials || include_labor) {
+        await this.generateQuotationItemsFromProject(quotation.id, project, organizationId);
+      }
+
+      return h.response({
+        success: true,
+        message: 'Quotation generated from project successfully',
+        data: {
+          quotation: quotation,
+          project_id: project_id,
+          items_generated: include_materials || include_labor
+        }
+      }).code(201);
+    } catch (error) {
+      if (error.isBoom) throw error;
+      console.error('Error generating quotation from project:', error);
+      throw Boom.internal('Failed to generate quotation from project');
+    }
+  }
+
   async getQuotationTemplates(request, h) {
     try {
       const organizationId = request.auth.credentials.organization_id;
       const { page = 1, limit = 10 } = request.query;
 
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10) };
-      const templates = await this.quotationRepository.getQuotationTemplates(organizationId, pagination);
-      const total = await this.quotationRepository.countQuotationTemplates(organizationId);
+      const templates = await this._service.getQuotationTemplates(organizationId, pagination);
+      const total = await this._service.countQuotationTemplates(organizationId);
 
       return h.response({
         success: true,
@@ -426,7 +512,7 @@ class QuotationHandler {
         created_by: request.auth.credentials.user_id
       };
 
-      const template = await this.quotationRepository.createQuotationTemplate(templateData);
+      const template = await this._service.createQuotationTemplate(templateData);
 
       return h.response({
         success: true,
@@ -445,7 +531,7 @@ class QuotationHandler {
       const organizationId = request.auth.credentials.organization_id;
       const updateData = request.payload;
 
-      const template = await this.quotationRepository.updateQuotationTemplate(id, organizationId, updateData);
+      const template = await this._service.updateQuotationTemplate(id, organizationId, updateData);
       if (!template) {
         throw Boom.notFound('Quotation template not found');
       }
@@ -467,7 +553,7 @@ class QuotationHandler {
       const { id } = request.params;
       const organizationId = request.auth.credentials.organization_id;
 
-      const template = await this.quotationRepository.deleteQuotationTemplate(id, organizationId);
+      const template = await this._service.deleteQuotationTemplate(id, organizationId);
       if (!template) {
         throw Boom.notFound('Quotation template not found');
       }
@@ -488,7 +574,7 @@ class QuotationHandler {
       const { id } = request.params;
       const organizationId = request.auth.credentials.organization_id;
 
-      const template = await this.quotationRepository.getQuotationTemplateById(id, organizationId);
+      const template = await this._service.getQuotationTemplateById(id, organizationId);
       if (!template) {
         throw Boom.notFound('Quotation template not found');
       }
@@ -513,10 +599,10 @@ class QuotationHandler {
       const userId = request.auth.credentials.user_id;
 
       // Update quotation status to pending approval
-      const quotation = await this.quotationRepository.updateStatus(id, organizationId, 'pending_approval', userId);
+      const quotation = await this._service.updateStatus(id, organizationId, 'pending_approval', userId);
 
       // Create approval request
-      const approvalRequest = await this.quotationRepository.createApprovalRequest({
+      const approvalRequest = await this._service.createApprovalRequest({
         quotation_id: id,
         requester_id: userId,
         approver_id,
@@ -545,8 +631,8 @@ class QuotationHandler {
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10) };
       const filters = { status, approver_id: userId };
 
-      const requests = await this.quotationRepository.getApprovalRequests(organizationId, filters, pagination);
-      const total = await this.quotationRepository.countApprovalRequests(organizationId, filters);
+      const requests = await this._service.getApprovalRequests(organizationId, filters, pagination);
+      const total = await this._service.countApprovalRequests(organizationId, filters);
 
       return h.response({
         success: true,
@@ -570,7 +656,7 @@ class QuotationHandler {
       const organizationId = request.auth.credentials.organization_id;
       const { period = 'month' } = request.query;
 
-      const statistics = await this.quotationRepository.getQuotationStatistics(organizationId, { period });
+      const statistics = await this._service.getQuotationStatistics(organizationId, { period });
 
       return h.response({
         success: true,
@@ -587,7 +673,7 @@ class QuotationHandler {
       const organizationId = request.auth.credentials.organization_id;
       const { period = 'month' } = request.query;
 
-      const statistics = await this.quotationRepository.getQuotationItemsStatistics(organizationId, { period });
+      const statistics = await this._service.getQuotationItemsStatistics(organizationId, { period });
 
       return h.response({
         success: true,
@@ -632,7 +718,7 @@ class QuotationHandler {
   }
 
   async buildQuotationFromProject(project, template, organizationId, userId) {
-    const numberResult = await this.quotationRepository.generateQuotationNumber(organizationId);
+    const numberResult = await this._service.generateQuotationNumber(organizationId);
 
     return {
       organization_id: organizationId,
@@ -684,9 +770,59 @@ class QuotationHandler {
     ];
 
     for (const item of items) {
-      await this.quotationRepository.createQuotationItem(item);
+      await this._service.createQuotationItem(item);
+    }
+  }
+
+  // Send quotation via email
+  async sendQuotation(request, h) {
+    try {
+      const { id } = request.params;
+      const { recipient_email, message, send_copy_to_sender = false } = request.payload;
+      const organizationId = request.auth.credentials.organization_id;
+      const userId = request.auth.credentials.user_id;
+
+      // Get quotation details
+      const quotation = await this._service.findById(id, organizationId);
+      if (!quotation) {
+        throw Boom.notFound('Quotation not found');
+      }
+
+      // Check if quotation is ready to be sent
+      if (quotation.status !== 'draft' && quotation.status !== 'approved') {
+        throw Boom.badRequest('Quotation can only be sent when status is draft or approved');
+      }
+
+      // TODO: Implement email service integration
+      // For now, just update the status and log the action
+      const updateData = {
+        status: 'sent',
+        sent_at: new Date(),
+        sent_by: userId,
+        recipient_email: recipient_email
+      };
+
+      const updatedQuotation = await this._service.update(id, organizationId, updateData);
+
+      // TODO: Send email using email service
+      // await emailService.sendQuotation(quotation, recipient_email, message, send_copy_to_sender);
+
+      return h.response({
+        success: true,
+        message: 'Quotation sent successfully',
+        data: {
+          quotation_id: id,
+          recipient_email: recipient_email,
+          sent_at: updateData.sent_at,
+          status: 'sent'
+        }
+      }).code(200);
+    } catch (error) {
+      if (error.isBoom) throw error;
+      console.error('Error sending quotation:', error);
+      throw Boom.internal('Failed to send quotation');
     }
   }
 }
 
-module.exports = new QuotationHandler();
+module.exports = QuotationHandler;

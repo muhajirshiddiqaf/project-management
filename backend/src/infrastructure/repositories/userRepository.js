@@ -9,6 +9,7 @@ class UserRepository {
   // Find user by email
   async findByEmail(email) {
     try {
+      console.log('findByEmail', email);
       const result = await this.db.query(queries.auth.findUserByEmail, [email]);
       return result.rows[0] || null;
     } catch (error) {
@@ -54,7 +55,7 @@ class UserRepository {
     try {
       const result = await this.db.query(queries.auth.createUser, [
         userData.email,
-        userData.password,
+        userData.password_hash || userData.password, // Support both password and password_hash
         userData.first_name,
         userData.last_name,
         userData.organization_id,
@@ -62,6 +63,7 @@ class UserRepository {
       ]);
       return result.rows[0];
     } catch (error) {
+      console.error('Create user error:', error);
       throw new Error('Failed to create user');
     }
   }

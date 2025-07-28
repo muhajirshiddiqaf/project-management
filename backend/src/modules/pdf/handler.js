@@ -5,14 +5,26 @@ const fs = require('fs').promises;
 const path = require('path');
 
 class PDFHandler {
-  constructor() {
-    this.pdfRepository = null;
+  constructor(service, validator) {
+    this._service = service;
+    this._validator = validator;
     this.browser = null;
-  }
 
-  // Set repository (dependency injection)
-  setPDFRepository(pdfRepository) {
-    this.pdfRepository = pdfRepository;
+    // Bind all methods to preserve 'this' context
+    this.generatePDF = this.generatePDF.bind(this);
+    this.generateQuotationPDF = this.generateQuotationPDF.bind(this);
+    this.generateInvoicePDF = this.generateInvoicePDF.bind(this);
+    this.getPDFTemplates = this.getPDFTemplates.bind(this);
+    this.getPDFTemplateById = this.getPDFTemplateById.bind(this);
+    this.createPDFTemplate = this.createPDFTemplate.bind(this);
+    this.updatePDFTemplate = this.updatePDFTemplate.bind(this);
+    this.deletePDFTemplate = this.deletePDFTemplate.bind(this);
+    this.compressPDF = this.compressPDF.bind(this);
+    this.signPDF = this.signPDF.bind(this);
+    this.verifyPDFSignature = this.verifyPDFSignature.bind(this);
+    this.mergePDFs = this.mergePDFs.bind(this);
+    this.getPDFStatistics = this.getPDFStatistics.bind(this);
+    this.getPDFTemplateStatistics = this.getPDFTemplateStatistics.bind(this);
   }
 
   // Initialize browser for PDF generation
@@ -35,13 +47,13 @@ class PDFHandler {
 
       // Get template if template_id is provided
       if (template_id) {
-        template = await this.pdfRepository.getPDFTemplateById(template_id, organizationId);
+        template = await this._service.getPDFTemplateById(template_id, organizationId);
         if (!template) {
           throw Boom.notFound('PDF template not found');
         }
       } else if (template_name) {
         // Get template by name
-        template = await this.pdfRepository.getPDFTemplateByName(template_name, organizationId);
+        template = await this._service.getPDFTemplateByName(template_name, organizationId);
         if (!template) {
           throw Boom.notFound('PDF template not found');
         }
@@ -62,7 +74,7 @@ class PDFHandler {
       }
 
       // Store PDF record
-      const pdfRecord = await this.pdfRepository.createPDFRecord({
+      const pdfRecord = await this._service.createPDFRecord({
         organization_id: organizationId,
         template_id: template ? template.id : null,
         content: content,
@@ -93,7 +105,7 @@ class PDFHandler {
       const organizationId = request.auth.credentials.organization_id;
 
       // Get quotation data
-      const quotation = await this.pdfRepository.getQuotationById(quotation_id, organizationId);
+      const quotation = await this._service.getQuotationById(quotation_id, organizationId);
       if (!quotation) {
         throw Boom.notFound('Quotation not found');
       }
@@ -101,13 +113,13 @@ class PDFHandler {
       // Get template
       let template = null;
       if (template_id) {
-        template = await this.pdfRepository.getPDFTemplateById(template_id, organizationId);
+        template = await this._service.getPDFTemplateById(template_id, organizationId);
         if (!template) {
           throw Boom.notFound('PDF template not found');
         }
       } else {
         // Get default quotation template
-        template = await this.pdfRepository.getDefaultPDFTemplate('quotation', organizationId);
+        template = await this._service.getDefaultPDFTemplate('quotation', organizationId);
       }
 
       // Prepare content for quotation PDF
@@ -128,7 +140,7 @@ class PDFHandler {
       }
 
       // Store PDF record
-      const pdfRecord = await this.pdfRepository.createPDFRecord({
+      const pdfRecord = await this._service.createPDFRecord({
         organization_id: organizationId,
         template_id: template ? template.id : null,
         quotation_id: quotation_id,
@@ -160,7 +172,7 @@ class PDFHandler {
       const organizationId = request.auth.credentials.organization_id;
 
       // Get invoice data
-      const invoice = await this.pdfRepository.getInvoiceById(invoice_id, organizationId);
+      const invoice = await this._service.getInvoiceById(invoice_id, organizationId);
       if (!invoice) {
         throw Boom.notFound('Invoice not found');
       }
@@ -168,13 +180,13 @@ class PDFHandler {
       // Get template
       let template = null;
       if (template_id) {
-        template = await this.pdfRepository.getPDFTemplateById(template_id, organizationId);
+        template = await this._service.getPDFTemplateById(template_id, organizationId);
         if (!template) {
           throw Boom.notFound('PDF template not found');
         }
       } else {
         // Get default invoice template
-        template = await this.pdfRepository.getDefaultPDFTemplate('invoice', organizationId);
+        template = await this._service.getDefaultPDFTemplate('invoice', organizationId);
       }
 
       // Prepare content for invoice PDF
@@ -195,7 +207,7 @@ class PDFHandler {
       }
 
       // Store PDF record
-      const pdfRecord = await this.pdfRepository.createPDFRecord({
+      const pdfRecord = await this._service.createPDFRecord({
         organization_id: organizationId,
         template_id: template ? template.id : null,
         invoice_id: invoice_id,
@@ -230,8 +242,8 @@ class PDFHandler {
       const filters = { category, is_active };
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sortBy, sortOrder };
 
-      const templates = await this.pdfRepository.getPDFTemplates(organizationId, filters, pagination);
-      const total = await this.pdfRepository.countPDFTemplates(organizationId, filters);
+      const templates = await this._service.getPDFTemplates(organizationId, filters, pagination);
+      const total = await this._service.countPDFTemplates(organizationId, filters);
 
       return h.response({
         success: true,
@@ -254,7 +266,7 @@ class PDFHandler {
       const { id } = request.params;
       const organizationId = request.auth.credentials.organization_id;
 
-      const template = await this.pdfRepository.getPDFTemplateById(id, organizationId);
+      const template = await this._service.getPDFTemplateById(id, organizationId);
       if (!template) {
         throw Boom.notFound('PDF template not found');
       }
@@ -278,7 +290,7 @@ class PDFHandler {
         created_by: request.auth.credentials.user_id
       };
 
-      const template = await this.pdfRepository.createPDFTemplate(templateData);
+      const template = await this._service.createPDFTemplate(templateData);
 
       return h.response({
         success: true,
@@ -297,7 +309,7 @@ class PDFHandler {
       const organizationId = request.auth.credentials.organization_id;
       const updateData = request.payload;
 
-      const template = await this.pdfRepository.updatePDFTemplate(id, organizationId, updateData);
+      const template = await this._service.updatePDFTemplate(id, organizationId, updateData);
       if (!template) {
         throw Boom.notFound('PDF template not found');
       }
@@ -319,7 +331,7 @@ class PDFHandler {
       const { id } = request.params;
       const organizationId = request.auth.credentials.organization_id;
 
-      const template = await this.pdfRepository.deletePDFTemplate(id, organizationId);
+      const template = await this._service.deletePDFTemplate(id, organizationId);
       if (!template) {
         throw Boom.notFound('PDF template not found');
       }
@@ -428,7 +440,7 @@ class PDFHandler {
       const organizationId = request.auth.credentials.organization_id;
       const { period = 'month', category, start_date, end_date } = request.query;
 
-      const statistics = await this.pdfRepository.getPDFStatistics(organizationId, { period, category, start_date, end_date });
+      const statistics = await this._service.getPDFStatistics(organizationId, { period, category, start_date, end_date });
 
       return h.response({
         success: true,
@@ -445,7 +457,7 @@ class PDFHandler {
       const organizationId = request.auth.credentials.organization_id;
       const { period = 'month', start_date, end_date } = request.query;
 
-      const statistics = await this.pdfRepository.getPDFTemplateStatistics(organizationId, { period, start_date, end_date });
+      const statistics = await this._service.getPDFTemplateStatistics(organizationId, { period, start_date, end_date });
 
       return h.response({
         success: true,
@@ -708,4 +720,4 @@ class PDFHandler {
   }
 }
 
-module.exports = new PDFHandler();
+module.exports = PDFHandler;

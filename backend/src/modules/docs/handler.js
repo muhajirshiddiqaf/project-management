@@ -6,12 +6,35 @@ const swaggerJSDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 
 class DocsHandler {
-  constructor() {
-    this.docsRepository = null;
-  }
+  constructor(service, validator) {
+    this._service = service;
+    this._validator = validator;
 
-  setDocsRepository(docsRepository) {
-    this.docsRepository = docsRepository;
+    // Bind all methods to preserve 'this' context
+    this.createAPIDoc = this.createAPIDoc.bind(this);
+    this.getAPIDocs = this.getAPIDocs.bind(this);
+    this.getAPIDocById = this.getAPIDocById.bind(this);
+    this.updateAPIDoc = this.updateAPIDoc.bind(this);
+    this.deleteAPIDoc = this.deleteAPIDoc.bind(this);
+    this.createEndpointDoc = this.createEndpointDoc.bind(this);
+    this.getEndpointDocs = this.getEndpointDocs.bind(this);
+    this.getEndpointDocById = this.getEndpointDocById.bind(this);
+    this.updateEndpointDoc = this.updateEndpointDoc.bind(this);
+    this.deleteEndpointDoc = this.deleteEndpointDoc.bind(this);
+    this.getExplorerSettings = this.getExplorerSettings.bind(this);
+    this.updateExplorerSettings = this.updateExplorerSettings.bind(this);
+    this.generateSDK = this.generateSDK.bind(this);
+    this.getSDKStatus = this.getSDKStatus.bind(this);
+    this.getSDKDownload = this.getSDKDownload.bind(this);
+    this.getSDKList = this.getSDKList.bind(this);
+    this.createCodeExample = this.createCodeExample.bind(this);
+    this.getCodeExamples = this.getCodeExamples.bind(this);
+    this.getCodeExampleById = this.getCodeExampleById.bind(this);
+    this.updateCodeExample = this.updateCodeExample.bind(this);
+    this.deleteCodeExample = this.deleteCodeExample.bind(this);
+    this.getDocStatistics = this.getDocStatistics.bind(this);
+    this.getEndpointUsageStats = this.getEndpointUsageStats.bind(this);
+    this.getSDKDownloadStats = this.getSDKDownloadStats.bind(this);
   }
 
   // === API DOCUMENTATION MANAGEMENT ===
@@ -22,7 +45,7 @@ class DocsHandler {
       const userId = request.auth.credentials.userId;
       const docData = { ...request.payload, organization_id: organizationId, created_by: userId };
 
-      const apiDoc = await this.docsRepository.createAPIDoc(docData);
+      const apiDoc = await this._service.createAPIDoc(docData);
 
       return h.response({
         success: true,
@@ -44,8 +67,8 @@ class DocsHandler {
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sort_by, sort_order };
 
       const [docs, total] = await Promise.all([
-        this.docsRepository.getAPIDocs(organizationId, filters, pagination),
-        this.docsRepository.countAPIDocs(organizationId, filters)
+        this._service.getAPIDocs(organizationId, filters, pagination),
+        this._service.countAPIDocs(organizationId, filters)
       ]);
 
       return h.response({
@@ -71,7 +94,7 @@ class DocsHandler {
       const organizationId = request.auth.credentials.organizationId;
       const { id } = request.params;
 
-      const apiDoc = await this.docsRepository.getAPIDocById(id, organizationId);
+      const apiDoc = await this._service.getAPIDocById(id, organizationId);
       if (!apiDoc) {
         throw Boom.notFound('API documentation not found');
       }
@@ -92,7 +115,7 @@ class DocsHandler {
       const { id } = request.params;
       const updateData = request.payload;
 
-      const apiDoc = await this.docsRepository.updateAPIDoc(id, organizationId, updateData);
+      const apiDoc = await this._service.updateAPIDoc(id, organizationId, updateData);
       if (!apiDoc) {
         throw Boom.notFound('API documentation not found');
       }
@@ -113,7 +136,7 @@ class DocsHandler {
       const organizationId = request.auth.credentials.organizationId;
       const { id } = request.params;
 
-      const apiDoc = await this.docsRepository.deleteAPIDoc(id, organizationId);
+      const apiDoc = await this._service.deleteAPIDoc(id, organizationId);
       if (!apiDoc) {
         throw Boom.notFound('API documentation not found');
       }
@@ -136,7 +159,7 @@ class DocsHandler {
       const userId = request.auth.credentials.userId;
       const docData = { ...request.payload, organization_id: organizationId, created_by: userId };
 
-      const endpointDoc = await this.docsRepository.createEndpointDoc(docData);
+      const endpointDoc = await this._service.createEndpointDoc(docData);
 
       return h.response({
         success: true,
@@ -158,8 +181,8 @@ class DocsHandler {
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sort_by, sort_order };
 
       const [docs, total] = await Promise.all([
-        this.docsRepository.getEndpointDocs(organizationId, filters, pagination),
-        this.docsRepository.countEndpointDocs(organizationId, filters)
+        this._service.getEndpointDocs(organizationId, filters, pagination),
+        this._service.countEndpointDocs(organizationId, filters)
       ]);
 
       return h.response({
@@ -185,7 +208,7 @@ class DocsHandler {
       const organizationId = request.auth.credentials.organizationId;
       const { id } = request.params;
 
-      const endpointDoc = await this.docsRepository.getEndpointDocById(id, organizationId);
+      const endpointDoc = await this._service.getEndpointDocById(id, organizationId);
       if (!endpointDoc) {
         throw Boom.notFound('Endpoint documentation not found');
       }
@@ -206,7 +229,7 @@ class DocsHandler {
       const { id } = request.params;
       const updateData = request.payload;
 
-      const endpointDoc = await this.docsRepository.updateEndpointDoc(id, organizationId, updateData);
+      const endpointDoc = await this._service.updateEndpointDoc(id, organizationId, updateData);
       if (!endpointDoc) {
         throw Boom.notFound('Endpoint documentation not found');
       }
@@ -227,7 +250,7 @@ class DocsHandler {
       const organizationId = request.auth.credentials.organizationId;
       const { id } = request.params;
 
-      const endpointDoc = await this.docsRepository.deleteEndpointDoc(id, organizationId);
+      const endpointDoc = await this._service.deleteEndpointDoc(id, organizationId);
       if (!endpointDoc) {
         throw Boom.notFound('Endpoint documentation not found');
       }
@@ -248,7 +271,7 @@ class DocsHandler {
     try {
       const organizationId = request.auth.credentials.organizationId;
 
-      const settings = await this.docsRepository.getExplorerSettings(organizationId);
+      const settings = await this._service.getExplorerSettings(organizationId);
 
       return h.response({
         success: true,
@@ -265,7 +288,7 @@ class DocsHandler {
       const organizationId = request.auth.credentials.organizationId;
       const updateData = request.payload;
 
-      const settings = await this.docsRepository.updateExplorerSettings(organizationId, updateData);
+      const settings = await this._service.updateExplorerSettings(organizationId, updateData);
 
       return h.response({
         success: true,
@@ -286,7 +309,7 @@ class DocsHandler {
       const userId = request.auth.credentials.userId;
       const sdkData = { ...request.payload, organization_id: organizationId, created_by: userId };
 
-      const sdk = await this.docsRepository.createSDK(sdkData);
+      const sdk = await this._service.createSDK(sdkData);
 
       // Start SDK generation in background
       this.generateSDKAsync(sdk.id, organizationId, sdkData);
@@ -308,7 +331,7 @@ class DocsHandler {
   async generateSDKAsync(sdkId, organizationId, sdkData) {
     try {
       // Update status to generating
-      await this.docsRepository.updateSDK(sdkId, organizationId, { status: 'generating' });
+      await this._service.updateSDK(sdkId, organizationId, { status: 'generating' });
 
       // Generate SDK based on language
       const sdkContent = await this.generateSDKContent(sdkData);
@@ -317,14 +340,14 @@ class DocsHandler {
       const filePath = await this.saveSDKFile(sdkId, sdkData.language, sdkContent);
 
       // Update status to completed
-      await this.docsRepository.updateSDK(sdkId, organizationId, {
+      await this._service.updateSDK(sdkId, organizationId, {
         status: 'completed',
         file_path: filePath,
         file_size: sdkContent.length
       });
     } catch (error) {
       // Update status to failed
-      await this.docsRepository.updateSDK(sdkId, organizationId, {
+      await this._service.updateSDK(sdkId, organizationId, {
         status: 'failed',
         error_message: error.message
       });
@@ -666,7 +689,7 @@ class Test${packageName.charAt(0).toUpperCase() + packageName.slice(1)}SDK exten
       const organizationId = request.auth.credentials.organizationId;
       const { sdk_id } = request.params;
 
-      const sdk = await this.docsRepository.getSDKById(sdk_id, organizationId);
+      const sdk = await this._service.getSDKById(sdk_id, organizationId);
       if (!sdk) {
         throw Boom.notFound('SDK not found');
       }
@@ -686,7 +709,7 @@ class Test${packageName.charAt(0).toUpperCase() + packageName.slice(1)}SDK exten
       const organizationId = request.auth.credentials.organizationId;
       const { sdk_id } = request.params;
 
-      const sdk = await this.docsRepository.getSDKById(sdk_id, organizationId);
+      const sdk = await this._service.getSDKById(sdk_id, organizationId);
       if (!sdk) {
         throw Boom.notFound('SDK not found');
       }
@@ -720,8 +743,8 @@ class Test${packageName.charAt(0).toUpperCase() + packageName.slice(1)}SDK exten
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sort_by, sort_order };
 
       const [sdks, total] = await Promise.all([
-        this.docsRepository.getSDKList(organizationId, filters, pagination),
-        this.docsRepository.countSDKList(organizationId, filters)
+        this._service.getSDKList(organizationId, filters, pagination),
+        this._service.countSDKList(organizationId, filters)
       ]);
 
       return h.response({
@@ -750,7 +773,7 @@ class Test${packageName.charAt(0).toUpperCase() + packageName.slice(1)}SDK exten
       const userId = request.auth.credentials.userId;
       const exampleData = { ...request.payload, organization_id: organizationId, created_by: userId };
 
-      const codeExample = await this.docsRepository.createCodeExample(exampleData);
+      const codeExample = await this._service.createCodeExample(exampleData);
 
       return h.response({
         success: true,
@@ -772,8 +795,8 @@ class Test${packageName.charAt(0).toUpperCase() + packageName.slice(1)}SDK exten
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sort_by, sort_order };
 
       const [examples, total] = await Promise.all([
-        this.docsRepository.getCodeExamples(organizationId, filters, pagination),
-        this.docsRepository.countCodeExamples(organizationId, filters)
+        this._service.getCodeExamples(organizationId, filters, pagination),
+        this._service.countCodeExamples(organizationId, filters)
       ]);
 
       return h.response({
@@ -799,7 +822,7 @@ class Test${packageName.charAt(0).toUpperCase() + packageName.slice(1)}SDK exten
       const organizationId = request.auth.credentials.organizationId;
       const { id } = request.params;
 
-      const codeExample = await this.docsRepository.getCodeExampleById(id, organizationId);
+      const codeExample = await this._service.getCodeExampleById(id, organizationId);
       if (!codeExample) {
         throw Boom.notFound('Code example not found');
       }
@@ -820,7 +843,7 @@ class Test${packageName.charAt(0).toUpperCase() + packageName.slice(1)}SDK exten
       const { id } = request.params;
       const updateData = request.payload;
 
-      const codeExample = await this.docsRepository.updateCodeExample(id, organizationId, updateData);
+      const codeExample = await this._service.updateCodeExample(id, organizationId, updateData);
       if (!codeExample) {
         throw Boom.notFound('Code example not found');
       }
@@ -841,7 +864,7 @@ class Test${packageName.charAt(0).toUpperCase() + packageName.slice(1)}SDK exten
       const organizationId = request.auth.credentials.organizationId;
       const { id } = request.params;
 
-      const codeExample = await this.docsRepository.deleteCodeExample(id, organizationId);
+      const codeExample = await this._service.deleteCodeExample(id, organizationId);
       if (!codeExample) {
         throw Boom.notFound('Code example not found');
       }
@@ -863,7 +886,7 @@ class Test${packageName.charAt(0).toUpperCase() + packageName.slice(1)}SDK exten
       const organizationId = request.auth.credentials.organizationId;
       const { start_date, end_date, group_by } = request.query;
 
-      const stats = await this.docsRepository.getDocStatistics(organizationId, {
+      const stats = await this._service.getDocStatistics(organizationId, {
         start_date,
         end_date,
         group_by
@@ -884,7 +907,7 @@ class Test${packageName.charAt(0).toUpperCase() + packageName.slice(1)}SDK exten
       const organizationId = request.auth.credentials.organizationId;
       const { endpoint_doc_id, start_date, end_date, group_by } = request.query;
 
-      const stats = await this.docsRepository.getEndpointUsageStats(organizationId, {
+      const stats = await this._service.getEndpointUsageStats(organizationId, {
         endpoint_doc_id,
         start_date,
         end_date,
@@ -906,7 +929,7 @@ class Test${packageName.charAt(0).toUpperCase() + packageName.slice(1)}SDK exten
       const organizationId = request.auth.credentials.organizationId;
       const { sdk_id, start_date, end_date, group_by } = request.query;
 
-      const stats = await this.docsRepository.getSDKDownloadStats(organizationId, {
+      const stats = await this._service.getSDKDownloadStats(organizationId, {
         sdk_id,
         start_date,
         end_date,
@@ -924,4 +947,4 @@ class Test${packageName.charAt(0).toUpperCase() + packageName.slice(1)}SDK exten
   }
 }
 
-module.exports = new DocsHandler();
+module.exports = DocsHandler;

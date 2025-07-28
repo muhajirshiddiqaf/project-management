@@ -1,23 +1,15 @@
-const clientHandler = require('./handler');
-const clientValidator = require('./validator');
-const { tenantIsolation, roleBasedAccess, permissionBasedAccess } = require('../../middleware');
-
-const routes = [
+const routes = (handler, auth) => [
   // === CLIENT CRUD ROUTES ===
 
   // Get all clients
   {
     method: 'GET',
     path: '/clients',
-    handler: clientHandler.getClients,
+    handler: handler.getClients,
     options: {
       auth: 'jwt',
-      pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
-      ],
       validate: {
-        query: clientValidator.searchClients
+        query: auth.searchClients
       },
       tags: ['clients']
     }
@@ -27,15 +19,11 @@ const routes = [
   {
     method: 'GET',
     path: '/clients/{id}',
-    handler: clientHandler.getClientById,
+    handler: handler.getClientById,
     options: {
       auth: 'jwt',
-      pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
-      ],
       validate: {
-        params: clientValidator.getClientById
+        params: auth.getClientById
       },
       tags: ['clients']
     }
@@ -45,16 +33,11 @@ const routes = [
   {
     method: 'POST',
     path: '/clients',
-    handler: clientHandler.createClient,
+    handler: handler.createClient,
     options: {
       auth: 'jwt',
-      pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['client:create']) }
-      ],
       validate: {
-        payload: clientValidator.createClient
+        payload: auth.createClient
       },
       tags: ['clients']
     }
@@ -64,17 +47,12 @@ const routes = [
   {
     method: 'PUT',
     path: '/clients/{id}',
-    handler: clientHandler.updateClient,
+    handler: handler.updateClient,
     options: {
       auth: 'jwt',
-      pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['client:update']) }
-      ],
       validate: {
-        params: clientValidator.getClientById,
-        payload: clientValidator.updateClient
+        params: auth.getClientById,
+        payload: auth.updateClient
       },
       tags: ['clients']
     }
@@ -84,16 +62,11 @@ const routes = [
   {
     method: 'DELETE',
     path: '/clients/{id}',
-    handler: clientHandler.deleteClient,
+    handler: handler.deleteClient,
     options: {
       auth: 'jwt',
-      pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['client:delete']) }
-      ],
       validate: {
-        params: clientValidator.deleteClient
+        params: auth.deleteClient
       },
       tags: ['clients']
     }
@@ -103,15 +76,12 @@ const routes = [
   {
     method: 'GET',
     path: '/clients/search',
-    handler: clientHandler.searchClients,
+    handler: handler.searchClients,
     options: {
       auth: 'jwt',
-      pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
-      ],
+
       validate: {
-        query: clientValidator.searchClients
+        query: auth.searchClients
       },
       tags: ['clients']
     }
@@ -123,15 +93,12 @@ const routes = [
   {
     method: 'GET',
     path: '/clients/contacts',
-    handler: clientHandler.getClientContacts,
+    handler: handler.getClientContacts,
     options: {
       auth: 'jwt',
-      pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
-      ],
+
       validate: {
-        query: clientValidator.getClientContacts
+        query: auth.getClientContacts
       },
       tags: ['client-contacts']
     }
@@ -141,15 +108,12 @@ const routes = [
   {
     method: 'GET',
     path: '/clients/contacts/{id}',
-    handler: clientHandler.getClientContactById,
+    handler: handler.getClientContactById,
     options: {
       auth: 'jwt',
-      pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
-      ],
+
       validate: {
-        params: clientValidator.getClientContactById
+        params: auth.getClientContactById
       },
       tags: ['client-contacts']
     }
@@ -159,16 +123,13 @@ const routes = [
   {
     method: 'POST',
     path: '/clients/contacts',
-    handler: clientHandler.createClientContact,
+    handler: handler.createClientContact,
     options: {
       auth: 'jwt',
-      pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['client:create_contact']) }
-      ],
+
+
       validate: {
-        payload: clientValidator.createClientContact
+        payload: auth.createClientContact
       },
       tags: ['client-contacts']
     }
@@ -178,17 +139,14 @@ const routes = [
   {
     method: 'PUT',
     path: '/clients/contacts/{id}',
-    handler: clientHandler.updateClientContact,
+    handler: handler.updateClientContact,
     options: {
       auth: 'jwt',
-      pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['client:update_contact']) }
-      ],
+
+
       validate: {
-        params: clientValidator.getClientContactById,
-        payload: clientValidator.updateClientContact
+        params: auth.getClientContactById,
+        payload: auth.updateClientContact
       },
       tags: ['client-contacts']
     }
@@ -198,16 +156,13 @@ const routes = [
   {
     method: 'DELETE',
     path: '/clients/contacts/{id}',
-    handler: clientHandler.deleteClientContact,
+    handler: handler.deleteClientContact,
     options: {
       auth: 'jwt',
-      pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['client:delete_contact']) }
-      ],
+
+
       validate: {
-        params: clientValidator.deleteClientContact
+        params: auth.deleteClientContact
       },
       tags: ['client-contacts']
     }
@@ -219,15 +174,12 @@ const routes = [
   {
     method: 'GET',
     path: '/clients/communications',
-    handler: clientHandler.getClientCommunications,
+    handler: handler.getClientCommunications,
     options: {
       auth: 'jwt',
-      pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
-      ],
+
       validate: {
-        query: clientValidator.getClientCommunications
+        query: auth.getClientCommunications
       },
       tags: ['client-communications']
     }
@@ -237,15 +189,12 @@ const routes = [
   {
     method: 'GET',
     path: '/clients/communications/{id}',
-    handler: clientHandler.getClientCommunicationById,
+    handler: handler.getClientCommunicationById,
     options: {
       auth: 'jwt',
-      pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
-      ],
+
       validate: {
-        params: clientValidator.getClientCommunicationById
+        params: auth.getClientCommunicationById
       },
       tags: ['client-communications']
     }
@@ -255,16 +204,13 @@ const routes = [
   {
     method: 'POST',
     path: '/clients/communications',
-    handler: clientHandler.createClientCommunication,
+    handler: handler.createClientCommunication,
     options: {
       auth: 'jwt',
-      pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) },
-        { method: permissionBasedAccess(['client:create_communication']) }
-      ],
+
+
       validate: {
-        payload: clientValidator.createClientCommunication
+        payload: auth.createClientCommunication
       },
       tags: ['client-communications']
     }
@@ -274,17 +220,14 @@ const routes = [
   {
     method: 'PUT',
     path: '/clients/communications/{id}',
-    handler: clientHandler.updateClientCommunication,
+    handler: handler.updateClientCommunication,
     options: {
       auth: 'jwt',
-      pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['client:update_communication']) }
-      ],
+
+
       validate: {
-        params: clientValidator.getClientCommunicationById,
-        payload: clientValidator.updateClientCommunication
+        params: auth.getClientCommunicationById,
+        payload: auth.updateClientCommunication
       },
       tags: ['client-communications']
     }
@@ -294,16 +237,13 @@ const routes = [
   {
     method: 'DELETE',
     path: '/clients/communications/{id}',
-    handler: clientHandler.deleteClientCommunication,
+    handler: handler.deleteClientCommunication,
     options: {
       auth: 'jwt',
-      pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['client:delete_communication']) }
-      ],
+
+
       validate: {
-        params: clientValidator.deleteClientCommunication
+        params: auth.deleteClientCommunication
       },
       tags: ['client-communications']
     }
@@ -315,16 +255,13 @@ const routes = [
   {
     method: 'POST',
     path: '/clients/import',
-    handler: clientHandler.importClients,
+    handler: handler.importClients,
     options: {
       auth: 'jwt',
-      pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['client:import']) }
-      ],
+
+
       validate: {
-        payload: clientValidator.importClients
+        payload: auth.importClients
       },
       tags: ['client-import-export']
     }
@@ -334,16 +271,13 @@ const routes = [
   {
     method: 'GET',
     path: '/clients/export',
-    handler: clientHandler.exportClients,
+    handler: handler.exportClients,
     options: {
       auth: 'jwt',
-      pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) },
-        { method: permissionBasedAccess(['client:export']) }
-      ],
+
+
       validate: {
-        query: clientValidator.exportClients
+        query: auth.exportClients
       },
       tags: ['client-import-export']
     }

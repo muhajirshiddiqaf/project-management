@@ -1,15 +1,13 @@
-const userRoutes = require('./routes');
-const userHandler = require('./handler');
-const UserRepository = require('../../infrastructure/repositories/userRepository');
+const UserHandler = require('./handler');
+const routes = require('./routes');
 
-const userModule = {
-  name: 'user',
-  register: async function (server, options) {
-    const db = server.app.db;
-    const userRepository = new UserRepository(db);
-    userHandler.setUserRepository(userRepository);
-    server.route(userRoutes);
-  }
+const user = async (server, { service, validator, auth }) => {
+  const userHandler = new UserHandler(service, validator);
+  server.route(routes(userHandler, auth));
 };
 
-module.exports = userModule;
+module.exports = {
+  name: 'user',
+  version: '1.0.0',
+  register: user
+};

@@ -1,21 +1,17 @@
-const invoiceHandler = require('./handler');
-const invoiceValidator = require('./validator');
-const { tenantIsolation, roleBasedAccess, permissionBasedAccess } = require('../../middleware');
-
-const routes = [
+const routes = (handler, auth) => [
   // === INVOICE CRUD ROUTES ===
   {
     method: 'GET',
     path: '/invoices',
-    handler: invoiceHandler.getInvoices,
+    handler: handler.getInvoices,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        query: invoiceValidator.getInvoices
+        query: auth.getInvoices
       },
       tags: ['invoices']
     }
@@ -23,15 +19,15 @@ const routes = [
   {
     method: 'GET',
     path: '/invoices/{id}',
-    handler: invoiceHandler.getInvoiceById,
+    handler: handler.getInvoiceById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        params: invoiceValidator.getInvoiceById
+        params: auth.getInvoiceById
       },
       tags: ['invoices']
     }
@@ -39,16 +35,16 @@ const routes = [
   {
     method: 'POST',
     path: '/invoices',
-    handler: invoiceHandler.createInvoice,
+    handler: handler.createInvoice,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['invoice:create']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['invoice:create']) }
       ],
       validate: {
-        payload: invoiceValidator.createInvoice
+        payload: auth.createInvoice
       },
       tags: ['invoices']
     }
@@ -56,17 +52,17 @@ const routes = [
   {
     method: 'PUT',
     path: '/invoices/{id}',
-    handler: invoiceHandler.updateInvoice,
+    handler: handler.updateInvoice,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['invoice:update']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['invoice:update']) }
       ],
       validate: {
-        params: invoiceValidator.getInvoiceById,
-        payload: invoiceValidator.updateInvoice
+        params: auth.getInvoiceById,
+        payload: auth.updateInvoice
       },
       tags: ['invoices']
     }
@@ -74,16 +70,16 @@ const routes = [
   {
     method: 'DELETE',
     path: '/invoices/{id}',
-    handler: invoiceHandler.deleteInvoice,
+    handler: handler.deleteInvoice,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin']) },
-        { method: permissionBasedAccess(['invoice:delete']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin']) },
+        //{ method: permissionBasedAccess(['invoice:delete']) }
       ],
       validate: {
-        params: invoiceValidator.deleteInvoice
+        params: auth.deleteInvoice
       },
       tags: ['invoices']
     }
@@ -91,15 +87,15 @@ const routes = [
   {
     method: 'GET',
     path: '/invoices/search',
-    handler: invoiceHandler.searchInvoices,
+    handler: handler.searchInvoices,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        query: invoiceValidator.searchInvoices
+        query: auth.searchInvoices
       },
       tags: ['invoices']
     }
@@ -107,17 +103,17 @@ const routes = [
   {
     method: 'PUT',
     path: '/invoices/{id}/status',
-    handler: invoiceHandler.updateInvoiceStatus,
+    handler: handler.updateInvoiceStatus,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['invoice:update_status']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['invoice:update_status']) }
       ],
       validate: {
-        params: invoiceValidator.getInvoiceById,
-        payload: invoiceValidator.updateInvoiceStatus
+        params: auth.getInvoiceById,
+        payload: auth.updateInvoiceStatus
       },
       tags: ['invoices']
     }
@@ -125,17 +121,17 @@ const routes = [
   {
     method: 'POST',
     path: '/invoices/{id}/send',
-    handler: invoiceHandler.sendInvoice,
+    handler: handler.sendInvoice,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['invoice:send']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['invoice:send']) }
       ],
       validate: {
-        params: invoiceValidator.getInvoiceById,
-        payload: invoiceValidator.sendInvoice
+        params: auth.getInvoiceById,
+        payload: auth.sendInvoice
       },
       tags: ['invoices']
     }
@@ -145,15 +141,15 @@ const routes = [
   {
     method: 'GET',
     path: '/invoices/items',
-    handler: invoiceHandler.getInvoiceItems,
+    handler: handler.getInvoiceItems,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        query: invoiceValidator.getInvoiceItems
+        query: auth.getInvoiceItems
       },
       tags: ['invoice-items']
     }
@@ -161,15 +157,15 @@ const routes = [
   {
     method: 'GET',
     path: '/invoices/items/{id}',
-    handler: invoiceHandler.getInvoiceItemById,
+    handler: handler.getInvoiceItemById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
       validate: {
-        params: invoiceValidator.getInvoiceItemById
+        params: auth.getInvoiceItemById
       },
       tags: ['invoice-items']
     }
@@ -177,16 +173,16 @@ const routes = [
   {
     method: 'POST',
     path: '/invoices/items',
-    handler: invoiceHandler.createInvoiceItem,
+    handler: handler.createInvoiceItem,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['invoice:create_item']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['invoice:create_item']) }
       ],
       validate: {
-        payload: invoiceValidator.createInvoiceItem
+        payload: auth.createInvoiceItem
       },
       tags: ['invoice-items']
     }
@@ -194,17 +190,17 @@ const routes = [
   {
     method: 'PUT',
     path: '/invoices/items/{id}',
-    handler: invoiceHandler.updateInvoiceItem,
+    handler: handler.updateInvoiceItem,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['invoice:update_item']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['invoice:update_item']) }
       ],
       validate: {
-        params: invoiceValidator.getInvoiceItemById,
-        payload: invoiceValidator.updateInvoiceItem
+        params: auth.getInvoiceItemById,
+        payload: auth.updateInvoiceItem
       },
       tags: ['invoice-items']
     }
@@ -212,16 +208,16 @@ const routes = [
   {
     method: 'DELETE',
     path: '/invoices/items/{id}',
-    handler: invoiceHandler.deleteInvoiceItem,
+    handler: handler.deleteInvoiceItem,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['invoice:delete_item']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['invoice:delete_item']) }
       ],
       validate: {
-        params: invoiceValidator.deleteInvoiceItem
+        params: auth.deleteInvoiceItem
       },
       tags: ['invoice-items']
     }
@@ -231,17 +227,17 @@ const routes = [
   {
     method: 'POST',
     path: '/invoices/{id}/process-payment',
-    handler: invoiceHandler.processPayment,
+    handler: handler.processPayment,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['invoice:process_payment']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['invoice:process_payment']) }
       ],
       validate: {
-        params: invoiceValidator.getInvoiceById,
-        payload: invoiceValidator.processPayment
+        params: auth.getInvoiceById,
+        payload: auth.processPayment
       },
       tags: ['payment']
     }
@@ -249,17 +245,17 @@ const routes = [
   {
     method: 'POST',
     path: '/invoices/{id}/verify-payment',
-    handler: invoiceHandler.verifyPayment,
+    handler: handler.verifyPayment,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['invoice:verify_payment']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['invoice:verify_payment']) }
       ],
       validate: {
-        params: invoiceValidator.getInvoiceById,
-        payload: invoiceValidator.verifyPayment
+        params: auth.getInvoiceById,
+        payload: auth.verifyPayment
       },
       tags: ['payment']
     }
@@ -269,15 +265,15 @@ const routes = [
   {
     method: 'GET',
     path: '/invoices/statistics',
-    handler: invoiceHandler.getInvoiceStatistics,
+    handler: handler.getInvoiceStatistics,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: invoiceValidator.getInvoiceStatistics
+        query: auth.getInvoiceStatistics
       },
       tags: ['invoice-statistics']
     }
@@ -285,15 +281,15 @@ const routes = [
   {
     method: 'GET',
     path: '/invoices/payment-statistics',
-    handler: invoiceHandler.getPaymentStatistics,
+    handler: handler.getPaymentStatistics,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: invoiceValidator.getPaymentStatistics
+        query: auth.getPaymentStatistics
       },
       tags: ['invoice-statistics']
     }

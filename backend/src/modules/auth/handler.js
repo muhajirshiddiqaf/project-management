@@ -4,28 +4,38 @@ const bcrypt = require('bcrypt');
 const speakeasy = require('speakeasy');
 const QRCode = require('qrcode');
 
-// Import use cases
-const {
-  RegisterUserUseCase,
-  LoginUserUseCase,
-  RefreshTokenUseCase,
-  GetProfileUseCase,
-  UpdateProfileUseCase,
-  ChangePasswordUseCase
-} = require('../../application/use-cases/auth');
-
-// Import repositories
-const { UserRepository } = require('../../infrastructure/repositories');
-
 class AuthHandler {
-  constructor() {
-    // Repository will be injected via dependency injection
-    this.userRepository = null;
-  }
+  constructor(service, validator) {
+    this._service = service;
+    this._validator = validator;
 
-  // Set repository (dependency injection)
-  setUserRepository(userRepository) {
-    this.userRepository = userRepository;
+    // Bind all methods to preserve 'this' context
+    this.register = this.register.bind(this);
+    this.login = this.login.bind(this);
+    this.verify2FA = this.verify2FA.bind(this);
+    this.setup2FA = this.setup2FA.bind(this);
+    this.enable2FA = this.enable2FA.bind(this);
+    this.disable2FA = this.disable2FA.bind(this);
+    this.refreshToken = this.refreshToken.bind(this);
+    this.getProfile = this.getProfile.bind(this);
+    this.updateProfile = this.updateProfile.bind(this);
+    this.changePassword = this.changePassword.bind(this);
+    this.forgotPassword = this.forgotPassword.bind(this);
+    this.resetPassword = this.resetPassword.bind(this);
+    this.logout = this.logout.bind(this);
+    this.generateQRCode = this.generateQRCode.bind(this);
+    this.resend2FAToken = this.resend2FAToken.bind(this);
+    this.get2FAStatus = this.get2FAStatus.bind(this);
+    this.backupCodes = this.backupCodes.bind(this);
+    this.verifyBackupCode = this.verifyBackupCode.bind(this);
+    this.initiate2FARecovery = this.initiate2FARecovery.bind(this);
+    this.complete2FARecovery = this.complete2FARecovery.bind(this);
+    this.get2FASettings = this.get2FASettings.bind(this);
+    this.update2FASettings = this.update2FASettings.bind(this);
+    this.get2FADevices = this.get2FADevices.bind(this);
+    this.revoke2FADevice = this.revoke2FADevice.bind(this);
+    this.get2FALogs = this.get2FALogs.bind(this);
+    this.verify2FAToken = this.verify2FAToken.bind(this);
   }
 
   // Register user
@@ -33,14 +43,18 @@ class AuthHandler {
     try {
       const { email, password, firstName, lastName, organizationName, organizationSlug } = request.payload;
 
+      if (!this._service) {
+        throw Boom.internal('User repository not initialized');
+      }
+
       // Check if user already exists
-      const existingUser = await this.userRepository.findByEmail(email);
+      const existingUser = await this._service.findByEmail(email);
       if (existingUser) {
         throw Boom.conflict('User already exists');
       }
 
       // Create organization
-      const organization = await this.userRepository.createOrganization({
+      const organization = await this._service.createOrganization({
         name: organizationName,
         slug: organizationSlug
       });
@@ -49,9 +63,9 @@ class AuthHandler {
       const hashedPassword = await bcrypt.hash(password, 10);
 
       // Create user
-      const user = await this.userRepository.createUser({
+      const user = await this._service.createUser({
         email,
-        password: hashedPassword,
+        password_hash: hashedPassword,
         first_name: firstName,
         last_name: lastName,
         organization_id: organization.id,
@@ -91,6 +105,7 @@ class AuthHandler {
         }
       }).code(201);
     } catch (error) {
+      console.error('Register error:', error);
       if (error.isBoom) throw error;
       throw Boom.internal('Registration failed');
     }
@@ -102,13 +117,13 @@ class AuthHandler {
       const { email, password } = request.payload;
 
       // Find user
-      const user = await this.userRepository.findByEmail(email);
+      const user = await this._service.findByEmail(email);
       if (!user) {
         throw Boom.unauthorized('Invalid credentials');
       }
 
       // Verify password
-      const isValidPassword = await bcrypt.compare(password, user.password);
+      const isValidPassword = await bcrypt.compare(password, user.password_hash);
       if (!isValidPassword) {
         throw Boom.unauthorized('Invalid credentials');
       }
@@ -158,6 +173,7 @@ class AuthHandler {
         }
       });
     } catch (error) {
+      console.error('Login error:', error);
       if (error.isBoom) throw error;
       throw Boom.internal('Login failed');
     }
@@ -169,7 +185,7 @@ class AuthHandler {
       const { userId, token } = request.payload;
 
       // Find user
-      const user = await this.userRepository.findById(userId);
+      const user = await this._service.findById(userId);
       if (!user || !user.two_factor_enabled) {
         throw Boom.badRequest('Invalid 2FA request');
       }
@@ -230,7 +246,7 @@ class AuthHandler {
       const { userId } = request.auth.credentials;
 
       // Find user
-      const user = await this.userRepository.findById(userId);
+      const user = await this._service.findById(userId);
       if (!user) {
         throw Boom.notFound('User not found');
       }
@@ -244,7 +260,7 @@ class AuthHandler {
       const qrCode = await QRCode.toDataURL(secret.otpauth_url);
 
       // Save secret temporarily (not enabled yet)
-      await this.userRepository.updateUser(userId, {
+      await this._service.updateUser(userId, {
         two_factor_secret: secret.base32,
         two_factor_enabled: false
       });
@@ -270,7 +286,7 @@ class AuthHandler {
       const { token } = request.payload;
 
       // Find user
-      const user = await this.userRepository.findById(userId);
+      const user = await this._service.findById(userId);
       if (!user || !user.two_factor_secret) {
         throw Boom.badRequest('2FA not set up');
       }
@@ -288,7 +304,7 @@ class AuthHandler {
       }
 
       // Enable 2FA
-      await this.userRepository.updateUser(userId, {
+      await this._service.updateUser(userId, {
         two_factor_enabled: true
       });
 
@@ -309,7 +325,7 @@ class AuthHandler {
       const { token } = request.payload;
 
       // Find user
-      const user = await this.userRepository.findById(userId);
+      const user = await this._service.findById(userId);
       if (!user || !user.two_factor_enabled) {
         throw Boom.badRequest('2FA not enabled');
       }
@@ -327,7 +343,7 @@ class AuthHandler {
       }
 
       // Disable 2FA
-      await this.userRepository.updateUser(userId, {
+      await this._service.updateUser(userId, {
         two_factor_enabled: false,
         two_factor_secret: null
       });
@@ -351,7 +367,7 @@ class AuthHandler {
       const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || 'your_refresh_secret_here');
 
       // Find user
-      const user = await this.userRepository.findById(decoded.userId);
+      const user = await this._service.findById(decoded.userId);
       if (!user) {
         throw Boom.unauthorized('Invalid refresh token');
       }
@@ -389,7 +405,7 @@ class AuthHandler {
     try {
       const { userId } = request.auth.credentials;
 
-      const user = await this.userRepository.findById(userId);
+      const user = await this._service.findById(userId);
       if (!user) {
         throw Boom.notFound('User not found');
       }
@@ -419,7 +435,7 @@ class AuthHandler {
       const { userId } = request.auth.credentials;
       const { firstName, lastName } = request.payload;
 
-      const user = await this.userRepository.updateUser(userId, {
+      const user = await this._service.updateUser(userId, {
         first_name: firstName,
         last_name: lastName
       });
@@ -448,7 +464,7 @@ class AuthHandler {
       const { currentPassword, newPassword } = request.payload;
 
       // Get user
-      const user = await this.userRepository.findById(userId);
+      const user = await this._service.findById(userId);
       if (!user) {
         throw Boom.notFound('User not found');
       }
@@ -463,7 +479,7 @@ class AuthHandler {
       const hashedPassword = await bcrypt.hash(newPassword, 10);
 
       // Update password
-      await this.userRepository.updateUser(userId, {
+      await this._service.updateUser(userId, {
         password: hashedPassword
       });
 
@@ -482,7 +498,7 @@ class AuthHandler {
     try {
       const { email } = request.payload;
 
-      const user = await this.userRepository.findByEmail(email);
+      const user = await this._service.findByEmail(email);
       if (!user) {
         // Don't reveal if user exists
         return h.response({
@@ -499,7 +515,7 @@ class AuthHandler {
       );
 
       // Save reset token
-      await this.userRepository.updateUser(user.id, {
+      await this._service.updateUser(user.id, {
         reset_token: resetToken,
         reset_token_expires: new Date(Date.now() + 3600000) // 1 hour
       });
@@ -524,7 +540,7 @@ class AuthHandler {
       const decoded = jwt.verify(token, process.env.JWT_RESET_SECRET || 'your_reset_secret_here');
 
       // Find user
-      const user = await this.userRepository.findById(decoded.userId);
+      const user = await this._service.findById(decoded.userId);
       if (!user || user.reset_token !== token || new Date() > user.reset_token_expires) {
         throw Boom.unauthorized('Invalid or expired reset token');
       }
@@ -533,7 +549,7 @@ class AuthHandler {
       const hashedPassword = await bcrypt.hash(newPassword, 10);
 
       // Update password and clear reset token
-      await this.userRepository.updateUser(user.id, {
+      await this._service.updateUser(user.id, {
         password: hashedPassword,
         reset_token: null,
         reset_token_expires: null
@@ -569,7 +585,7 @@ class AuthHandler {
   async generateQRCode(request, h) {
     try {
       const userId = request.auth.credentials.userId;
-      const user = await this.userRepository.findById(userId);
+      const user = await this._service.findById(userId);
 
       if (!user) {
         throw Boom.notFound('User not found');
@@ -586,7 +602,7 @@ class AuthHandler {
           issuer: process.env.APP_NAME || 'Project Management'
         });
 
-        await this.userRepository.updateUser(userId, {
+        await this._service.updateUser(userId, {
           two_factor_secret: secret.base32
         });
 
@@ -615,7 +631,7 @@ class AuthHandler {
   async resend2FAToken(request, h) {
     try {
       const { email } = request.payload;
-      const user = await this.userRepository.findByEmail(email);
+      const user = await this._service.findByEmail(email);
 
       if (!user) {
         throw Boom.notFound('User not found');
@@ -648,7 +664,7 @@ class AuthHandler {
   async get2FAStatus(request, h) {
     try {
       const userId = request.auth.credentials.userId;
-      const user = await this.userRepository.findById(userId);
+      const user = await this._service.findById(userId);
 
       if (!user) {
         throw Boom.notFound('User not found');
@@ -673,7 +689,7 @@ class AuthHandler {
   async backupCodes(request, h) {
     try {
       const userId = request.auth.credentials.userId;
-      const user = await this.userRepository.findById(userId);
+      const user = await this._service.findById(userId);
 
       if (!user) {
         throw Boom.notFound('User not found');
@@ -693,7 +709,7 @@ class AuthHandler {
         backupCodes.map(code => bcrypt.hash(code, 10))
       );
 
-      await this.userRepository.updateUser(userId, {
+      await this._service.updateUser(userId, {
         backup_codes: hashedBackupCodes
       });
 
@@ -714,7 +730,7 @@ class AuthHandler {
   async verifyBackupCode(request, h) {
     try {
       const { backup_code, email } = request.payload;
-      const user = await this.userRepository.findByEmail(email);
+      const user = await this._service.findByEmail(email);
 
       if (!user) {
         throw Boom.notFound('User not found');
@@ -731,7 +747,7 @@ class AuthHandler {
           if (isValid) {
             // Remove used backup code
             const updatedBackupCodes = user.backup_codes.filter((_, i) => i !== index);
-            await this.userRepository.updateUser(user.id, {
+            await this._service.updateUser(user.id, {
               backup_codes: updatedBackupCodes
             });
           }
@@ -768,7 +784,7 @@ class AuthHandler {
   async initiate2FARecovery(request, h) {
     try {
       const { email } = request.payload;
-      const user = await this.userRepository.findByEmail(email);
+      const user = await this._service.findByEmail(email);
 
       if (!user) {
         throw Boom.notFound('User not found');
@@ -810,7 +826,7 @@ class AuthHandler {
         throw Boom.unauthorized('Invalid recovery token');
       }
 
-      const user = await this.userRepository.findById(decoded.userId);
+      const user = await this._service.findById(decoded.userId);
       if (!user) {
         throw Boom.notFound('User not found');
       }
@@ -819,7 +835,7 @@ class AuthHandler {
       const hashedPassword = await bcrypt.hash(new_password, 10);
 
       // Disable 2FA and update password
-      await this.userRepository.updateUser(user.id, {
+      await this._service.updateUser(user.id, {
         password: hashedPassword,
         two_factor_enabled: false,
         two_factor_secret: null,
@@ -840,7 +856,7 @@ class AuthHandler {
   async get2FASettings(request, h) {
     try {
       const userId = request.auth.credentials.userId;
-      const user = await this.userRepository.findById(userId);
+      const user = await this._service.findById(userId);
 
       if (!user) {
         throw Boom.notFound('User not found');
@@ -867,12 +883,12 @@ class AuthHandler {
       const userId = request.auth.credentials.userId;
       const updateData = request.payload;
 
-      const user = await this.userRepository.findById(userId);
+      const user = await this._service.findById(userId);
       if (!user) {
         throw Boom.notFound('User not found');
       }
 
-      await this.userRepository.updateUser(userId, updateData);
+      await this._service.updateUser(userId, updateData);
 
       return h.response({
         success: true,
@@ -888,7 +904,7 @@ class AuthHandler {
   async get2FADevices(request, h) {
     try {
       const userId = request.auth.credentials.userId;
-      const devices = await this.userRepository.get2FADevices(userId);
+      const devices = await this._service.get2FADevices(userId);
 
       return h.response({
         success: true,
@@ -908,7 +924,7 @@ class AuthHandler {
       const userId = request.auth.credentials.userId;
       const { device_id } = request.params;
 
-      const result = await this.userRepository.revoke2FADevice(userId, device_id);
+      const result = await this._service.revoke2FADevice(userId, device_id);
 
       if (!result) {
         throw Boom.notFound('Device not found');
@@ -930,7 +946,7 @@ class AuthHandler {
       const userId = request.auth.credentials.userId;
       const { page = 1, limit = 10, start_date, end_date, action } = request.query;
 
-      const logs = await this.userRepository.get2FALogs(userId, {
+      const logs = await this._service.get2FALogs(userId, {
         page: parseInt(page, 10),
         limit: parseInt(limit, 10),
         start_date,
@@ -953,6 +969,45 @@ class AuthHandler {
       throw Boom.internal('Failed to get 2FA logs');
     }
   }
+
+  // Verify 2FA Token (for POST /2fa/verify-token)
+  async verify2FAToken(request, h) {
+    try {
+      const { userId, token } = request.payload;
+      // Find user
+      const user = await this._service.findById(userId);
+      if (!user || !user.two_factor_enabled) {
+        throw Boom.badRequest('Invalid 2FA request');
+      }
+      // Verify token
+      const isValid = speakeasy.totp.verify({
+        secret: user.two_factor_secret,
+        encoding: 'base32',
+        token: token,
+        window: 2
+      });
+      if (!isValid) {
+        throw Boom.unauthorized('Invalid 2FA token');
+      }
+      // Generate tokens
+      const accessToken = jwt.sign(
+        { userId: user.id, email: user.email, role: user.role, organizationId: user.organization_id },
+        process.env.JWT_SECRET || 'your_jwt_secret_here',
+        { expiresIn: '24h' }
+      );
+      return h.response({
+        success: true,
+        message: '2FA token verified successfully',
+        data: {
+          accessToken,
+          expiresIn: '24h'
+        }
+      });
+    } catch (error) {
+      if (error.isBoom) throw error;
+      throw Boom.internal('Failed to verify 2FA token');
+    }
+  }
 }
 
-module.exports = new AuthHandler();
+module.exports = AuthHandler;

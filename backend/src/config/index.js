@@ -2,6 +2,10 @@
 require('dotenv').config();
 
 const config = {
+  // Top-level properties for server.js compatibility
+  port: parseInt(process.env.PORT, 10) || 3000,
+  nodeEnv: process.env.NODE_ENV || 'development',
+
   // Server configuration
   server: {
     port: parseInt(process.env.PORT, 10) || 3000,
@@ -20,6 +24,8 @@ const config = {
     maxConnections: parseInt(process.env.DB_MAX_CONNECTIONS, 10) || 20,
     idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT, 10) || 30000,
     connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT, 10) || 2000,
+    // Construct connection string for pg
+    url: process.env.DATABASE_URL || `postgresql://${process.env.DB_USER || 'postgres'}:${process.env.DB_PASSWORD || 'password'}@${process.env.DB_HOST || 'localhost'}:${process.env.DB_PORT || 5432}/${process.env.DB_NAME || 'project_management'}`,
   },
 
   // Redis configuration

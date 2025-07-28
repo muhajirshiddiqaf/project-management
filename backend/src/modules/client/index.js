@@ -1,31 +1,13 @@
-const Hapi = require('@hapi/hapi');
+const ClientHandler = require('./handler');
+const routes = require('./routes');
 
-// Import routes
-const clientRoutes = require('./routes');
-
-// Import handler
-const clientHandler = require('./handler');
-
-// Import repositories
-const { ClientRepository } = require('../../infrastructure/repositories');
-
-// Client module registration
-const register = async (server, options) => {
-  // Register routes
-  server.route(clientRoutes);
-
-  // Inject database into repositories
-  const clientRepository = new ClientRepository(server.app.db);
-
-  // Inject repository into handler
-  clientHandler.setClientRepository(clientRepository);
-
-  console.log('✅ Client module registered with multi-tenant support');
+const client = async (server, { service, validator, auth }) => {
+  const clientHandler = new ClientHandler(service, validator);
+  server.route(routes(clientHandler, auth));
 };
 
-const name = 'client';
-
 module.exports = {
-  register,
-  name
+  name: 'client',
+  version: '1.0.0',
+  register: client
 };

@@ -5,7 +5,7 @@ const authQueries = {
     SELECT u.*, o.name as organization_name, o.slug as organization_slug
     FROM users u
     JOIN organizations o ON u.organization_id = o.id
-    WHERE u.email = $1 AND u.is_active = true AND o.is_active = true
+    WHERE u.email = $1 AND u.is_active = true
   `,
 
   // Find user by ID
@@ -31,7 +31,7 @@ const authQueries = {
 
   // Create user
   createUser: `
-    INSERT INTO users (email, password, first_name, last_name, organization_id, role)
+    INSERT INTO users (email, password_hash, first_name, last_name, organization_id, role)
     VALUES ($1, $2, $3, $4, $5, $6)
     RETURNING *
   `,

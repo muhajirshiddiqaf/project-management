@@ -2,19 +2,34 @@ const Boom = require('@hapi/boom');
 const sgMail = require('@sendgrid/mail');
 
 class EmailHandler {
-  constructor() {
-    this.emailRepository = null;
+  constructor(service, validator) {
+    this._service = service;
+    this._validator = validator;
     this.sendGridApiKey = process.env.SENDGRID_API_KEY;
 
     // Initialize SendGrid
     if (this.sendGridApiKey) {
       sgMail.setApiKey(this.sendGridApiKey);
     }
-  }
 
-  // Set repository (dependency injection)
-  setEmailRepository(emailRepository) {
-    this.emailRepository = emailRepository;
+    // Bind all methods to preserve 'this' context
+    this.sendEmail = this.sendEmail.bind(this);
+    this.sendBulkEmail = this.sendBulkEmail.bind(this);
+    this.getEmailTemplates = this.getEmailTemplates.bind(this);
+    this.getEmailTemplateById = this.getEmailTemplateById.bind(this);
+    this.createEmailTemplate = this.createEmailTemplate.bind(this);
+    this.updateEmailTemplate = this.updateEmailTemplate.bind(this);
+    this.deleteEmailTemplate = this.deleteEmailTemplate.bind(this);
+    this.getEmailTracking = this.getEmailTracking.bind(this);
+    this.getEmailTrackingById = this.getEmailTrackingById.bind(this);
+    this.getEmailSchedules = this.getEmailSchedules.bind(this);
+    this.getEmailScheduleById = this.getEmailScheduleById.bind(this);
+    this.createEmailSchedule = this.createEmailSchedule.bind(this);
+    this.updateEmailSchedule = this.updateEmailSchedule.bind(this);
+    this.deleteEmailSchedule = this.deleteEmailSchedule.bind(this);
+    this.getEmailStatistics = this.getEmailStatistics.bind(this);
+    this.getEmailTemplateStatistics = this.getEmailTemplateStatistics.bind(this);
+    this.processEmailWebhook = this.processEmailWebhook.bind(this);
   }
 
   // === EMAIL SENDING METHODS ===
@@ -29,7 +44,7 @@ class EmailHandler {
 
       // If template_id is provided, get template and merge data
       if (emailData.template_id) {
-        const template = await this.emailRepository.getEmailTemplateById(emailData.template_id, emailData.organization_id);
+        const template = await this._service.getEmailTemplateById(emailData.template_id, emailData.organization_id);
         if (!template) {
           throw Boom.notFound('Email template not found');
         }
@@ -44,7 +59,7 @@ class EmailHandler {
       const sendGridResult = await this.sendViaSendGrid(emailData);
 
       // Store email record
-      const emailRecord = await this.emailRepository.createEmailRecord({
+      const emailRecord = await this._service.createEmailRecord({
         ...emailData,
         sendgrid_message_id: sendGridResult.messageId,
         status: 'sent'
@@ -72,7 +87,7 @@ class EmailHandler {
       const sentBy = request.auth.credentials.user_id;
 
       // Get template
-      const template = await this.emailRepository.getEmailTemplateById(template_id, organizationId);
+      const template = await this._service.getEmailTemplateById(template_id, organizationId);
       if (!template) {
         throw Boom.notFound('Email template not found');
       }
@@ -112,8 +127,8 @@ class EmailHandler {
       const filters = { category, is_active };
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sortBy, sortOrder };
 
-      const templates = await this.emailRepository.getEmailTemplates(organizationId, filters, pagination);
-      const total = await this.emailRepository.countEmailTemplates(organizationId, filters);
+      const templates = await this._service.getEmailTemplates(organizationId, filters, pagination);
+      const total = await this._service.countEmailTemplates(organizationId, filters);
 
       return h.response({
         success: true,
@@ -136,7 +151,7 @@ class EmailHandler {
       const { id } = request.params;
       const organizationId = request.auth.credentials.organization_id;
 
-      const template = await this.emailRepository.getEmailTemplateById(id, organizationId);
+      const template = await this._service.getEmailTemplateById(id, organizationId);
       if (!template) {
         throw Boom.notFound('Email template not found');
       }
@@ -160,7 +175,7 @@ class EmailHandler {
         created_by: request.auth.credentials.user_id
       };
 
-      const template = await this.emailRepository.createEmailTemplate(templateData);
+      const template = await this._service.createEmailTemplate(templateData);
 
       return h.response({
         success: true,
@@ -179,7 +194,7 @@ class EmailHandler {
       const organizationId = request.auth.credentials.organization_id;
       const updateData = request.payload;
 
-      const template = await this.emailRepository.updateEmailTemplate(id, organizationId, updateData);
+      const template = await this._service.updateEmailTemplate(id, organizationId, updateData);
       if (!template) {
         throw Boom.notFound('Email template not found');
       }
@@ -201,7 +216,7 @@ class EmailHandler {
       const { id } = request.params;
       const organizationId = request.auth.credentials.organization_id;
 
-      const template = await this.emailRepository.deleteEmailTemplate(id, organizationId);
+      const template = await this._service.deleteEmailTemplate(id, organizationId);
       if (!template) {
         throw Boom.notFound('Email template not found');
       }
@@ -226,8 +241,8 @@ class EmailHandler {
       const filters = { status, template_id, start_date, end_date };
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sortBy, sortOrder };
 
-      const tracking = await this.emailRepository.getEmailTracking(organizationId, filters, pagination);
-      const total = await this.emailRepository.countEmailTracking(organizationId, filters);
+      const tracking = await this._service.getEmailTracking(organizationId, filters, pagination);
+      const total = await this._service.countEmailTracking(organizationId, filters);
 
       return h.response({
         success: true,
@@ -250,7 +265,7 @@ class EmailHandler {
       const { id } = request.params;
       const organizationId = request.auth.credentials.organization_id;
 
-      const tracking = await this.emailRepository.getEmailTrackingById(id, organizationId);
+      const tracking = await this._service.getEmailTrackingById(id, organizationId);
       if (!tracking) {
         throw Boom.notFound('Email tracking record not found');
       }
@@ -275,8 +290,8 @@ class EmailHandler {
       const filters = { is_active, repeat_type };
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sortBy, sortOrder };
 
-      const schedules = await this.emailRepository.getEmailSchedules(organizationId, filters, pagination);
-      const total = await this.emailRepository.countEmailSchedules(organizationId, filters);
+      const schedules = await this._service.getEmailSchedules(organizationId, filters, pagination);
+      const total = await this._service.countEmailSchedules(organizationId, filters);
 
       return h.response({
         success: true,
@@ -299,7 +314,7 @@ class EmailHandler {
       const { id } = request.params;
       const organizationId = request.auth.credentials.organization_id;
 
-      const schedule = await this.emailRepository.getEmailScheduleById(id, organizationId);
+      const schedule = await this._service.getEmailScheduleById(id, organizationId);
       if (!schedule) {
         throw Boom.notFound('Email schedule not found');
       }
@@ -323,7 +338,7 @@ class EmailHandler {
         created_by: request.auth.credentials.user_id
       };
 
-      const schedule = await this.emailRepository.createEmailSchedule(scheduleData);
+      const schedule = await this._service.createEmailSchedule(scheduleData);
 
       return h.response({
         success: true,
@@ -342,7 +357,7 @@ class EmailHandler {
       const organizationId = request.auth.credentials.organization_id;
       const updateData = request.payload;
 
-      const schedule = await this.emailRepository.updateEmailSchedule(id, organizationId, updateData);
+      const schedule = await this._service.updateEmailSchedule(id, organizationId, updateData);
       if (!schedule) {
         throw Boom.notFound('Email schedule not found');
       }
@@ -364,7 +379,7 @@ class EmailHandler {
       const { id } = request.params;
       const organizationId = request.auth.credentials.organization_id;
 
-      const schedule = await this.emailRepository.deleteEmailSchedule(id, organizationId);
+      const schedule = await this._service.deleteEmailSchedule(id, organizationId);
       if (!schedule) {
         throw Boom.notFound('Email schedule not found');
       }
@@ -386,7 +401,7 @@ class EmailHandler {
       const organizationId = request.auth.credentials.organization_id;
       const { period = 'month', template_id, start_date, end_date } = request.query;
 
-      const statistics = await this.emailRepository.getEmailStatistics(organizationId, { period, template_id, start_date, end_date });
+      const statistics = await this._service.getEmailStatistics(organizationId, { period, template_id, start_date, end_date });
 
       return h.response({
         success: true,
@@ -403,7 +418,7 @@ class EmailHandler {
       const organizationId = request.auth.credentials.organization_id;
       const { period = 'month', start_date, end_date } = request.query;
 
-      const statistics = await this.emailRepository.getEmailTemplateStatistics(organizationId, { period, start_date, end_date });
+      const statistics = await this._service.getEmailTemplateStatistics(organizationId, { period, start_date, end_date });
 
       return h.response({
         success: true,
@@ -422,7 +437,7 @@ class EmailHandler {
       const organizationId = request.auth.credentials.organization_id;
 
       // Process webhook event
-      await this.emailRepository.processEmailWebhook(webhookData, organizationId);
+      await this._service.processEmailWebhook(webhookData, organizationId);
 
       return h.response({
         success: true,
@@ -491,7 +506,7 @@ class EmailHandler {
 
         const sendGridResult = await this.sendViaSendGrid(emailData);
 
-        const emailRecord = await this.emailRepository.createEmailRecord({
+        const emailRecord = await this._service.createEmailRecord({
           ...emailData,
           sendgrid_message_id: sendGridResult.messageId,
           status: 'sent'
@@ -529,4 +544,4 @@ class EmailHandler {
   }
 }
 
-module.exports = new EmailHandler();
+module.exports = EmailHandler;

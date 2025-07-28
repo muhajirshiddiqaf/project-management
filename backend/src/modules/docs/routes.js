@@ -1,22 +1,18 @@
-const docsHandler = require('./handler');
-const docsValidator = require('./validator');
-const { tenantIsolation, roleBasedAccess, permissionBasedAccess } = require('../../middleware');
-
-const routes = [
+const routes = (handler, auth) => [
   // === API DOCUMENTATION MANAGEMENT ROUTES ===
   {
     method: 'POST',
     path: '/api-docs',
-    handler: docsHandler.createAPIDoc,
+    handler: handler.createAPIDoc,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['docs:create']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['docs:create']) }
       ],
       validate: {
-        payload: docsValidator.createAPIDoc
+        payload: auth.createAPIDoc
       },
       tags: ['api-docs']
     }
@@ -24,15 +20,15 @@ const routes = [
   {
     method: 'GET',
     path: '/api-docs',
-    handler: docsHandler.getAPIDocs,
+    handler: handler.getAPIDocs,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: docsValidator.getAPIDocs
+        query: auth.getAPIDocs
       },
       tags: ['api-docs']
     }
@@ -40,15 +36,15 @@ const routes = [
   {
     method: 'GET',
     path: '/api-docs/{id}',
-    handler: docsHandler.getAPIDocById,
+    handler: handler.getAPIDocById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        params: docsValidator.getAPIDocById
+        params: auth.getAPIDocById
       },
       tags: ['api-docs']
     }
@@ -56,17 +52,17 @@ const routes = [
   {
     method: 'PUT',
     path: '/api-docs/{id}',
-    handler: docsHandler.updateAPIDoc,
+    handler: handler.updateAPIDoc,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['docs:update']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['docs:update']) }
       ],
       validate: {
-        params: docsValidator.getAPIDocById,
-        payload: docsValidator.updateAPIDoc
+        params: auth.getAPIDocById,
+        payload: auth.updateAPIDoc
       },
       tags: ['api-docs']
     }
@@ -74,16 +70,16 @@ const routes = [
   {
     method: 'DELETE',
     path: '/api-docs/{id}',
-    handler: docsHandler.deleteAPIDoc,
+    handler: handler.deleteAPIDoc,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['docs:delete']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['docs:delete']) }
       ],
       validate: {
-        params: docsValidator.deleteAPIDoc
+        params: auth.deleteAPIDoc
       },
       tags: ['api-docs']
     }
@@ -93,16 +89,16 @@ const routes = [
   {
     method: 'POST',
     path: '/endpoint-docs',
-    handler: docsHandler.createEndpointDoc,
+    handler: handler.createEndpointDoc,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['docs:create_endpoint']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['docs:create_endpoint']) }
       ],
       validate: {
-        payload: docsValidator.createEndpointDoc
+        payload: auth.createEndpointDoc
       },
       tags: ['endpoint-docs']
     }
@@ -110,15 +106,15 @@ const routes = [
   {
     method: 'GET',
     path: '/endpoint-docs',
-    handler: docsHandler.getEndpointDocs,
+    handler: handler.getEndpointDocs,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: docsValidator.getEndpointDocs
+        query: auth.getEndpointDocs
       },
       tags: ['endpoint-docs']
     }
@@ -126,15 +122,15 @@ const routes = [
   {
     method: 'GET',
     path: '/endpoint-docs/{id}',
-    handler: docsHandler.getEndpointDocById,
+    handler: handler.getEndpointDocById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        params: docsValidator.getEndpointDocById
+        params: auth.getEndpointDocById
       },
       tags: ['endpoint-docs']
     }
@@ -142,17 +138,17 @@ const routes = [
   {
     method: 'PUT',
     path: '/endpoint-docs/{id}',
-    handler: docsHandler.updateEndpointDoc,
+    handler: handler.updateEndpointDoc,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['docs:update_endpoint']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['docs:update_endpoint']) }
       ],
       validate: {
-        params: docsValidator.getEndpointDocById,
-        payload: docsValidator.updateEndpointDoc
+        params: auth.getEndpointDocById,
+        payload: auth.updateEndpointDoc
       },
       tags: ['endpoint-docs']
     }
@@ -160,16 +156,16 @@ const routes = [
   {
     method: 'DELETE',
     path: '/endpoint-docs/{id}',
-    handler: docsHandler.deleteEndpointDoc,
+    handler: handler.deleteEndpointDoc,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['docs:delete_endpoint']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['docs:delete_endpoint']) }
       ],
       validate: {
-        params: docsValidator.deleteEndpointDoc
+        params: auth.deleteEndpointDoc
       },
       tags: ['endpoint-docs']
     }
@@ -179,32 +175,29 @@ const routes = [
   {
     method: 'GET',
     path: '/explorer-settings',
-    handler: docsHandler.getExplorerSettings,
+    handler: handler.getExplorerSettings,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
-      validate: {
-        payload: docsValidator.getExplorerSettings
-      },
       tags: ['explorer-settings']
     }
   },
   {
     method: 'PUT',
     path: '/explorer-settings',
-    handler: docsHandler.updateExplorerSettings,
+    handler: handler.updateExplorerSettings,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['docs:update_settings']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['docs:update_settings']) }
       ],
       validate: {
-        payload: docsValidator.updateExplorerSettings
+        payload: auth.updateExplorerSettings
       },
       tags: ['explorer-settings']
     }
@@ -214,16 +207,16 @@ const routes = [
   {
     method: 'POST',
     path: '/sdks/generate',
-    handler: docsHandler.generateSDK,
+    handler: handler.generateSDK,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['docs:generate_sdk']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['docs:generate_sdk']) }
       ],
       validate: {
-        payload: docsValidator.generateSDK
+        payload: auth.generateSDK
       },
       tags: ['sdks']
     }
@@ -231,15 +224,15 @@ const routes = [
   {
     method: 'GET',
     path: '/sdks',
-    handler: docsHandler.getSDKList,
+    handler: handler.getSDKList,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: docsValidator.getSDKList
+        query: auth.getSDKList
       },
       tags: ['sdks']
     }
@@ -247,15 +240,15 @@ const routes = [
   {
     method: 'GET',
     path: '/sdks/{sdk_id}/status',
-    handler: docsHandler.getSDKStatus,
+    handler: handler.getSDKStatus,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        params: docsValidator.getSDKStatus
+        params: auth.getSDKStatus
       },
       tags: ['sdks']
     }
@@ -263,15 +256,15 @@ const routes = [
   {
     method: 'GET',
     path: '/sdks/{sdk_id}/download',
-    handler: docsHandler.getSDKDownload,
+    handler: handler.getSDKDownload,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        params: docsValidator.getSDKDownload
+        params: auth.getSDKDownload
       },
       tags: ['sdks']
     }
@@ -281,16 +274,16 @@ const routes = [
   {
     method: 'POST',
     path: '/code-examples',
-    handler: docsHandler.createCodeExample,
+    handler: handler.createCodeExample,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['docs:create_example']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['docs:create_example']) }
       ],
       validate: {
-        payload: docsValidator.createCodeExample
+        payload: auth.createCodeExample
       },
       tags: ['code-examples']
     }
@@ -298,15 +291,15 @@ const routes = [
   {
     method: 'GET',
     path: '/code-examples',
-    handler: docsHandler.getCodeExamples,
+    handler: handler.getCodeExamples,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: docsValidator.getCodeExamples
+        query: auth.getCodeExamples
       },
       tags: ['code-examples']
     }
@@ -314,15 +307,15 @@ const routes = [
   {
     method: 'GET',
     path: '/code-examples/{id}',
-    handler: docsHandler.getCodeExampleById,
+    handler: handler.getCodeExampleById,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        params: docsValidator.getCodeExampleById
+        params: auth.getCodeExampleById
       },
       tags: ['code-examples']
     }
@@ -330,17 +323,17 @@ const routes = [
   {
     method: 'PUT',
     path: '/code-examples/{id}',
-    handler: docsHandler.updateCodeExample,
+    handler: handler.updateCodeExample,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['docs:update_example']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['docs:update_example']) }
       ],
       validate: {
-        params: docsValidator.getCodeExampleById,
-        payload: docsValidator.updateCodeExample
+        params: auth.getCodeExampleById,
+        payload: auth.updateCodeExample
       },
       tags: ['code-examples']
     }
@@ -348,16 +341,16 @@ const routes = [
   {
     method: 'DELETE',
     path: '/code-examples/{id}',
-    handler: docsHandler.deleteCodeExample,
+    handler: handler.deleteCodeExample,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) },
-        { method: permissionBasedAccess(['docs:delete_example']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) },
+        //{ method: permissionBasedAccess(['docs:delete_example']) }
       ],
       validate: {
-        params: docsValidator.deleteCodeExample
+        params: auth.deleteCodeExample
       },
       tags: ['code-examples']
     }
@@ -367,15 +360,15 @@ const routes = [
   {
     method: 'GET',
     path: '/docs/statistics',
-    handler: docsHandler.getDocStatistics,
+    handler: handler.getDocStatistics,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: docsValidator.getDocStatistics
+        query: auth.getDocStatistics
       },
       tags: ['docs-statistics']
     }
@@ -383,15 +376,15 @@ const routes = [
   {
     method: 'GET',
     path: '/docs/endpoint-usage-stats',
-    handler: docsHandler.getEndpointUsageStats,
+    handler: handler.getEndpointUsageStats,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: docsValidator.getEndpointUsageStats
+        query: auth.getEndpointUsageStats
       },
       tags: ['docs-statistics']
     }
@@ -399,15 +392,15 @@ const routes = [
   {
     method: 'GET',
     path: '/docs/sdk-download-stats',
-    handler: docsHandler.getSDKDownloadStats,
+    handler: handler.getSDKDownloadStats,
     options: {
       auth: 'jwt',
       pre: [
-        { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+       // //{ method: tenantIsolation },
+        //{ method: roleBasedAccess(['admin', 'manager']) }
       ],
       validate: {
-        query: docsValidator.getSDKDownloadStats
+        query: auth.getSDKDownloadStats
       },
       tags: ['docs-statistics']
     }

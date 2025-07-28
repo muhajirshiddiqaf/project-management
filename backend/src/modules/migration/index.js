@@ -1,15 +1,13 @@
-const migrationRoutes = require('./routes');
-const migrationHandler = require('./handler');
-const MigrationRepository = require('../../infrastructure/repositories/migrationRepository');
+const MigrationHandler = require('./handler');
+const routes = require('./routes');
 
-const migrationModule = {
-  name: 'migration',
-  register: async function (server, options) {
-    const db = server.app.db;
-    const migrationRepository = new MigrationRepository(db);
-    migrationHandler.setMigrationRepository(migrationRepository);
-    server.route(migrationRoutes);
-  }
+const migration = async (server, { service, validator, auth }) => {
+  const migrationHandler = new MigrationHandler(service, validator);
+  server.route(routes(migrationHandler, auth));
 };
 
-module.exports = migrationModule;
+module.exports = {
+  name: 'migration',
+  version: '1.0.0',
+  register: migration
+};

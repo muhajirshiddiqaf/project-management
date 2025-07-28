@@ -1,0 +1,27 @@
+{
+  "name": "saas-project-management",
+  "version": "1.0.0",
+  "description": "SaaS Project Management & Quotation System",
+  "main": "index.js",
+  "scripts": {
+    "start": "cd backend && npm start",
+    "start:dev": "cd backend && npm run start:dev",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "dev": "concurrently \"cd backend && npm run start:dev\" \"cd frontend && npm start\"",
+    "build": "cd frontend && npm run build",
+    "test": "cd backend && npm test"
+  },
+  "keywords": [
+    "saas",
+    "project-management",
+    "quotation",
+    "nodejs",
+    "react",
+    "postgresql"
+  ],
+  "author": "Muhajir Shiddiq",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

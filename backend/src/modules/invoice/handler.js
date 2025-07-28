@@ -1,13 +1,28 @@
 const Boom = require('@hapi/boom');
 
 class InvoiceHandler {
-  constructor() {
-    this.invoiceRepository = null;
-  }
+  constructor(service, validator) {
+    this._service = service;
+    this._validator = validator;
 
-  // Set repository (dependency injection)
-  setInvoiceRepository(invoiceRepository) {
-    this.invoiceRepository = invoiceRepository;
+    // Bind all methods to preserve 'this' context
+    this.getInvoices = this.getInvoices.bind(this);
+    this.getInvoiceById = this.getInvoiceById.bind(this);
+    this.createInvoice = this.createInvoice.bind(this);
+    this.updateInvoice = this.updateInvoice.bind(this);
+    this.deleteInvoice = this.deleteInvoice.bind(this);
+    this.searchInvoices = this.searchInvoices.bind(this);
+    this.updateInvoiceStatus = this.updateInvoiceStatus.bind(this);
+    this.sendInvoice = this.sendInvoice.bind(this);
+    this.getInvoiceItems = this.getInvoiceItems.bind(this);
+    this.getInvoiceItemById = this.getInvoiceItemById.bind(this);
+    this.createInvoiceItem = this.createInvoiceItem.bind(this);
+    this.updateInvoiceItem = this.updateInvoiceItem.bind(this);
+    this.deleteInvoiceItem = this.deleteInvoiceItem.bind(this);
+    this.processPayment = this.processPayment.bind(this);
+    this.verifyPayment = this.verifyPayment.bind(this);
+    this.getInvoiceStatistics = this.getInvoiceStatistics.bind(this);
+    this.getPaymentStatistics = this.getPaymentStatistics.bind(this);
   }
 
   // === INVOICE CRUD METHODS ===
@@ -18,7 +33,7 @@ class InvoiceHandler {
       const { organizationId } = request;
       const { page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'desc', status, client_id, project_id, payment_method, created_by } = request.query;
 
-      const invoices = await this.invoiceRepository.findAll(organizationId, {
+      const invoices = await this._service.findAll(organizationId, {
         page: parseInt(page, 10),
         limit: parseInt(limit, 10),
         sortBy,
@@ -46,7 +61,7 @@ class InvoiceHandler {
       const { organizationId } = request;
       const { id } = request.params;
 
-      const invoice = await this.invoiceRepository.findById(id, organizationId);
+      const invoice = await this._service.findById(id, organizationId);
 
       if (!invoice) {
         throw Boom.notFound('Invoice not found');
@@ -69,7 +84,7 @@ class InvoiceHandler {
       const { organizationId, userId } = request;
       const invoiceData = request.payload;
 
-      const invoice = await this.invoiceRepository.create({
+      const invoice = await this._service.create({
         ...invoiceData,
         organization_id: organizationId,
         created_by: userId
@@ -92,7 +107,7 @@ class InvoiceHandler {
       const { id } = request.params;
       const updateData = request.payload;
 
-      const invoice = await this.invoiceRepository.update(id, organizationId, updateData);
+      const invoice = await this._service.update(id, organizationId, updateData);
 
       if (!invoice) {
         throw Boom.notFound('Invoice not found');
@@ -115,7 +130,7 @@ class InvoiceHandler {
       const { organizationId } = request;
       const { id } = request.params;
 
-      const deleted = await this.invoiceRepository.delete(id, organizationId);
+      const deleted = await this._service.delete(id, organizationId);
 
       if (!deleted) {
         throw Boom.notFound('Invoice not found');
@@ -137,7 +152,7 @@ class InvoiceHandler {
       const { organizationId } = request;
       const { q, page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'desc' } = request.query;
 
-      const invoices = await this.invoiceRepository.search(organizationId, q, {
+      const invoices = await this._service.search(organizationId, q, {
         page: parseInt(page, 10),
         limit: parseInt(limit, 10),
         sortBy,
@@ -161,7 +176,7 @@ class InvoiceHandler {
       const { id } = request.params;
       const { status, payment_date, payment_method, payment_reference, notes } = request.payload;
 
-      const invoice = await this.invoiceRepository.updateStatus(id, organizationId, {
+      const invoice = await this._service.updateStatus(id, organizationId, {
         status,
         payment_date,
         payment_method,
@@ -191,7 +206,7 @@ class InvoiceHandler {
       const { id } = request.params;
       const { email_template, subject, message, send_copy_to } = request.payload;
 
-      const result = await this.invoiceRepository.sendInvoice(id, organizationId, {
+      const result = await this._service.sendInvoice(id, organizationId, {
         email_template,
         subject,
         message,
@@ -221,7 +236,7 @@ class InvoiceHandler {
       const { organizationId } = request;
       const { invoice_id, page = 1, limit = 10 } = request.query;
 
-      const items = await this.invoiceRepository.getItems(invoice_id, organizationId, {
+      const items = await this._service.getItems(invoice_id, organizationId, {
         page: parseInt(page, 10),
         limit: parseInt(limit, 10)
       });
@@ -242,7 +257,7 @@ class InvoiceHandler {
       const { organizationId } = request;
       const { id } = request.params;
 
-      const item = await this.invoiceRepository.getItemById(id, organizationId);
+      const item = await this._service.getItemById(id, organizationId);
 
       if (!item) {
         throw Boom.notFound('Invoice item not found');
@@ -265,7 +280,7 @@ class InvoiceHandler {
       const { organizationId } = request;
       const itemData = request.payload;
 
-      const item = await this.invoiceRepository.createItem({
+      const item = await this._service.createItem({
         ...itemData,
         organization_id: organizationId
       });
@@ -287,7 +302,7 @@ class InvoiceHandler {
       const { id } = request.params;
       const updateData = request.payload;
 
-      const item = await this.invoiceRepository.updateItem(id, organizationId, updateData);
+      const item = await this._service.updateItem(id, organizationId, updateData);
 
       if (!item) {
         throw Boom.notFound('Invoice item not found');
@@ -310,7 +325,7 @@ class InvoiceHandler {
       const { organizationId } = request;
       const { id } = request.params;
 
-      const deleted = await this.invoiceRepository.deleteItem(id, organizationId);
+      const deleted = await this._service.deleteItem(id, organizationId);
 
       if (!deleted) {
         throw Boom.notFound('Invoice item not found');
@@ -335,7 +350,7 @@ class InvoiceHandler {
       const { id } = request.params;
       const paymentData = request.payload;
 
-      const payment = await this.invoiceRepository.processPayment(id, organizationId, paymentData);
+      const payment = await this._service.processPayment(id, organizationId, paymentData);
 
       if (!payment) {
         throw Boom.notFound('Invoice not found');
@@ -359,7 +374,7 @@ class InvoiceHandler {
       const { id } = request.params;
       const { transaction_id, payment_method } = request.payload;
 
-      const verification = await this.invoiceRepository.verifyPayment(id, organizationId, {
+      const verification = await this._service.verifyPayment(id, organizationId, {
         transaction_id,
         payment_method
       });
@@ -386,7 +401,7 @@ class InvoiceHandler {
     try {
       const { organizationId } = request;
 
-      const statistics = await this.invoiceRepository.getStatistics(organizationId);
+      const statistics = await this._service.getStatistics(organizationId);
 
       return h.response({
         success: true,
@@ -403,7 +418,7 @@ class InvoiceHandler {
     try {
       const { organizationId } = request;
 
-      const statistics = await this.invoiceRepository.getPaymentStatistics(organizationId);
+      const statistics = await this._service.getPaymentStatistics(organizationId);
 
       return h.response({
         success: true,
@@ -416,4 +431,4 @@ class InvoiceHandler {
   }
 }
 
-module.exports = new InvoiceHandler();
+module.exports = InvoiceHandler;
