@@ -13,6 +13,7 @@ const database = require('./config/database');
 const authModule = require('./modules/auth');
 const clientModule = require('./modules/client');
 const orderModule = require('./modules/order');
+const ticketModule = require('./modules/ticket');
 
 // Import plugins
 const plugins = [
@@ -93,6 +94,7 @@ const createServer = async () => {
   await server.register(authModule);
   await server.register(clientModule);
   await server.register(orderModule);
+  await server.register(ticketModule);
 
   // Health check route
   server.route({
