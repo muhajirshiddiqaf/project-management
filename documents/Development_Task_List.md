@@ -6,7 +6,7 @@
 - **Repository**: https://github.com/muhajirshiddiqaf/project-management.git
 - **Start Date**: [Tanggal saat ini]
 - **Target Completion**: [TBD]
-- **Current Progress**: 5% (Phase 1 Complete, Phase 2 Started)
+- **Current Progress**: 12% (Phase 1 Complete, Phase 2 In Progress)
 
 ---
 
@@ -104,7 +104,7 @@
 
 ---
 
-### Phase 2: Backend Development (8%)
+### Phase 2: Backend Development (15%)
 
 **Target**: 40% of total project
 
@@ -131,14 +131,14 @@
   - **Estimated Time**: 2 days
   - **Status**: ✅ Completed
 
-- [ ] **Task 2.1.2**: Multi-tenant authentication
+- [x] **Task 2.1.2**: Multi-tenant authentication
 
-  - [ ] Implement tenant isolation
-  - [ ] Add organization-based access control
-  - [ ] Setup role-based permissions
+  - [x] Implement tenant isolation
+  - [x] Add organization-based access control
+  - [x] Setup role-based permissions
   - **Priority**: High
   - **Estimated Time**: 2 days
-  - **Status**: Not Started
+  - **Status**: ✅ Completed
 
 - [ ] **Task 2.1.3**: Two-factor authentication
   - [ ] Implement 2FA setup
