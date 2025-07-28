@@ -1,7 +1,7 @@
 {
   "info": {
-    "name": "Project Management API - Auth",
-    "description": "Collection untuk testing API Authentication",
+    "name": "Project Management API",
+    "description": "Collection untuk testing API Authentication dan Order Management",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -121,12 +121,12 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{refresh_token}}"
               }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"refreshToken\": \"{{refresh_token}}\"\n}"
-            },
             "url": {
               "raw": "{{base_url}}/auth/refresh",
               "host": ["{{base_url}}"],
@@ -139,10 +139,10 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "// Auto-save new tokens",
+                  "// Auto-save tokens",
                   "if (pm.response.code === 200) {",
                   "    const response = pm.response.json();",
-                  "    if (response.data) {",
+                  "    if (response.data && response.data.accessToken) {",
                   "        pm.environment.set(\"access_token\", response.data.accessToken);",
                   "        pm.environment.set(\"refresh_token\", response.data.refreshToken);",
                   "    }",
@@ -154,44 +154,7 @@
           ]
         },
         {
-          "name": "Logout User",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{access_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/auth/logout",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "logout"]
-            }
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Clear tokens on logout",
-                  "if (pm.response.code === 200) {",
-                  "    pm.environment.set(\"access_token\", \"\");",
-                  "    pm.environment.set(\"refresh_token\", \"\");",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ]
-        },
-        {
-          "name": "Get User Profile",
+          "name": "Get Profile",
           "request": {
             "method": "GET",
             "header": [
@@ -209,7 +172,7 @@
           "response": []
         },
         {
-          "name": "Update User Profile",
+          "name": "Update Profile",
           "request": {
             "method": "PUT",
             "header": [
@@ -224,7 +187,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"firstName\": \"John Updated\",\n  \"lastName\": \"Doe Updated\",\n  \"phone\": \"+1234567890\"\n}"
+              "raw": "{\n  \"firstName\": \"John Updated\",\n  \"lastName\": \"Doe Updated\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/auth/profile",
@@ -237,7 +200,7 @@
         {
           "name": "Change Password",
           "request": {
-            "method": "POST",
+            "method": "PUT",
             "header": [
               {
                 "key": "Content-Type",
@@ -250,30 +213,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"currentPassword\": \"old_password\",\n  \"newPassword\": \"new_password123\"\n}"
+              "raw": "{\n  \"currentPassword\": \"password123\",\n  \"newPassword\": \"newpassword123\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/auth/change-password",
               "host": ["{{base_url}}"],
               "path": ["auth", "change-password"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Verify Token",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{access_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/auth/verify",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "verify"]
             }
           },
           "response": []
@@ -312,7 +257,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"token\": \"reset_token_here\",\n  \"newPassword\": \"new_password123\"\n}"
+              "raw": "{\n  \"token\": \"reset_token_here\",\n  \"newPassword\": \"newpassword123\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/auth/reset-password",
@@ -348,16 +293,157 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
               }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"user@example.com\",\n  \"code\": \"123456\"\n}"
+              "raw": "{\n  \"token\": \"123456\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/auth/2fa/verify",
               "host": ["{{base_url}}"],
               "path": ["auth", "2fa", "verify"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Disable 2FA",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/2fa/disable",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "2fa", "disable"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "logout"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📦 Order Management",
+      "item": [
+        {
+          "name": "Get All Orders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/orders?page=1&limit=10&status=pending&priority=high&sortBy=created_at&sortOrder=desc",
+              "host": ["{{base_url}}"],
+              "path": ["orders"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "status",
+                  "value": "pending"
+                },
+                {
+                  "key": "priority",
+                  "value": "high"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "created_at"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Order by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/orders/{{order_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "{{order_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Website Development\",\n  \"description\": \"Create company website with modern design\",\n  \"client_id\": \"client_uuid\",\n  \"project_id\": \"project_uuid\",\n  \"order_date\": \"2024-01-15\",\n  \"due_date\": \"2024-02-15\",\n  \"total_amount\": 5000000,\n  \"currency\": \"IDR\",\n  \"status\": \"draft\",\n  \"priority\": \"high\",\n  \"assigned_to\": \"user_uuid\",\n  \"notes\": \"Urgent project for client\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/orders",
+              "host": ["{{base_url}}"],
+              "path": ["orders"]
             }
           },
           "response": [],
@@ -366,12 +452,11 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "// Auto-save tokens for 2FA verification",
-                  "if (pm.response.code === 200) {",
+                  "// Auto-save order ID",
+                  "if (pm.response.code === 201) {",
                   "    const response = pm.response.json();",
-                  "    if (response.data) {",
-                  "        pm.environment.set(\"access_token\", response.data.accessToken);",
-                  "        pm.environment.set(\"refresh_token\", response.data.refreshToken);",
+                  "    if (response.data && response.data.id) {",
+                  "        pm.environment.set(\"order_id\", response.data.id);",
                   "    }",
                   "}"
                 ],
@@ -379,6 +464,168 @@
               }
             }
           ]
+        },
+        {
+          "name": "Update Order",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Website Development - Updated\",\n  \"description\": \"Create company website with modern design and SEO\",\n  \"total_amount\": 6000000,\n  \"status\": \"approved\",\n  \"priority\": \"urgent\",\n  \"notes\": \"Updated requirements from client\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/orders/{{order_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "{{order_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Order",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/orders/{{order_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "{{order_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search Orders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/orders/search?q=website&page=1&limit=10&status=pending&priority=high&sortBy=created_at&sortOrder=desc",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "website"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "status",
+                  "value": "pending"
+                },
+                {
+                  "key": "priority",
+                  "value": "high"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "created_at"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Order Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"in_progress\",\n  \"notes\": \"Started development work\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/orders/{{order_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "{{order_id}}", "status"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Assign Order",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assigned_to\": \"user_uuid\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/orders/{{order_id}}/assign",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "{{order_id}}", "assign"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Order Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/orders/statistics",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "statistics"]
+            }
+          },
+          "response": []
         }
       ]
     }

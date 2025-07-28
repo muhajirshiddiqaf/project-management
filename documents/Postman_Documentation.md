@@ -115,9 +115,7 @@ Content-Type: application/json
       "firstName": "John",
       "lastName": "Doe",
       "role": "admin",
-      "organizationId": "org_id",
-      "organizationName": "My Company",
-      "organizationSlug": "my-company"
+      "organizationId": "org_id"
     },
     "tokens": {
       "accessToken": "jwt_token_here",
@@ -138,14 +136,7 @@ Content-Type: application/json
 
 ```
 Content-Type: application/json
-```
-
-**Body (JSON):**
-
-```json
-{
-  "refreshToken": "refresh_token_here"
-}
+Authorization: Bearer {{refresh_token}}
 ```
 
 **Response Success (200):**
@@ -164,29 +155,7 @@ Content-Type: application/json
 
 ---
 
-### 4. Logout User
-
-**POST** `{{base_url}}/auth/logout`
-
-**Headers:**
-
-```
-Content-Type: application/json
-Authorization: Bearer {{access_token}}
-```
-
-**Response Success (200):**
-
-```json
-{
-  "success": true,
-  "message": "Logout successful"
-}
-```
-
----
-
-### 5. Get User Profile
+### 4. Get Profile
 
 **GET** `{{base_url}}/auth/profile`
 
@@ -203,23 +172,19 @@ Authorization: Bearer {{access_token}}
   "success": true,
   "message": "Profile retrieved successfully",
   "data": {
-    "user": {
-      "id": "user_id",
-      "email": "user@example.com",
-      "firstName": "John",
-      "lastName": "Doe",
-      "role": "admin",
-      "organizationId": "org_id",
-      "organizationName": "My Company",
-      "organizationSlug": "my-company"
-    }
+    "id": "user_id",
+    "email": "user@example.com",
+    "firstName": "John",
+    "lastName": "Doe",
+    "role": "admin",
+    "organizationId": "org_id"
   }
 }
 ```
 
 ---
 
-### 6. Update User Profile
+### 5. Update Profile
 
 **PUT** `{{base_url}}/auth/profile`
 
@@ -235,8 +200,7 @@ Authorization: Bearer {{access_token}}
 ```json
 {
   "firstName": "John Updated",
-  "lastName": "Doe Updated",
-  "phone": "+1234567890"
+  "lastName": "Doe Updated"
 }
 ```
 
@@ -247,22 +211,20 @@ Authorization: Bearer {{access_token}}
   "success": true,
   "message": "Profile updated successfully",
   "data": {
-    "user": {
-      "id": "user_id",
-      "email": "user@example.com",
-      "firstName": "John Updated",
-      "lastName": "Doe Updated",
-      "phone": "+1234567890"
-    }
+    "id": "user_id",
+    "email": "user@example.com",
+    "firstName": "John Updated",
+    "lastName": "Doe Updated",
+    "role": "admin"
   }
 }
 ```
 
 ---
 
-### 7. Change Password
+### 6. Change Password
 
-**POST** `{{base_url}}/auth/change-password`
+**PUT** `{{base_url}}/auth/change-password`
 
 **Headers:**
 
@@ -275,8 +237,8 @@ Authorization: Bearer {{access_token}}
 
 ```json
 {
-  "currentPassword": "old_password",
-  "newPassword": "new_password123"
+  "currentPassword": "oldpassword123",
+  "newPassword": "newpassword123"
 }
 ```
 
@@ -291,35 +253,7 @@ Authorization: Bearer {{access_token}}
 
 ---
 
-### 8. Verify Token
-
-**GET** `{{base_url}}/auth/verify`
-
-**Headers:**
-
-```
-Authorization: Bearer {{access_token}}
-```
-
-**Response Success (200):**
-
-```json
-{
-  "success": true,
-  "message": "Token is valid",
-  "data": {
-    "user": {
-      "id": "user_id",
-      "email": "user@example.com",
-      "role": "admin"
-    }
-  }
-}
-```
-
----
-
-### 9. Forgot Password
+### 7. Forgot Password
 
 **POST** `{{base_url}}/auth/forgot-password`
 
@@ -342,13 +276,13 @@ Content-Type: application/json
 ```json
 {
   "success": true,
-  "message": "Password reset email sent successfully"
+  "message": "Password reset email sent"
 }
 ```
 
 ---
 
-### 10. Reset Password
+### 8. Reset Password
 
 **POST** `{{base_url}}/auth/reset-password`
 
@@ -363,7 +297,7 @@ Content-Type: application/json
 ```json
 {
   "token": "reset_token_here",
-  "newPassword": "new_password123"
+  "newPassword": "newpassword123"
 }
 ```
 
@@ -378,7 +312,7 @@ Content-Type: application/json
 
 ---
 
-### 11. Setup 2FA
+### 9. Setup 2FA
 
 **POST** `{{base_url}}/auth/2fa/setup`
 
@@ -393,7 +327,7 @@ Authorization: Bearer {{access_token}}
 ```json
 {
   "success": true,
-  "message": "2FA setup successful",
+  "message": "2FA setup initiated",
   "data": {
     "qrCode": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...",
     "secret": "JBSWY3DPEHPK3PXP"
@@ -403,7 +337,7 @@ Authorization: Bearer {{access_token}}
 
 ---
 
-### 12. Verify 2FA
+### 10. Verify 2FA
 
 **POST** `{{base_url}}/auth/2fa/verify`
 
@@ -411,14 +345,14 @@ Authorization: Bearer {{access_token}}
 
 ```
 Content-Type: application/json
+Authorization: Bearer {{access_token}}
 ```
 
 **Body (JSON):**
 
 ```json
 {
-  "email": "user@example.com",
-  "code": "123456"
+  "token": "123456"
 }
 ```
 
@@ -427,10 +361,477 @@ Content-Type: application/json
 ```json
 {
   "success": true,
-  "message": "2FA verification successful",
+  "message": "2FA verified successfully"
+}
+```
+
+---
+
+### 11. Disable 2FA
+
+**DELETE** `{{base_url}}/auth/2fa/disable`
+
+**Headers:**
+
+```
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+```
+
+**Body (JSON):**
+
+```json
+{
+  "token": "123456"
+}
+```
+
+**Response Success (200):**
+
+```json
+{
+  "success": true,
+  "message": "2FA disabled successfully"
+}
+```
+
+---
+
+### 12. Logout
+
+**POST** `{{base_url}}/auth/logout`
+
+**Headers:**
+
+```
+Authorization: Bearer {{access_token}}
+```
+
+**Response Success (200):**
+
+```json
+{
+  "success": true,
+  "message": "Logged out successfully"
+}
+```
+
+---
+
+## 📦 Order Management Routes
+
+### 1. Get All Orders
+
+**GET** `{{base_url}}/orders`
+
+**Headers:**
+
+```
+Authorization: Bearer {{access_token}}
+```
+
+**Query Parameters:**
+
+```
+page=1&limit=10&status=pending&priority=high&client_id=client_uuid&assigned_to=user_uuid&sortBy=created_at&sortOrder=desc
+```
+
+**Response Success (200):**
+
+```json
+{
+  "success": true,
+  "message": "Orders retrieved successfully",
   "data": {
-    "accessToken": "jwt_token_here",
-    "refreshToken": "refresh_token_here"
+    "orders": [
+      {
+        "id": "order_uuid",
+        "title": "Website Development",
+        "description": "Create company website",
+        "client_id": "client_uuid",
+        "client_name": "ABC Company",
+        "client_email": "contact@abc.com",
+        "project_id": "project_uuid",
+        "project_name": "Website Project",
+        "order_date": "2024-01-15T00:00:00.000Z",
+        "due_date": "2024-02-15T00:00:00.000Z",
+        "total_amount": 5000000,
+        "currency": "IDR",
+        "status": "pending",
+        "priority": "high",
+        "assigned_to": "user_uuid",
+        "assigned_to_name": "John Doe",
+        "notes": "Urgent project",
+        "created_at": "2024-01-15T10:00:00.000Z",
+        "updated_at": "2024-01-15T10:00:00.000Z"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 10,
+      "total": 25,
+      "totalPages": 3
+    }
+  }
+}
+```
+
+---
+
+### 2. Get Order by ID
+
+**GET** `{{base_url}}/orders/{{order_id}}`
+
+**Headers:**
+
+```
+Authorization: Bearer {{access_token}}
+```
+
+**Response Success (200):**
+
+```json
+{
+  "success": true,
+  "message": "Order retrieved successfully",
+  "data": {
+    "id": "order_uuid",
+    "title": "Website Development",
+    "description": "Create company website",
+    "client_id": "client_uuid",
+    "client_name": "ABC Company",
+    "client_email": "contact@abc.com",
+    "project_id": "project_uuid",
+    "project_name": "Website Project",
+    "order_date": "2024-01-15T00:00:00.000Z",
+    "due_date": "2024-02-15T00:00:00.000Z",
+    "total_amount": 5000000,
+    "currency": "IDR",
+    "status": "pending",
+    "priority": "high",
+    "assigned_to": "user_uuid",
+    "assigned_to_name": "John Doe",
+    "notes": "Urgent project",
+    "created_at": "2024-01-15T10:00:00.000Z",
+    "updated_at": "2024-01-15T10:00:00.000Z"
+  }
+}
+```
+
+---
+
+### 3. Create Order
+
+**POST** `{{base_url}}/orders`
+
+**Headers:**
+
+```
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+```
+
+**Body (JSON):**
+
+```json
+{
+  "title": "Website Development",
+  "description": "Create company website with modern design",
+  "client_id": "client_uuid",
+  "project_id": "project_uuid",
+  "order_date": "2024-01-15",
+  "due_date": "2024-02-15",
+  "total_amount": 5000000,
+  "currency": "IDR",
+  "status": "draft",
+  "priority": "high",
+  "assigned_to": "user_uuid",
+  "notes": "Urgent project for client"
+}
+```
+
+**Response Success (201):**
+
+```json
+{
+  "success": true,
+  "message": "Order created successfully",
+  "data": {
+    "id": "order_uuid",
+    "title": "Website Development",
+    "description": "Create company website with modern design",
+    "client_id": "client_uuid",
+    "project_id": "project_uuid",
+    "order_date": "2024-01-15T00:00:00.000Z",
+    "due_date": "2024-02-15T00:00:00.000Z",
+    "total_amount": 5000000,
+    "currency": "IDR",
+    "status": "draft",
+    "priority": "high",
+    "assigned_to": "user_uuid",
+    "notes": "Urgent project for client",
+    "created_at": "2024-01-15T10:00:00.000Z",
+    "updated_at": "2024-01-15T10:00:00.000Z"
+  }
+}
+```
+
+---
+
+### 4. Update Order
+
+**PUT** `{{base_url}}/orders/{{order_id}}`
+
+**Headers:**
+
+```
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+```
+
+**Body (JSON):**
+
+```json
+{
+  "title": "Website Development - Updated",
+  "description": "Create company website with modern design and SEO",
+  "total_amount": 6000000,
+  "status": "approved",
+  "priority": "urgent",
+  "notes": "Updated requirements from client"
+}
+```
+
+**Response Success (200):**
+
+```json
+{
+  "success": true,
+  "message": "Order updated successfully",
+  "data": {
+    "id": "order_uuid",
+    "title": "Website Development - Updated",
+    "description": "Create company website with modern design and SEO",
+    "client_id": "client_uuid",
+    "project_id": "project_uuid",
+    "order_date": "2024-01-15T00:00:00.000Z",
+    "due_date": "2024-02-15T00:00:00.000Z",
+    "total_amount": 6000000,
+    "currency": "IDR",
+    "status": "approved",
+    "priority": "urgent",
+    "assigned_to": "user_uuid",
+    "notes": "Updated requirements from client",
+    "created_at": "2024-01-15T10:00:00.000Z",
+    "updated_at": "2024-01-15T11:00:00.000Z"
+  }
+}
+```
+
+---
+
+### 5. Delete Order
+
+**DELETE** `{{base_url}}/orders/{{order_id}}`
+
+**Headers:**
+
+```
+Authorization: Bearer {{access_token}}
+```
+
+**Response Success (200):**
+
+```json
+{
+  "success": true,
+  "message": "Order deleted successfully"
+}
+```
+
+---
+
+### 6. Search Orders
+
+**GET** `{{base_url}}/orders/search`
+
+**Headers:**
+
+```
+Authorization: Bearer {{access_token}}
+```
+
+**Query Parameters:**
+
+```
+q=website&page=1&limit=10&status=pending&priority=high&sortBy=created_at&sortOrder=desc
+```
+
+**Response Success (200):**
+
+```json
+{
+  "success": true,
+  "message": "Orders search completed",
+  "data": {
+    "orders": [
+      {
+        "id": "order_uuid",
+        "title": "Website Development",
+        "description": "Create company website",
+        "client_id": "client_uuid",
+        "client_name": "ABC Company",
+        "client_email": "contact@abc.com",
+        "project_id": "project_uuid",
+        "project_name": "Website Project",
+        "order_date": "2024-01-15T00:00:00.000Z",
+        "due_date": "2024-02-15T00:00:00.000Z",
+        "total_amount": 5000000,
+        "currency": "IDR",
+        "status": "pending",
+        "priority": "high",
+        "assigned_to": "user_uuid",
+        "assigned_to_name": "John Doe",
+        "notes": "Urgent project",
+        "created_at": "2024-01-15T10:00:00.000Z",
+        "updated_at": "2024-01-15T10:00:00.000Z"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 10,
+      "total": 5,
+      "totalPages": 1
+    }
+  }
+}
+```
+
+---
+
+### 7. Update Order Status
+
+**PATCH** `{{base_url}}/orders/{{order_id}}/status`
+
+**Headers:**
+
+```
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+```
+
+**Body (JSON):**
+
+```json
+{
+  "status": "in_progress",
+  "notes": "Started development work"
+}
+```
+
+**Response Success (200):**
+
+```json
+{
+  "success": true,
+  "message": "Order status updated successfully",
+  "data": {
+    "id": "order_uuid",
+    "title": "Website Development",
+    "description": "Create company website",
+    "client_id": "client_uuid",
+    "project_id": "project_uuid",
+    "order_date": "2024-01-15T00:00:00.000Z",
+    "due_date": "2024-02-15T00:00:00.000Z",
+    "total_amount": 5000000,
+    "currency": "IDR",
+    "status": "in_progress",
+    "priority": "high",
+    "assigned_to": "user_uuid",
+    "notes": "Started development work",
+    "created_at": "2024-01-15T10:00:00.000Z",
+    "updated_at": "2024-01-15T12:00:00.000Z"
+  }
+}
+```
+
+---
+
+### 8. Assign Order
+
+**PATCH** `{{base_url}}/orders/{{order_id}}/assign`
+
+**Headers:**
+
+```
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+```
+
+**Body (JSON):**
+
+```json
+{
+  "assigned_to": "user_uuid"
+}
+```
+
+**Response Success (200):**
+
+```json
+{
+  "success": true,
+  "message": "Order assigned successfully",
+  "data": {
+    "id": "order_uuid",
+    "title": "Website Development",
+    "description": "Create company website",
+    "client_id": "client_uuid",
+    "project_id": "project_uuid",
+    "order_date": "2024-01-15T00:00:00.000Z",
+    "due_date": "2024-02-15T00:00:00.000Z",
+    "total_amount": 5000000,
+    "currency": "IDR",
+    "status": "pending",
+    "priority": "high",
+    "assigned_to": "user_uuid",
+    "notes": "Urgent project",
+    "created_at": "2024-01-15T10:00:00.000Z",
+    "updated_at": "2024-01-15T13:00:00.000Z"
+  }
+}
+```
+
+---
+
+### 9. Get Order Statistics
+
+**GET** `{{base_url}}/orders/statistics`
+
+**Headers:**
+
+```
+Authorization: Bearer {{access_token}}
+```
+
+**Response Success (200):**
+
+```json
+{
+  "success": true,
+  "message": "Order statistics retrieved successfully",
+  "data": {
+    "total_orders": 25,
+    "draft_orders": 5,
+    "pending_orders": 8,
+    "approved_orders": 3,
+    "in_progress_orders": 6,
+    "completed_orders": 2,
+    "cancelled_orders": 1,
+    "urgent_orders": 3,
+    "high_priority_orders": 10,
+    "total_amount": 125000000,
+    "average_amount": 5000000
   }
 }
 ```
@@ -453,6 +854,7 @@ Content-Type: application/json
 | `refresh_token`   | ``                          | ``                          |
 | `user_id`         | ``                          | ``                          |
 | `organization_id` | ``                          | ``                          |
+| `order_id`        | ``                          | ``                          |
 
 ### Auto-save Token Script:
 
@@ -501,6 +903,18 @@ if (pm.response.code === 200) {
 2. Access protected route tanpa token
 3. Use expired token
 
+### 5. Order Management Test
+
+1. Create new order
+2. Get all orders
+3. Get order by ID
+4. Update order
+5. Search orders
+6. Update order status
+7. Assign order
+8. Get order statistics
+9. Delete order
+
 ---
 
 ## 🚀 Quick Start
@@ -529,3 +943,6 @@ if (pm.response.code === 200) {
 - Error responses konsisten dengan format yang sama
 - Refresh token untuk extend session
 - 2FA optional untuk security tambahan
+- Order management supports multi-tenant isolation
+- Order status: draft, pending, approved, in_progress, completed, cancelled
+- Order priority: low, medium, high, urgent
