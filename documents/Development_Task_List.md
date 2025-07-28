@@ -5,7 +5,7 @@
 - **Repository**: https://github.com/muhajirshiddiqaf/project-management.git
 - **Start Date**: [Tanggal saat ini]
 - **Target Completion**: [TBD]
-- **Current Progress**: 0% (Planning Phase Complete)
+- **Current Progress**: 5% (Phase 1 Complete, Phase 2 Started)
 
 ---
 
@@ -94,18 +94,18 @@
 
 ---
 
-### Phase 2: Backend Development (0%)
+### Phase 2: Backend Development (5%)
 **Target**: 40% of total project
 
 #### 2.1 Authentication & Authorization
-- [ ] **Task 2.1.1**: JWT authentication implementation
-  - [ ] Setup JWT middleware
-  - [ ] Implement login/register endpoints
-  - [ ] Add password hashing
-  - [ ] Implement refresh token
+- [x] **Task 2.1.1**: JWT authentication implementation
+  - [x] Setup JWT middleware
+  - [x] Implement login/register endpoints
+  - [x] Add password hashing
+  - [x] Implement refresh token
   - **Priority**: High
   - **Estimated Time**: 3 days
-  - **Status**: Not Started
+  - **Status**: ✅ Completed
 
 - [ ] **Task 2.1.2**: Multi-tenant authentication
   - [ ] Implement tenant isolation
