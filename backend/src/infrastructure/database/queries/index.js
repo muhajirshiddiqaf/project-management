@@ -12,7 +12,8 @@ const email = require('./email');
 const pdf = require('./pdf');
 const analytics = require('./analytics');
 const reports = require('./reports');
-const docs = require('./docs'); // New import
+const docs = require('./docs');
+const organization = require('./organization'); // New import
 
 const queries = {
   auth,
@@ -28,7 +29,8 @@ const queries = {
   pdf,
   analytics,
   reports,
-  docs // New export
+  docs,
+  organization // New export
 };
 
 module.exports = { queries };

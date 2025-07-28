@@ -23,7 +23,8 @@ const pdfModule = require('./modules/pdf');
 const analyticsModule = require('./modules/analytics');
 const reportsModule = require('./modules/reports');
 const docsModule = require('./modules/docs');
-const userModule = require('./modules/user'); // New import
+const userModule = require('./modules/user');
+const organizationModule = require('./modules/organization'); // New import
 
 // Import plugins
 const plugins = [
@@ -114,7 +115,8 @@ const createServer = async () => {
       await server.register(analyticsModule);
   await server.register(reportsModule);
   await server.register(docsModule);
-  await server.register(userModule); // New registration
+  await server.register(userModule);
+  await server.register(organizationModule); // New registration
 
   // Health check route
   server.route({

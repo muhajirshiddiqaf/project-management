@@ -1,373 +1,362 @@
-// Organization module database queries
-const organizationQueries = {
-  // Find organization by ID
-  findOrganizationById: `
-    SELECT * FROM organizations
-    WHERE id = $1 AND is_active = true
-  `,
+// === ORGANIZATION CRUD OPERATIONS ===
 
-  // Find organization by slug
-  findOrganizationBySlug: `
-    SELECT * FROM organizations
-    WHERE slug = $1 AND is_active = true
-  `,
+const createOrganization = `
+  INSERT INTO organizations (
+    name, slug, description, domain, logo, website, contact_email, contact_phone,
+    address, industry, company_size, timezone, locale, is_active, metadata, created_by
+  ) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
+  ) RETURNING *
+`;
 
-  // Find organizations
-  findOrganizations: `
-    SELECT * FROM organizations
-    WHERE is_active = true
-    ORDER BY created_at DESC
-  `,
+const getOrganizations = `
+  SELECT
+    o.*,
+    COALESCE(COUNT(u.id), 0) as user_count,
+    COALESCE(COUNT(p.id), 0) as project_count,
+    COALESCE(COUNT(c.id), 0) as client_count
+  FROM organizations o
+  LEFT JOIN users u ON o.id = u.organization_id AND u.deleted_at IS NULL
+  LEFT JOIN projects p ON o.id = p.organization_id AND p.is_active = true
+  LEFT JOIN clients c ON o.id = c.organization_id AND c.is_active = true
+  GROUP BY o.id
+  ORDER BY o.created_at DESC
+  LIMIT $1 OFFSET $2
+`;
 
-  // Create organization
-  createOrganization: `
-    INSERT INTO organizations (id, name, slug, domain, subscription_plan,
-                            max_users, max_projects, logo_url, primary_color,
-                            secondary_color, settings)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-    RETURNING *
-  `,
+const countOrganizations = `
+  SELECT COUNT(*) as count
+  FROM organizations o
+`;
 
-  // Update organization
-  updateOrganization: `
-    UPDATE organizations
-    SET name = COALESCE($1, name),
-        slug = COALESCE($2, slug),
-        domain = COALESCE($3, domain),
-        subscription_plan = COALESCE($4, subscription_plan),
-        max_users = COALESCE($5, max_users),
-        max_projects = COALESCE($6, max_projects),
-        logo_url = COALESCE($7, logo_url),
-        primary_color = COALESCE($8, primary_color),
-        secondary_color = COALESCE($9, secondary_color),
-        settings = COALESCE($10, settings),
-        updated_at = NOW()
-    WHERE id = $11
-    RETURNING *
-  `,
+const getOrganizationById = `
+  SELECT
+    o.*,
+    COALESCE(COUNT(u.id), 0) as user_count,
+    COALESCE(COUNT(p.id), 0) as project_count,
+    COALESCE(COUNT(c.id), 0) as client_count
+  FROM organizations o
+  LEFT JOIN users u ON o.id = u.organization_id AND u.deleted_at IS NULL
+  LEFT JOIN projects p ON o.id = p.organization_id AND p.is_active = true
+  LEFT JOIN clients c ON o.id = c.organization_id AND c.is_active = true
+  WHERE o.id = $1
+  GROUP BY o.id
+`;
 
-  // Delete organization (soft delete)
-  deleteOrganization: `
-    UPDATE organizations
-    SET is_active = false, updated_at = NOW()
-    WHERE id = $1
-  `,
+const getOrganizationBySlug = `
+  SELECT * FROM organizations
+  WHERE slug = $1 AND deleted_at IS NULL
+`;
 
-  // Get organization statistics
-  getOrganizationStatistics: `
-    SELECT
-      o.id,
-      o.name,
-      o.slug,
-      o.subscription_plan,
-      COUNT(u.id) as total_users,
-      COUNT(p.id) as total_projects,
-      COUNT(c.id) as total_clients,
-      COUNT(q.id) as total_quotations,
-      COUNT(ord.id) as total_orders,
-      COUNT(t.id) as total_tickets,
-      COUNT(i.id) as total_invoices,
-      COUNT(s.id) as total_services
-    FROM organizations o
-    LEFT JOIN users u ON o.id = u.organization_id AND u.is_active = true
-    LEFT JOIN projects p ON o.id = p.organization_id AND p.is_active = true
-    LEFT JOIN clients c ON o.id = c.organization_id AND c.is_active = true
-    LEFT JOIN quotations q ON o.id = q.organization_id AND q.is_active = true
-    LEFT JOIN orders ord ON o.id = ord.organization_id AND ord.is_active = true
-    LEFT JOIN tickets t ON o.id = t.organization_id AND t.is_active = true
-    LEFT JOIN invoices i ON o.id = i.organization_id AND i.is_active = true
-    LEFT JOIN services s ON o.id = s.organization_id AND s.is_active = true
-    WHERE o.id = $1 AND o.is_active = true
-    GROUP BY o.id, o.name, o.slug, o.subscription_plan
-  `,
+const updateOrganization = `
+  UPDATE organizations
+  SET column = $1, updated_at = NOW()
+  WHERE id = $2
+  RETURNING *
+`;
 
-  // Get organization usage limits
-  getOrganizationUsageLimits: `
-    SELECT
-      o.id,
-      o.name,
-      o.subscription_plan,
-      o.max_users,
-      o.max_projects,
-      COUNT(u.id) as current_users,
-      COUNT(p.id) as current_projects,
-      (o.max_users - COUNT(u.id)) as remaining_users,
-      (o.max_projects - COUNT(p.id)) as remaining_projects
-    FROM organizations o
-    LEFT JOIN users u ON o.id = u.organization_id AND u.is_active = true
-    LEFT JOIN projects p ON o.id = p.organization_id AND p.is_active = true
-    WHERE o.id = $1 AND o.is_active = true
-    GROUP BY o.id, o.name, o.subscription_plan, o.max_users, o.max_projects
-  `,
+const deleteOrganization = `
+  UPDATE organizations
+  SET deleted_at = NOW(), is_active = false
+  WHERE id = $1
+  RETURNING *
+`;
 
-  // Get organization revenue
-  getOrganizationRevenue: `
-    SELECT
-      o.id,
-      o.name,
-      SUM(q.total_amount) as quotation_revenue,
-      SUM(ord.total_amount) as order_revenue,
-      SUM(i.total_amount) as invoice_revenue,
-      (SUM(q.total_amount) + SUM(ord.total_amount) + SUM(i.total_amount)) as total_revenue
-    FROM organizations o
-    LEFT JOIN quotations q ON o.id = q.organization_id AND q.status = 'accepted' AND q.is_active = true
-    LEFT JOIN orders ord ON o.id = ord.organization_id AND ord.payment_status = 'paid' AND ord.is_active = true
-    LEFT JOIN invoices i ON o.id = i.organization_id AND i.status = 'paid' AND i.is_active = true
-    WHERE o.id = $1 AND o.is_active = true
-    GROUP BY o.id, o.name
-  `,
+const getOrganizationsForExport = `
+  SELECT
+    id, name, slug, description, domain, contact_email, industry, company_size,
+    timezone, locale, is_active, created_at, updated_at
+  FROM organizations
+  WHERE deleted_at IS NULL
+  ORDER BY created_at DESC
+`;
 
-  // Get organization activity
-  getOrganizationActivity: `
-    SELECT
-      'user' as type,
-      u.id,
-      u.first_name || ' ' || u.last_name as title,
-      u.created_at as date,
-      'registered' as status
-    FROM users u
-    WHERE u.organization_id = $1 AND u.is_active = true
+// === SUBSCRIPTION PLAN MANAGEMENT ===
 
-    UNION ALL
+const createSubscriptionPlan = `
+  INSERT INTO subscription_plans (
+    name, description, price, currency, billing_cycle, features, limits,
+    is_active, is_popular, metadata, created_by
+  ) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+  ) RETURNING *
+`;
 
-    SELECT
-      'project' as type,
-      p.id,
-      p.name as title,
-      p.created_at as date,
-      p.status
-    FROM projects p
-    WHERE p.organization_id = $1 AND p.is_active = true
+const getSubscriptionPlans = `
+  SELECT
+    sp.*,
+    COALESCE(COUNT(os.organization_id), 0) as organization_count
+  FROM subscription_plans sp
+  LEFT JOIN organization_subscriptions os ON sp.id = os.subscription_plan_id
+  GROUP BY sp.id
+  ORDER BY sp.created_at DESC
+  LIMIT $1 OFFSET $2
+`;
 
-    UNION ALL
+const countSubscriptionPlans = `
+  SELECT COUNT(*) as count
+  FROM subscription_plans sp
+`;
 
-    SELECT
-      'quotation' as type,
-      q.id,
-      q.title as title,
-      q.created_at as date,
-      q.status
-    FROM quotations q
-    WHERE q.organization_id = $1 AND q.is_active = true
+const getSubscriptionPlanById = `
+  SELECT
+    sp.*,
+    COALESCE(COUNT(os.organization_id), 0) as organization_count
+  FROM subscription_plans sp
+  LEFT JOIN organization_subscriptions os ON sp.id = os.subscription_plan_id
+  WHERE sp.id = $1
+  GROUP BY sp.id
+`;
 
-    UNION ALL
+const updateSubscriptionPlan = `
+  UPDATE subscription_plans
+  SET column = $1, updated_at = NOW()
+  WHERE id = $2
+  RETURNING *
+`;
 
-    SELECT
-      'order' as type,
-      o.id,
-      o.title as title,
-      o.created_at as date,
-      o.status
-    FROM orders o
-    WHERE o.organization_id = $1 AND o.is_active = true
+const deleteSubscriptionPlan = `
+  DELETE FROM subscription_plans
+  WHERE id = $1
+  RETURNING *
+`;
 
-    ORDER BY date DESC
-    LIMIT 50
-  `,
+// === ORGANIZATION SUBSCRIPTION MANAGEMENT ===
 
-  // Get organization settings
-  getOrganizationSettings: `
-    SELECT settings FROM organizations
-    WHERE id = $1 AND is_active = true
-  `,
+const assignSubscriptionToOrganization = `
+  INSERT INTO organization_subscriptions (
+    organization_id, subscription_plan_id, start_date, end_date, auto_renew,
+    payment_method, billing_address, metadata, assigned_by
+  ) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9
+  ) RETURNING *
+`;
 
-  // Update organization settings
-  updateOrganizationSettings: `
-    UPDATE organizations
-    SET settings = $1, updated_at = NOW()
-    WHERE id = $2
-    RETURNING settings
-  `,
+const updateOrganizationSubscription = `
+  UPDATE organization_subscriptions
+  SET column = $1, updated_at = NOW()
+  WHERE organization_id = $2
+  RETURNING *
+`;
 
-  // Get organization billing info
-  getOrganizationBillingInfo: `
-    SELECT
-      o.id,
-      o.name,
-      o.subscription_plan,
-      o.created_at as subscription_start,
-      COUNT(u.id) as user_count,
-      COUNT(p.id) as project_count,
-      SUM(q.total_amount) as quotation_revenue,
-      SUM(ord.total_amount) as order_revenue,
-      SUM(i.total_amount) as invoice_revenue
-    FROM organizations o
-    LEFT JOIN users u ON o.id = u.organization_id AND u.is_active = true
-    LEFT JOIN projects p ON o.id = p.organization_id AND p.is_active = true
-    LEFT JOIN quotations q ON o.id = q.organization_id AND q.status = 'accepted' AND q.is_active = true
-    LEFT JOIN orders ord ON o.id = ord.organization_id AND ord.payment_status = 'paid' AND ord.is_active = true
-    LEFT JOIN invoices i ON o.id = i.organization_id AND i.status = 'paid' AND i.is_active = true
-    WHERE o.id = $1 AND o.is_active = true
-    GROUP BY o.id, o.name, o.subscription_plan, o.created_at
-  `,
+const getOrganizationSubscription = `
+  SELECT
+    os.*,
+    sp.name as plan_name,
+    sp.description as plan_description,
+    sp.features as plan_features,
+    sp.limits as plan_limits
+  FROM organization_subscriptions os
+  JOIN subscription_plans sp ON os.subscription_plan_id = sp.id
+  WHERE os.organization_id = $1
+`;
 
-  // Get organization subscription plans
-  getOrganizationSubscriptionPlans: `
-    SELECT
-      subscription_plan,
-      COUNT(*) as organization_count,
-      AVG(COUNT(u.id)) as avg_users_per_org,
-      AVG(COUNT(p.id)) as avg_projects_per_org
-    FROM organizations o
-    LEFT JOIN users u ON o.id = u.organization_id AND u.is_active = true
-    LEFT JOIN projects p ON o.id = p.organization_id AND p.is_active = true
-    WHERE o.is_active = true
-    GROUP BY subscription_plan
-    ORDER BY organization_count DESC
-  `,
-
-  // Get organization growth metrics
-  getOrganizationGrowthMetrics: `
-    SELECT
-      DATE_TRUNC('month', o.created_at) as period,
-      COUNT(o.id) as new_organizations,
-      COUNT(u.id) as new_users,
-      COUNT(p.id) as new_projects
-    FROM organizations o
-    LEFT JOIN users u ON o.id = u.organization_id AND u.is_active = true
-    LEFT JOIN projects p ON o.id = p.organization_id AND p.is_active = true
-    WHERE o.is_active = true
-    AND o.created_at >= $1 AND o.created_at <= $2
-    GROUP BY DATE_TRUNC('month', o.created_at)
-    ORDER BY period DESC
-  `,
-
-  // Get organization performance metrics
-  getOrganizationPerformanceMetrics: `
-    SELECT
-      o.id,
-      o.name,
-      o.subscription_plan,
-      COUNT(u.id) as user_count,
-      COUNT(p.id) as project_count,
-      COUNT(c.id) as client_count,
-      AVG(p.progress_percentage) as avg_project_progress,
-      COUNT(CASE WHEN p.status = 'completed' THEN 1 END) as completed_projects,
-      COUNT(CASE WHEN q.status = 'accepted' THEN 1 END) as accepted_quotations,
-      COUNT(CASE WHEN ord.payment_status = 'paid' THEN 1 END) as paid_orders,
-      COUNT(CASE WHEN i.status = 'paid' THEN 1 END) as paid_invoices
-    FROM organizations o
-    LEFT JOIN users u ON o.id = u.organization_id AND u.is_active = true
-    LEFT JOIN projects p ON o.id = p.organization_id AND p.is_active = true
-    LEFT JOIN clients c ON o.id = c.organization_id AND c.is_active = true
-    LEFT JOIN quotations q ON o.id = q.organization_id AND q.is_active = true
-    LEFT JOIN orders ord ON o.id = ord.organization_id AND ord.is_active = true
-    LEFT JOIN invoices i ON o.id = i.organization_id AND i.is_active = true
-    WHERE o.is_active = true
-    GROUP BY o.id, o.name, o.subscription_plan
-    ORDER BY user_count DESC
-  `,
-
-  // Check organization limits
-  checkOrganizationLimits: `
-    SELECT
-      o.id,
-      o.max_users,
-      o.max_projects,
-      COUNT(u.id) as current_users,
-      COUNT(p.id) as current_projects,
-      CASE WHEN COUNT(u.id) >= o.max_users THEN true ELSE false END as user_limit_reached,
-      CASE WHEN COUNT(p.id) >= o.max_projects THEN true ELSE false END as project_limit_reached
-    FROM organizations o
-    LEFT JOIN users u ON o.id = u.organization_id AND u.is_active = true
-    LEFT JOIN projects p ON o.id = p.organization_id AND p.is_active = true
-    WHERE o.id = $1 AND o.is_active = true
-    GROUP BY o.id, o.max_users, o.max_projects
-  `,
-
-  // Get organization dashboard data
-  getOrganizationDashboardData: `
-    SELECT
-      o.id,
-      o.name,
-      o.slug,
-      o.subscription_plan,
-      o.logo_url,
-      o.primary_color,
-      o.secondary_color,
-      COUNT(u.id) as total_users,
-      COUNT(p.id) as total_projects,
-      COUNT(c.id) as total_clients,
-      COUNT(q.id) as total_quotations,
-      COUNT(ord.id) as total_orders,
-      COUNT(t.id) as total_tickets,
-      COUNT(i.id) as total_invoices,
-      COUNT(s.id) as total_services,
-      SUM(q.total_amount) as quotation_revenue,
-      SUM(ord.total_amount) as order_revenue,
-      SUM(i.total_amount) as invoice_revenue
-    FROM organizations o
-    LEFT JOIN users u ON o.id = u.organization_id AND u.is_active = true
-    LEFT JOIN projects p ON o.id = p.organization_id AND p.is_active = true
-    LEFT JOIN clients c ON o.id = c.organization_id AND c.is_active = true
-    LEFT JOIN quotations q ON o.id = q.organization_id AND q.status = 'accepted' AND q.is_active = true
-    LEFT JOIN orders ord ON o.id = ord.organization_id AND ord.payment_status = 'paid' AND ord.is_active = true
-    LEFT JOIN invoices i ON o.id = i.organization_id AND i.status = 'paid' AND i.is_active = true
-    LEFT JOIN tickets t ON o.id = t.organization_id AND t.is_active = true
-    LEFT JOIN services s ON o.id = s.organization_id AND s.is_active = true
-    WHERE o.id = $1 AND o.is_active = true
-    GROUP BY o.id, o.name, o.slug, o.subscription_plan, o.logo_url, o.primary_color, o.secondary_color
-  `,
-
-  // Get organization white-label settings
-  getOrganizationWhiteLabelSettings: `
-    SELECT
-      id,
-      name,
-      slug,
-      domain,
-      logo_url,
-      primary_color,
-      secondary_color,
-      settings
-    FROM organizations
-    WHERE id = $1 AND is_active = true
-  `,
-
-  // Update organization white-label settings
-  updateOrganizationWhiteLabelSettings: `
-    UPDATE organizations
-    SET domain = COALESCE($1, domain),
-        logo_url = COALESCE($2, logo_url),
-        primary_color = COALESCE($3, primary_color),
-        secondary_color = COALESCE($4, secondary_color),
-        updated_at = NOW()
-    WHERE id = $5
-    RETURNING *
-  `,
-
-  // Get organization SSO settings
-  getOrganizationSSOSettings: `
-    SELECT
-      settings->>'sso_enabled' as sso_enabled,
-      settings->>'sso_provider' as sso_provider,
-      settings->>'sso_config' as sso_config
-    FROM organizations
-    WHERE id = $1 AND is_active = true
-  `,
-
-  // Update organization SSO settings
-  updateOrganizationSSOSettings: `
-    UPDATE organizations
-    SET settings = jsonb_set(
-      COALESCE(settings, '{}'::jsonb),
-      '{sso_enabled}',
-      $1::jsonb
-    ),
-    settings = jsonb_set(
-      settings,
-      '{sso_provider}',
-      $2::jsonb
-    ),
-    settings = jsonb_set(
-      settings,
-      '{sso_config}',
-      $3::jsonb
-    ),
+const cancelOrganizationSubscription = `
+  UPDATE organization_subscriptions
+  SET
+    status = 'cancelled',
+    cancelled_at = NOW(),
+    cancellation_reason = $2,
+    effective_date = $3,
+    cancelled_by = $4,
     updated_at = NOW()
-    WHERE id = $4
-    RETURNING settings
-  `
-};
+  WHERE organization_id = $1
+  RETURNING *
+`;
 
-module.exports = organizationQueries;
+// === TENANT SETTINGS ===
+
+const getTenantSettings = `
+  SELECT * FROM tenant_settings
+  WHERE organization_id = $1
+`;
+
+const updateTenantSettings = `
+  UPDATE tenant_settings
+  SET column = $1, updated_at = NOW()
+  WHERE organization_id = $2
+  RETURNING *
+`;
+
+const upsertTenantSettings = `
+  INSERT INTO tenant_settings (
+    organization_id, general, notifications, security, integrations, branding
+  ) VALUES (
+    $1, $2, $3, $4, $5, $6
+  )
+  ON CONFLICT (organization_id)
+  DO UPDATE SET
+    general = EXCLUDED.general,
+    notifications = EXCLUDED.notifications,
+    security = EXCLUDED.security,
+    integrations = EXCLUDED.integrations,
+    branding = EXCLUDED.branding,
+    updated_at = NOW()
+  RETURNING *
+`;
+
+// === TENANT ONBOARDING ===
+
+const initiateOnboarding = `
+  INSERT INTO organization_onboarding (
+    organization_id, onboarding_type, steps, assigned_admin,
+    estimated_completion_days, metadata, initiated_by
+  ) VALUES (
+    $1, $2, $3, $4, $5, $6, $7
+  ) RETURNING *
+`;
+
+const updateOnboardingProgress = `
+  INSERT INTO onboarding_progress (
+    organization_id, step, status, completed_at, notes, metadata, updated_by
+  ) VALUES (
+    $1, $2, $3, $4, $5, $6, $7
+  ) RETURNING *
+`;
+
+const getOnboardingStatus = `
+  SELECT
+    o.*,
+    COALESCE(COUNT(op.id), 0) as completed_steps,
+    COALESCE(COUNT(op.id) FILTER (WHERE op.status = 'completed'), 0) as total_steps
+  FROM organization_onboarding o
+  LEFT JOIN onboarding_progress op ON o.organization_id = op.organization_id
+  WHERE o.organization_id = $1
+  GROUP BY o.id
+`;
+
+// === TENANT OFFBOARDING ===
+
+const initiateOffboarding = `
+  INSERT INTO organization_offboarding (
+    organization_id, reason, effective_date, data_retention_days,
+    export_data, notify_users, metadata, initiated_by
+  ) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8
+  ) RETURNING *
+`;
+
+const updateOffboardingProgress = `
+  INSERT INTO offboarding_progress (
+    organization_id, step, status, completed_at, notes, metadata, updated_by
+  ) VALUES (
+    $1, $2, $3, $4, $5, $6, $7
+  ) RETURNING *
+`;
+
+const getOffboardingStatus = `
+  SELECT
+    o.*,
+    COALESCE(COUNT(op.id), 0) as completed_steps,
+    COALESCE(COUNT(op.id) FILTER (WHERE op.status = 'completed'), 0) as total_steps
+  FROM organization_offboarding o
+  LEFT JOIN offboarding_progress op ON o.organization_id = op.organization_id
+  WHERE o.organization_id = $1
+  GROUP BY o.id
+`;
+
+// === ORGANIZATION STATISTICS ===
+
+const getOrganizationStatistics = `
+  SELECT
+    DATE_TRUNC('day', o.created_at) as date,
+    COUNT(o.id) as new_organizations,
+    COUNT(CASE WHEN o.is_active = true THEN 1 END) as active_organizations,
+    COUNT(CASE WHEN os.status = 'active' THEN 1 END) as subscribed_organizations,
+    AVG(COALESCE(u.user_count, 0)) as avg_users_per_organization,
+    AVG(COALESCE(p.project_count, 0)) as avg_projects_per_organization
+  FROM organizations o
+  LEFT JOIN organization_subscriptions os ON o.id = os.organization_id
+  LEFT JOIN (
+    SELECT organization_id, COUNT(*) as user_count
+    FROM users
+    WHERE deleted_at IS NULL
+    GROUP BY organization_id
+  ) u ON o.id = u.organization_id
+  LEFT JOIN (
+    SELECT organization_id, COUNT(*) as project_count
+    FROM projects
+    WHERE is_active = true
+    GROUP BY organization_id
+  ) p ON o.id = p.organization_id
+  WHERE o.deleted_at IS NULL
+  GROUP BY DATE_TRUNC('day', o.created_at)
+  ORDER BY date DESC
+`;
+
+// === ACTIVITY LOGS ===
+
+const createActivityLog = `
+  INSERT INTO organization_activity_logs (
+    organization_id, user_id, action, resource, resource_id, details, ip_address, user_agent
+  ) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8
+  ) RETURNING *
+`;
+
+const getOrganizationActivityLogs = `
+  SELECT
+    al.*,
+    u.name as user_name,
+    u.email as user_email
+  FROM organization_activity_logs al
+  LEFT JOIN users u ON al.user_id = u.id
+  WHERE al.organization_id = $1
+  ORDER BY al.created_at DESC
+  LIMIT $2 OFFSET $3
+`;
+
+const countOrganizationActivityLogs = `
+  SELECT COUNT(*) as count
+  FROM organization_activity_logs al
+  WHERE al.organization_id = $1
+`;
+
+module.exports = {
+  // Organization CRUD
+  createOrganization,
+  getOrganizations,
+  countOrganizations,
+  getOrganizationById,
+  getOrganizationBySlug,
+  updateOrganization,
+  deleteOrganization,
+  getOrganizationsForExport,
+
+  // Subscription Plans
+  createSubscriptionPlan,
+  getSubscriptionPlans,
+  countSubscriptionPlans,
+  getSubscriptionPlanById,
+  updateSubscriptionPlan,
+  deleteSubscriptionPlan,
+
+  // Organization Subscriptions
+  assignSubscriptionToOrganization,
+  updateOrganizationSubscription,
+  getOrganizationSubscription,
+  cancelOrganizationSubscription,
+
+  // Tenant Settings
+  getTenantSettings,
+  updateTenantSettings,
+  upsertTenantSettings,
+
+  // Onboarding
+  initiateOnboarding,
+  updateOnboardingProgress,
+  getOnboardingStatus,
+
+  // Offboarding
+  initiateOffboarding,
+  updateOffboardingProgress,
+  getOffboardingStatus,
+
+  // Statistics
+  getOrganizationStatistics,
+
+  // Activity Logs
+  createActivityLog,
+  getOrganizationActivityLogs,
+  countOrganizationActivityLogs
+};
