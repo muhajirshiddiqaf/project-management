@@ -17,14 +17,30 @@ database/
 ├── seeds/              # Initial data seeding
 │   ├── 001_initial_migration_seed.sql
 │   ├── 002_initial_seeds_data.sql
-│   └── 003_initial_versions_data.sql
+│   ├── 003_initial_versions_data.sql
+│   ├── 004_complete_database_schema.sql
+│   └── 005_initial_data_seed.sql
 ├── migrate.js          # Migration runner script
+├── setup_database.js   # Complete database setup script
 └── README.md          # This file
 ```
 
 ## 🚀 Quick Start
 
-### 1. Run Migrations
+### 1. Complete Database Setup
+
+```bash
+# Setup complete database with all schema and data
+node setup_database.js setup
+
+# Reset and setup database (WARNING: This will drop all tables)
+node setup_database.js reset
+
+# Check database status
+node setup_database.js status
+```
+
+### 2. Run Migrations
 
 ```bash
 # Run all pending migrations
@@ -34,14 +50,14 @@ node migrate.js run
 CONTINUE_ON_ERROR=true node migrate.js run
 ```
 
-### 2. Check Migration Status
+### 3. Check Migration Status
 
 ```bash
 # Show migration status
 node migrate.js status
 ```
 
-### 3. Rollback Migrations
+### 4. Rollback Migrations
 
 ```bash
 # Rollback last migration
@@ -131,6 +147,25 @@ Sample version data:
 - Version 1.2.0 (Invoice Management)
 - Version 2.0.0 (Advanced Features)
 
+### 004_complete_database_schema.sql
+
+Complete database schema migration:
+
+- All tables from the original schema.sql
+- Organizations, Users, Clients, Projects
+- Quotations, Orders, Tickets, Invoices
+- Service management, Email & PDF management
+- Subscription & Usage tracking
+- All indexes and triggers
+
+### 005_initial_data_seed.sql
+
+Initial data from schema.sql:
+
+- Default organization setup
+- Default service categories
+- Basic system configuration
+
 ## 🔧 Configuration
 
 ### Environment Variables
@@ -147,6 +182,43 @@ DB_SSL=false
 # Migration Configuration
 CONTINUE_ON_ERROR=false
 ```
+
+## 🗄️ Complete Database Setup
+
+### Setup Script
+
+The `setup_database.js` script provides a complete database setup solution:
+
+```bash
+# Setup complete database with all schema and data
+node setup_database.js setup
+
+# Reset and setup database (WARNING: This will drop all tables)
+node setup_database.js reset
+
+# Check database status
+node setup_database.js status
+```
+
+### What the Setup Script Does
+
+1. **Schema Creation**: Creates all database tables from the original schema.sql
+2. **Initial Data**: Seeds default organization and service categories
+3. **Migration System**: Sets up the migration tracking system
+4. **Sample Data**: Populates sample migrations, seeds, and versions
+5. **Indexes & Triggers**: Creates all performance indexes and update triggers
+
+### Database Schema Included
+
+- **Organization & User Management**: Multi-tenant organizations and users
+- **Client Management**: Clients, contacts, and communications
+- **Project & Quotation Management**: Projects, quotations, and cost calculations
+- **Order & Ticket Management**: Orders, tickets, and messages
+- **Invoice Management**: Invoices and invoice items
+- **Service Management**: Service categories and services
+- **Email & PDF Management**: Templates, campaigns, and tracking
+- **Subscription & Usage Tracking**: Subscription management and usage metrics
+- **Order Forms**: Custom order forms and submissions
 
 ### Database Connection
 
