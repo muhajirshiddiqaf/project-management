@@ -32,30 +32,75 @@ const routes = [
     }
   },
 
+  // Verify 2FA
+  {
+    method: 'POST',
+    path: '/verify-2fa',
+    handler: authHandler.verify2FA,
+    options: {
+      auth: false,
+      validate: {
+        payload: authValidator.verify2FASchema
+      },
+      tags: ['auth']
+    }
+  },
+
+  // Setup 2FA
+  {
+    method: 'POST',
+    path: '/setup-2fa',
+    handler: authHandler.setup2FA,
+    options: {
+      auth: 'jwt',
+      pre: [{ method: tenantIsolation }],
+      validate: {
+        payload: authValidator.setup2FASchema
+      },
+      tags: ['auth']
+    }
+  },
+
+  // Enable 2FA
+  {
+    method: 'POST',
+    path: '/enable-2fa',
+    handler: authHandler.enable2FA,
+    options: {
+      auth: 'jwt',
+      pre: [{ method: tenantIsolation }],
+      validate: {
+        payload: authValidator.enable2FASchema
+      },
+      tags: ['auth']
+    }
+  },
+
+  // Disable 2FA
+  {
+    method: 'POST',
+    path: '/disable-2fa',
+    handler: authHandler.disable2FA,
+    options: {
+      auth: 'jwt',
+      pre: [{ method: tenantIsolation }],
+      validate: {
+        payload: authValidator.disable2FASchema
+      },
+      tags: ['auth']
+    }
+  },
+
   // Refresh token
   {
     method: 'POST',
-    path: '/refresh',
+    path: '/refresh-token',
     handler: authHandler.refreshToken,
     options: {
       auth: false,
       validate: {
         payload: authValidator.refreshTokenSchema
       },
-      tags: ['auth']
-    }
-  },
-
-  // Logout
-  {
-    method: 'POST',
-    path: '/logout',
-    handler: authHandler.logout,
-    options: {
-      auth: 'jwt',
-      pre: [
-        { method: tenantIsolation }
-      ],
       tags: ['auth']
     }
   },
@@ -67,9 +112,10 @@ const routes = [
     handler: authHandler.getProfile,
     options: {
       auth: 'jwt',
-      pre: [
-        { method: tenantIsolation }
-      ],
+      pre: [{ method: tenantIsolation }],
+      validate: {
+        query: authValidator.getProfileSchema
+      },
       tags: ['auth']
     }
   },
@@ -81,9 +127,7 @@ const routes = [
     handler: authHandler.updateProfile,
     options: {
       auth: 'jwt',
-      pre: [
-        { method: tenantIsolation }
-      ],
+      pre: [{ method: tenantIsolation }],
       validate: {
         payload: authValidator.updateProfileSchema
       },
@@ -93,31 +137,15 @@ const routes = [
 
   // Change password
   {
-    method: 'POST',
+    method: 'PUT',
     path: '/change-password',
     handler: authHandler.changePassword,
     options: {
       auth: 'jwt',
-      pre: [
-        { method: tenantIsolation }
-      ],
+      pre: [{ method: tenantIsolation }],
       validate: {
         payload: authValidator.changePasswordSchema
       },
-      tags: ['auth']
-    }
-  },
-
-  // Verify token
-  {
-    method: 'GET',
-    path: '/verify',
-    handler: authHandler.verifyToken,
-    options: {
-      auth: 'jwt',
-      pre: [
-        { method: tenantIsolation }
-      ],
       tags: ['auth']
     }
   },
@@ -150,29 +178,16 @@ const routes = [
     }
   },
 
-  // Setup 2FA
+  // Logout
   {
     method: 'POST',
-    path: '/2fa/setup',
-    handler: authHandler.setup2FA,
+    path: '/logout',
+    handler: authHandler.logout,
     options: {
       auth: 'jwt',
-      pre: [
-        { method: tenantIsolation }
-      ],
-      tags: ['auth']
-    }
-  },
-
-  // Verify 2FA
-  {
-    method: 'POST',
-    path: '/2fa/verify',
-    handler: authHandler.verify2FA,
-    options: {
-      auth: false,
+      pre: [{ method: tenantIsolation }],
       validate: {
-        payload: authValidator.verify2FASchema
+        payload: authValidator.logoutSchema
       },
       tags: ['auth']
     }

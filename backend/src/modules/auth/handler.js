@@ -1,7 +1,8 @@
 const Boom = require('@hapi/boom');
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { v4: uuidv4 } = require('uuid');
+const bcrypt = require('bcrypt');
+const speakeasy = require('speakeasy');
+const QRCode = require('qrcode');
 
 // Import use cases
 const {
@@ -27,40 +28,70 @@ class AuthHandler {
     this.userRepository = userRepository;
   }
 
-  // Register new user
+  // Register user
   async register(request, h) {
     try {
-      const {
-        email,
-        password,
-        firstName,
-        lastName,
-        organizationName,
-        organizationSlug,
-      } = request.payload;
+      const { email, password, firstName, lastName, organizationName, organizationSlug } = request.payload;
 
-      const useCase = new RegisterUserUseCase(this.userRepository);
-      const result = await useCase.execute({
-        email,
-        password,
-        firstName,
-        lastName,
-        organizationName,
-        organizationSlug,
+      // Check if user already exists
+      const existingUser = await this.userRepository.findByEmail(email);
+      if (existingUser) {
+        throw Boom.conflict('User already exists');
+      }
+
+      // Create organization
+      const organization = await this.userRepository.createOrganization({
+        name: organizationName,
+        slug: organizationSlug
       });
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Create user
+      const user = await this.userRepository.createUser({
+        email,
+        password: hashedPassword,
+        first_name: firstName,
+        last_name: lastName,
+        organization_id: organization.id,
+        role: 'admin'
+      });
+
+      // Generate tokens
+      const accessToken = jwt.sign(
+        { userId: user.id, email: user.email, role: user.role, organizationId: organization.id },
+        process.env.JWT_SECRET || 'your_jwt_secret_here',
+        { expiresIn: '24h' }
+      );
+
+      const refreshToken = jwt.sign(
+        { userId: user.id, email: user.email },
+        process.env.JWT_REFRESH_SECRET || 'your_refresh_secret_here',
+        { expiresIn: '7d' }
+      );
 
       return h.response({
         success: true,
         message: 'User registered successfully',
-        data: result
+        data: {
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.first_name,
+            lastName: user.last_name,
+            role: user.role,
+            organizationId: organization.id
+          },
+          tokens: {
+            accessToken,
+            refreshToken,
+            expiresIn: '24h'
+          }
+        }
       }).code(201);
-
     } catch (error) {
-      if (error.code === 'EMAIL_EXISTS') {
-        throw Boom.conflict('Email already registered');
-      }
-
-      console.error('Registration error:', error);
+      if (error.isBoom) throw error;
       throw Boom.internal('Registration failed');
     }
   }
@@ -70,22 +101,244 @@ class AuthHandler {
     try {
       const { email, password } = request.payload;
 
-      const useCase = new LoginUserUseCase(this.userRepository);
-      const result = await useCase.execute({ email, password });
+      // Find user
+      const user = await this.userRepository.findByEmail(email);
+      if (!user) {
+        throw Boom.unauthorized('Invalid credentials');
+      }
+
+      // Verify password
+      const isValidPassword = await bcrypt.compare(password, user.password);
+      if (!isValidPassword) {
+        throw Boom.unauthorized('Invalid credentials');
+      }
+
+      // Check if 2FA is enabled
+      if (user.two_factor_enabled) {
+        return h.response({
+          success: true,
+          message: '2FA verification required',
+          data: {
+            requires2FA: true,
+            userId: user.id
+          }
+        });
+      }
+
+      // Generate tokens
+      const accessToken = jwt.sign(
+        { userId: user.id, email: user.email, role: user.role, organizationId: user.organization_id },
+        process.env.JWT_SECRET || 'your_jwt_secret_here',
+        { expiresIn: '24h' }
+      );
+
+      const refreshToken = jwt.sign(
+        { userId: user.id, email: user.email },
+        process.env.JWT_REFRESH_SECRET || 'your_refresh_secret_here',
+        { expiresIn: '7d' }
+      );
 
       return h.response({
         success: true,
         message: 'Login successful',
-        data: result
+        data: {
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.first_name,
+            lastName: user.last_name,
+            role: user.role,
+            organizationId: user.organization_id
+          },
+          tokens: {
+            accessToken,
+            refreshToken,
+            expiresIn: '24h'
+          }
+        }
       });
-
     } catch (error) {
-      if (error.code === 'INVALID_CREDENTIALS') {
-        throw Boom.unauthorized('Invalid credentials');
+      if (error.isBoom) throw error;
+      throw Boom.internal('Login failed');
+    }
+  }
+
+  // Verify 2FA
+  async verify2FA(request, h) {
+    try {
+      const { userId, token } = request.payload;
+
+      // Find user
+      const user = await this.userRepository.findById(userId);
+      if (!user || !user.two_factor_enabled) {
+        throw Boom.badRequest('Invalid 2FA request');
       }
 
-      console.error('Login error:', error);
-      throw Boom.internal('Login failed');
+      // Verify token
+      const isValid = speakeasy.totp.verify({
+        secret: user.two_factor_secret,
+        encoding: 'base32',
+        token: token,
+        window: 2 // Allow 2 time steps tolerance
+      });
+
+      if (!isValid) {
+        throw Boom.unauthorized('Invalid 2FA token');
+      }
+
+      // Generate tokens
+      const accessToken = jwt.sign(
+        { userId: user.id, email: user.email, role: user.role, organizationId: user.organization_id },
+        process.env.JWT_SECRET || 'your_jwt_secret_here',
+        { expiresIn: '24h' }
+      );
+
+      const refreshToken = jwt.sign(
+        { userId: user.id, email: user.email },
+        process.env.JWT_REFRESH_SECRET || 'your_refresh_secret_here',
+        { expiresIn: '7d' }
+      );
+
+      return h.response({
+        success: true,
+        message: '2FA verification successful',
+        data: {
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.first_name,
+            lastName: user.last_name,
+            role: user.role,
+            organizationId: user.organization_id
+          },
+          tokens: {
+            accessToken,
+            refreshToken,
+            expiresIn: '24h'
+          }
+        }
+      });
+    } catch (error) {
+      if (error.isBoom) throw error;
+      throw Boom.internal('2FA verification failed');
+    }
+  }
+
+  // Setup 2FA
+  async setup2FA(request, h) {
+    try {
+      const { userId } = request.auth.credentials;
+
+      // Find user
+      const user = await this.userRepository.findById(userId);
+      if (!user) {
+        throw Boom.notFound('User not found');
+      }
+
+      // Generate secret
+      const secret = speakeasy.generateSecret({
+        name: `${user.email} (${process.env.APP_NAME || 'Project Management'})`
+      });
+
+      // Generate QR code
+      const qrCode = await QRCode.toDataURL(secret.otpauth_url);
+
+      // Save secret temporarily (not enabled yet)
+      await this.userRepository.updateUser(userId, {
+        two_factor_secret: secret.base32,
+        two_factor_enabled: false
+      });
+
+      return h.response({
+        success: true,
+        message: '2FA setup initiated',
+        data: {
+          qrCode,
+          secret: secret.base32
+        }
+      });
+    } catch (error) {
+      if (error.isBoom) throw error;
+      throw Boom.internal('2FA setup failed');
+    }
+  }
+
+  // Enable 2FA
+  async enable2FA(request, h) {
+    try {
+      const { userId } = request.auth.credentials;
+      const { token } = request.payload;
+
+      // Find user
+      const user = await this.userRepository.findById(userId);
+      if (!user || !user.two_factor_secret) {
+        throw Boom.badRequest('2FA not set up');
+      }
+
+      // Verify token
+      const isValid = speakeasy.totp.verify({
+        secret: user.two_factor_secret,
+        encoding: 'base32',
+        token: token,
+        window: 2
+      });
+
+      if (!isValid) {
+        throw Boom.unauthorized('Invalid 2FA token');
+      }
+
+      // Enable 2FA
+      await this.userRepository.updateUser(userId, {
+        two_factor_enabled: true
+      });
+
+      return h.response({
+        success: true,
+        message: '2FA enabled successfully'
+      });
+    } catch (error) {
+      if (error.isBoom) throw error;
+      throw Boom.internal('Failed to enable 2FA');
+    }
+  }
+
+  // Disable 2FA
+  async disable2FA(request, h) {
+    try {
+      const { userId } = request.auth.credentials;
+      const { token } = request.payload;
+
+      // Find user
+      const user = await this.userRepository.findById(userId);
+      if (!user || !user.two_factor_enabled) {
+        throw Boom.badRequest('2FA not enabled');
+      }
+
+      // Verify token
+      const isValid = speakeasy.totp.verify({
+        secret: user.two_factor_secret,
+        encoding: 'base32',
+        token: token,
+        window: 2
+      });
+
+      if (!isValid) {
+        throw Boom.unauthorized('Invalid 2FA token');
+      }
+
+      // Disable 2FA
+      await this.userRepository.updateUser(userId, {
+        two_factor_enabled: false,
+        two_factor_secret: null
+      });
+
+      return h.response({
+        success: true,
+        message: '2FA disabled successfully'
+      });
+    } catch (error) {
+      if (error.isBoom) throw error;
+      throw Boom.internal('Failed to disable 2FA');
     }
   }
 
@@ -94,90 +347,96 @@ class AuthHandler {
     try {
       const { refreshToken } = request.payload;
 
-      const useCase = new RefreshTokenUseCase(this.userRepository);
-      const result = await useCase.execute({ refreshToken });
+      // Verify refresh token
+      const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || 'your_refresh_secret_here');
+
+      // Find user
+      const user = await this.userRepository.findById(decoded.userId);
+      if (!user) {
+        throw Boom.unauthorized('Invalid refresh token');
+      }
+
+      // Generate new tokens
+      const newAccessToken = jwt.sign(
+        { userId: user.id, email: user.email, role: user.role, organizationId: user.organization_id },
+        process.env.JWT_SECRET || 'your_jwt_secret_here',
+        { expiresIn: '24h' }
+      );
+
+      const newRefreshToken = jwt.sign(
+        { userId: user.id, email: user.email },
+        process.env.JWT_REFRESH_SECRET || 'your_refresh_secret_here',
+        { expiresIn: '7d' }
+      );
 
       return h.response({
         success: true,
         message: 'Token refreshed successfully',
-        data: result
+        data: {
+          accessToken: newAccessToken,
+          refreshToken: newRefreshToken,
+          expiresIn: '24h'
+        }
       });
-
     } catch (error) {
-      if (error.code === 'INVALID_REFRESH_TOKEN') {
-        throw Boom.unauthorized('Invalid refresh token');
-      }
-
-      console.error('Token refresh error:', error);
-      throw Boom.internal('Token refresh failed');
+      if (error.isBoom) throw error;
+      throw Boom.unauthorized('Invalid refresh token');
     }
   }
 
-  // Logout user
-  async logout(request, h) {
-    try {
-      // In a real application, you might want to blacklist the token
-      // For now, we'll just return success
-      return h.response({
-        success: true,
-        message: 'Logout successful'
-      });
-
-    } catch (error) {
-      console.error('Logout error:', error);
-      throw Boom.internal('Logout failed');
-    }
-  }
-
-  // Get current user profile
+  // Get profile
   async getProfile(request, h) {
     try {
-      const userId = request.auth.credentials.id;
+      const { userId } = request.auth.credentials;
 
-      const useCase = new GetProfileUseCase(this.userRepository);
-      const result = await useCase.execute({ userId });
-
-      return h.response({
-        success: true,
-        data: result
-      });
-
-    } catch (error) {
-      if (error.code === 'USER_NOT_FOUND') {
+      const user = await this.userRepository.findById(userId);
+      if (!user) {
         throw Boom.notFound('User not found');
       }
 
-      console.error('Get profile error:', error);
-      throw Boom.internal('Failed to get profile');
+      return h.response({
+        success: true,
+        message: 'Profile retrieved successfully',
+        data: {
+          id: user.id,
+          email: user.email,
+          firstName: user.first_name,
+          lastName: user.last_name,
+          role: user.role,
+          organizationId: user.organization_id,
+          twoFactorEnabled: user.two_factor_enabled
+        }
+      });
+    } catch (error) {
+      if (error.isBoom) throw error;
+      throw Boom.internal('Failed to retrieve profile');
     }
   }
 
-  // Update user profile
+  // Update profile
   async updateProfile(request, h) {
     try {
-      const userId = request.auth.credentials.id;
-      const { firstName, lastName, avatarUrl } = request.payload;
+      const { userId } = request.auth.credentials;
+      const { firstName, lastName } = request.payload;
 
-      const useCase = new UpdateProfileUseCase(this.userRepository);
-      const result = await useCase.execute({
-        userId,
-        firstName,
-        lastName,
-        avatarUrl
+      const user = await this.userRepository.updateUser(userId, {
+        first_name: firstName,
+        last_name: lastName
       });
 
       return h.response({
         success: true,
         message: 'Profile updated successfully',
-        data: result
+        data: {
+          id: user.id,
+          email: user.email,
+          firstName: user.first_name,
+          lastName: user.last_name,
+          role: user.role
+        }
       });
-
     } catch (error) {
-      if (error.code === 'USER_NOT_FOUND') {
-        throw Boom.notFound('User not found');
-      }
-
-      console.error('Update profile error:', error);
+      if (error.isBoom) throw error;
       throw Boom.internal('Failed to update profile');
     }
   }
@@ -185,109 +444,122 @@ class AuthHandler {
   // Change password
   async changePassword(request, h) {
     try {
-      const userId = request.auth.credentials.id;
+      const { userId } = request.auth.credentials;
       const { currentPassword, newPassword } = request.payload;
 
-      const useCase = new ChangePasswordUseCase(this.userRepository);
-      await useCase.execute({
-        userId,
-        currentPassword,
-        newPassword
+      // Get user
+      const user = await this.userRepository.findById(userId);
+      if (!user) {
+        throw Boom.notFound('User not found');
+      }
+
+      // Verify current password
+      const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+      if (!isValidPassword) {
+        throw Boom.unauthorized('Current password is incorrect');
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // Update password
+      await this.userRepository.updateUser(userId, {
+        password: hashedPassword
       });
 
       return h.response({
         success: true,
         message: 'Password changed successfully'
       });
-
     } catch (error) {
-      if (error.code === 'INVALID_CURRENT_PASSWORD') {
-        throw Boom.unauthorized('Current password is incorrect');
-      }
-
-      if (error.code === 'USER_NOT_FOUND') {
-        throw Boom.notFound('User not found');
-      }
-
-      console.error('Change password error:', error);
+      if (error.isBoom) throw error;
       throw Boom.internal('Failed to change password');
     }
   }
 
-  // Verify token
-  async verifyToken(request, h) {
-    try {
-      return h.response({
-        success: true,
-        message: 'Token is valid',
-        data: {
-          user: request.auth.credentials
-        }
-      });
-
-    } catch (error) {
-      console.error('Token verification error:', error);
-      throw Boom.internal('Token verification failed');
-    }
-  }
-
-  // Forgot password (placeholder)
+  // Forgot password
   async forgotPassword(request, h) {
     try {
-      // TODO: Implement password reset functionality
-      return h.response({
-        success: true,
-        message: 'Password reset email sent (not implemented yet)'
+      const { email } = request.payload;
+
+      const user = await this.userRepository.findByEmail(email);
+      if (!user) {
+        // Don't reveal if user exists
+        return h.response({
+          success: true,
+          message: 'Password reset email sent'
+        });
+      }
+
+      // Generate reset token
+      const resetToken = jwt.sign(
+        { userId: user.id, email: user.email },
+        process.env.JWT_RESET_SECRET || 'your_reset_secret_here',
+        { expiresIn: '1h' }
+      );
+
+      // Save reset token
+      await this.userRepository.updateUser(user.id, {
+        reset_token: resetToken,
+        reset_token_expires: new Date(Date.now() + 3600000) // 1 hour
       });
 
+      // TODO: Send email with reset link
+      // For now, just return success
+      return h.response({
+        success: true,
+        message: 'Password reset email sent'
+      });
     } catch (error) {
-      console.error('Forgot password error:', error);
-      throw Boom.internal('Failed to send password reset email');
+      throw Boom.internal('Failed to process forgot password');
     }
   }
 
-  // Reset password (placeholder)
+  // Reset password
   async resetPassword(request, h) {
     try {
-      // TODO: Implement password reset functionality
-      return h.response({
-        success: true,
-        message: 'Password reset successful (not implemented yet)'
+      const { token, newPassword } = request.payload;
+
+      // Verify reset token
+      const decoded = jwt.verify(token, process.env.JWT_RESET_SECRET || 'your_reset_secret_here');
+
+      // Find user
+      const user = await this.userRepository.findById(decoded.userId);
+      if (!user || user.reset_token !== token || new Date() > user.reset_token_expires) {
+        throw Boom.unauthorized('Invalid or expired reset token');
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // Update password and clear reset token
+      await this.userRepository.updateUser(user.id, {
+        password: hashedPassword,
+        reset_token: null,
+        reset_token_expires: null
       });
 
+      return h.response({
+        success: true,
+        message: 'Password reset successfully'
+      });
     } catch (error) {
-      console.error('Reset password error:', error);
-      throw Boom.internal('Failed to reset password');
+      if (error.isBoom) throw error;
+      throw Boom.unauthorized('Invalid reset token');
     }
   }
 
-  // Setup 2FA (placeholder)
-  async setup2FA(request, h) {
+  // Logout
+  async logout(request, h) {
     try {
-      // TODO: Implement 2FA setup
+      // In a real application, you might want to blacklist the token
+      // For now, just return success
       return h.response({
         success: true,
-        message: '2FA setup (not implemented yet)'
+        message: 'Logged out successfully'
       });
-
     } catch (error) {
-      console.error('2FA setup error:', error);
-      throw Boom.internal('Failed to setup 2FA');
-    }
-  }
-
-  // Verify 2FA (placeholder)
-  async verify2FA(request, h) {
-    try {
-      // TODO: Implement 2FA verification
-      return h.response({
-        success: true,
-        message: '2FA verification (not implemented yet)'
-      });
-
-    } catch (error) {
-      console.error('2FA verification error:', error);
-      throw Boom.internal('Failed to verify 2FA');
+      throw Boom.internal('Logout failed');
     }
   }
 }

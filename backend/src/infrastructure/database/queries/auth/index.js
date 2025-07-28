@@ -1,6 +1,6 @@
 // Auth module database queries
 const authQueries = {
-  // Find user by email with organization info
+  // Find user by email
   findUserByEmail: `
     SELECT u.*, o.name as organization_name, o.slug as organization_slug
     FROM users u
@@ -8,7 +8,7 @@ const authQueries = {
     WHERE u.email = $1 AND u.is_active = true AND o.is_active = true
   `,
 
-  // Find user by ID with organization info
+  // Find user by ID
   findUserById: `
     SELECT u.*, o.name as organization_name, o.slug as organization_slug
     FROM users u
@@ -16,100 +16,107 @@ const authQueries = {
     WHERE u.id = $1 AND u.is_active = true
   `,
 
-  // Check if email exists
-  checkEmailExists: `
-    SELECT id FROM users WHERE email = $1
-  `,
-
-  // Create user
-  createUser: `
-    INSERT INTO users (id, organization_id, email, password_hash, first_name, last_name, role)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
-    RETURNING id, email, first_name, last_name, role, organization_id
-  `,
-
-  // Update user last login
-  updateLastLogin: `
-    UPDATE users
-    SET last_login_at = NOW()
-    WHERE id = $1
-  `,
-
-  // Update user profile
-  updateUserProfile: `
-    UPDATE users
-    SET first_name = COALESCE($1, first_name),
-        last_name = COALESCE($2, last_name),
-        avatar_url = COALESCE($3, avatar_url),
-        updated_at = NOW()
-    WHERE id = $4
-    RETURNING id, email, first_name, last_name, role, avatar_url
-  `,
-
-  // Update user password
-  updateUserPassword: `
-    UPDATE users
-    SET password_hash = $1, updated_at = NOW()
-    WHERE id = $2
-  `,
-
-  // Get user password hash
-  getUserPasswordHash: `
-    SELECT password_hash FROM users WHERE id = $1
-  `,
-
-  // Get user profile
-  getUserProfile: `
-    SELECT u.id, u.email, u.first_name, u.last_name, u.role, u.permissions,
-           u.avatar_url, u.two_factor_enabled, u.last_login_at,
-           o.name as organization_name, o.slug as organization_slug
-    FROM users u
-    JOIN organizations o ON u.organization_id = o.id
-    WHERE u.id = $1 AND u.is_active = true
-  `,
-
-  // Find organization by slug
-  findOrganizationBySlug: `
-    SELECT * FROM organizations WHERE slug = $1 AND is_active = true
-  `,
-
   // Find organization by ID
   findOrganizationById: `
-    SELECT * FROM organizations WHERE id = $1 AND is_active = true
+    SELECT * FROM organizations
+    WHERE id = $1 AND is_active = true
   `,
 
   // Create organization
   createOrganization: `
-    INSERT INTO organizations (id, name, slug, domain, subscription_plan, max_users, max_projects)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
-    RETURNING id, name, slug
-  `,
-
-  // Update organization
-  updateOrganization: `
-    UPDATE organizations
-    SET name = COALESCE($1, name),
-        slug = COALESCE($2, slug),
-        domain = COALESCE($3, domain),
-        logo_url = COALESCE($4, logo_url),
-        primary_color = COALESCE($5, primary_color),
-        secondary_color = COALESCE($6, secondary_color),
-        updated_at = NOW()
-    WHERE id = $7
+    INSERT INTO organizations (name, slug)
+    VALUES ($1, $2)
     RETURNING *
   `,
 
-  // Get organization users count
-  getOrganizationUsersCount: `
-    SELECT COUNT(*) as user_count
-    FROM users
-    WHERE organization_id = $1 AND is_active = true
+  // Create user
+  createUser: `
+    INSERT INTO users (email, password, first_name, last_name, organization_id, role)
+    VALUES ($1, $2, $3, $4, $5, $6)
+    RETURNING *
   `,
 
-  // Get organization projects count
-  getOrganizationProjectsCount: `
-    SELECT COUNT(*) as project_count
-    FROM projects
+  // Update user (dynamic query built in repository)
+  updateUser: `
+    UPDATE users
+    SET first_name = $1, last_name = $2, email = $3, role = $4,
+        permissions = $5, avatar_url = $6, two_factor_enabled = $7,
+        two_factor_secret = $8, reset_token = $9, reset_token_expires = $10,
+        updated_at = NOW()
+    WHERE id = $11
+    RETURNING *
+  `,
+
+  // Find users by organization
+  findUsersByOrganization: `
+    SELECT u.*, o.name as organization_name
+    FROM users u
+    JOIN organizations o ON u.organization_id = o.id
+    WHERE u.organization_id = $1
+      AND u.is_active = $3
+      AND ($2::text IS NULL OR u.role = $2)
+    ORDER BY u.created_at DESC
+    LIMIT $4 OFFSET $5
+  `,
+
+  // Count users by organization
+  countUsersByOrganization: `
+    SELECT COUNT(*) as count
+    FROM users
+    WHERE organization_id = $1
+      AND is_active = $3
+      AND ($2::text IS NULL OR role = $2)
+  `,
+
+  // Search users
+  searchUsers: `
+    SELECT u.*, o.name as organization_name
+    FROM users u
+    JOIN organizations o ON u.organization_id = o.id
+    WHERE u.organization_id = $1
+      AND u.is_active = true
+      AND (
+        u.first_name ILIKE $2 OR
+        u.last_name ILIKE $2 OR
+        u.email ILIKE $2
+      )
+      AND ($3::text IS NULL OR u.role = $3)
+    ORDER BY u.created_at DESC
+    LIMIT $4 OFFSET $5
+  `,
+
+  // Count search users
+  countSearchUsers: `
+    SELECT COUNT(*) as count
+    FROM users
+    WHERE organization_id = $1
+      AND is_active = true
+      AND (
+        first_name ILIKE $2 OR
+        last_name ILIKE $2 OR
+        email ILIKE $2
+      )
+      AND ($3::text IS NULL OR role = $3)
+  `,
+
+  // Delete user (soft delete)
+  deleteUser: `
+    UPDATE users
+    SET is_active = false, updated_at = NOW()
+    WHERE id = $1 AND organization_id = $2
+  `,
+
+  // Get user statistics
+  getUserStatistics: `
+    SELECT
+      COUNT(*) as total_users,
+      COUNT(CASE WHEN role = 'admin' THEN 1 END) as admin_users,
+      COUNT(CASE WHEN role = 'manager' THEN 1 END) as manager_users,
+      COUNT(CASE WHEN role = 'user' THEN 1 END) as regular_users,
+      COUNT(CASE WHEN two_factor_enabled = true THEN 1 END) as two_factor_users,
+      COUNT(CASE WHEN created_at >= NOW() - INTERVAL '30 days' THEN 1 END) as new_users_30_days,
+      AVG(EXTRACT(EPOCH FROM (updated_at - created_at))/3600) as avg_user_activity_hours
+    FROM users
     WHERE organization_id = $1 AND is_active = true
   `
 };

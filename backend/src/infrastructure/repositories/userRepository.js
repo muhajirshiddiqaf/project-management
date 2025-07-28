@@ -8,250 +8,190 @@ class UserRepository {
 
   // Find user by email
   async findByEmail(email) {
-    const result = await this.db.query(queries.auth.findUserByEmail, [email]);
-    return result.rows[0] || null;
+    try {
+      const result = await this.db.query(queries.auth.findUserByEmail, [email]);
+      return result.rows[0] || null;
+    } catch (error) {
+      throw new Error('Failed to find user by email');
+    }
   }
 
   // Find user by ID
-  async findById(userId) {
-    const result = await this.db.query(queries.auth.findUserById, [userId]);
-    return result.rows[0] || null;
-  }
-
-  // Check if email exists
-  async emailExists(email) {
-    const result = await this.db.query(queries.auth.checkEmailExists, [email]);
-    return result.rows.length > 0;
-  }
-
-  // Create user
-  async create(userData) {
-    const {
-      id,
-      organizationId,
-      email,
-      passwordHash,
-      firstName,
-      lastName,
-      role = 'member'
-    } = userData;
-
-    const result = await this.db.query(queries.auth.createUser, [
-      id,
-      organizationId,
-      email,
-      passwordHash,
-      firstName,
-      lastName,
-      role
-    ]);
-
-    return result.rows[0];
-  }
-
-  // Update user last login
-  async updateLastLogin(userId) {
-    await this.db.query(queries.auth.updateLastLogin, [userId]);
-  }
-
-  // Update user profile
-  async updateProfile(userId, profileData) {
-    const { firstName, lastName, avatarUrl } = profileData;
-
-    const result = await this.db.query(queries.auth.updateUserProfile, [
-      firstName,
-      lastName,
-      avatarUrl,
-      userId
-    ]);
-
-    return result.rows[0];
-  }
-
-  // Update user password
-  async updatePassword(userId, passwordHash) {
-    await this.db.query(queries.auth.updateUserPassword, [passwordHash, userId]);
-  }
-
-  // Get user password hash
-  async getPasswordHash(userId) {
-    const result = await this.db.query(queries.auth.getUserPasswordHash, [userId]);
-    return result.rows[0]?.password_hash || null;
-  }
-
-  // Get user profile
-  async getProfile(userId) {
-    const result = await this.db.query(queries.auth.getUserProfile, [userId]);
-    return result.rows[0] || null;
-  }
-
-  // Find organization by slug
-  async findOrganizationBySlug(slug) {
-    const result = await this.db.query(queries.auth.findOrganizationBySlug, [slug]);
-    return result.rows[0] || null;
+  async findById(id) {
+    try {
+      const result = await this.db.query(queries.auth.findUserById, [id]);
+      return result.rows[0] || null;
+    } catch (error) {
+      throw new Error('Failed to find user by ID');
+    }
   }
 
   // Find organization by ID
   async findOrganizationById(organizationId) {
-    const result = await this.db.query(queries.auth.findOrganizationById, [organizationId]);
-    return result.rows[0] || null;
+    try {
+      const result = await this.db.query(queries.auth.findOrganizationById, [organizationId]);
+      return result.rows[0] || null;
+    } catch (error) {
+      throw new Error('Failed to find organization by ID');
+    }
   }
 
   // Create organization
   async createOrganization(organizationData) {
-    const {
-      id,
-      name,
-      slug,
-      domain,
-      subscriptionPlan = 'starter',
-      maxUsers = 5,
-      maxProjects = 10
-    } = organizationData;
-
-    const result = await this.db.query(queries.auth.createOrganization, [
-      id,
-      name,
-      slug,
-      domain,
-      subscriptionPlan,
-      maxUsers,
-      maxProjects
-    ]);
-
-    return result.rows[0];
+    try {
+      const result = await this.db.query(queries.auth.createOrganization, [
+        organizationData.name,
+        organizationData.slug
+      ]);
+      return result.rows[0];
+    } catch (error) {
+      throw new Error('Failed to create organization');
+    }
   }
 
-  // Update organization
-  async updateOrganization(organizationId, organizationData) {
-    const {
-      name,
-      slug,
-      domain,
-      logoUrl,
-      primaryColor,
-      secondaryColor
-    } = organizationData;
-
-    const result = await this.db.query(queries.auth.updateOrganization, [
-      name,
-      slug,
-      domain,
-      logoUrl,
-      primaryColor,
-      secondaryColor,
-      organizationId
-    ]);
-
-    return result.rows[0];
-  }
-
-  // Get organization users count
-  async getOrganizationUsersCount(organizationId) {
-    const result = await this.db.query(queries.auth.getOrganizationUsersCount, [organizationId]);
-    return result.rows[0]?.user_count || 0;
-  }
-
-  // Get organization projects count
-  async getOrganizationProjectsCount(organizationId) {
-    const result = await this.db.query(queries.auth.getOrganizationProjectsCount, [organizationId]);
-    return result.rows[0]?.project_count || 0;
-  }
-
-  // Find users by organization
-  async findByOrganization(organizationId) {
-    const result = await this.db.query(queries.user.findUsersByOrganization, [organizationId]);
-    return result.rows;
-  }
-
-  // Find user by ID with organization check
-  async findByIdWithOrganization(userId, organizationId) {
-    const result = await this.db.query(queries.user.findUserById, [userId, organizationId]);
-    return result.rows[0] || null;
+  // Create user
+  async createUser(userData) {
+    try {
+      const result = await this.db.query(queries.auth.createUser, [
+        userData.email,
+        userData.password,
+        userData.first_name,
+        userData.last_name,
+        userData.organization_id,
+        userData.role
+      ]);
+      return result.rows[0];
+    } catch (error) {
+      throw new Error('Failed to create user');
+    }
   }
 
   // Update user
-  async update(userId, organizationId, userData) {
-    const {
-      firstName,
-      lastName,
-      email,
-      role,
-      permissions,
-      avatarUrl,
-      twoFactorEnabled
-    } = userData;
+  async updateUser(userId, updateData) {
+    try {
+      const fields = [];
+      const values = [];
+      let paramCount = 1;
 
-    const result = await this.db.query(queries.user.updateUser, [
-      firstName,
-      lastName,
-      email,
-      role,
-      permissions,
-      avatarUrl,
-      twoFactorEnabled,
-      userId,
-      organizationId
-    ]);
+      // Build dynamic update query
+      Object.keys(updateData).forEach(key => {
+        if (updateData[key] !== undefined) {
+          fields.push(`${key} = $${paramCount}`);
+          values.push(updateData[key]);
+          paramCount++;
+        }
+      });
 
-    return result.rows[0];
+      if (fields.length === 0) {
+        throw new Error('No fields to update');
+      }
+
+      // Add updated_at and user ID
+      fields.push('updated_at = NOW()');
+      values.push(userId);
+
+      const query = `
+        UPDATE users
+        SET ${fields.join(', ')}
+        WHERE id = $${paramCount}
+        RETURNING *
+      `;
+
+      const result = await this.db.query(query, values);
+      return result.rows[0] || null;
+    } catch (error) {
+      throw new Error('Failed to update user');
+    }
+  }
+
+  // Find users by organization
+  async findByOrganization(organizationId, options = {}) {
+    const { page = 1, limit = 10, role, isActive = true } = options;
+    const offset = (page - 1) * limit;
+
+    try {
+      const result = await this.db.query(queries.user.findUsersByOrganization, [
+        organizationId,
+        role,
+        isActive,
+        limit,
+        offset
+      ]);
+
+      const countResult = await this.db.query(queries.user.countUsersByOrganization, [
+        organizationId,
+        role,
+        isActive
+      ]);
+      const total = parseInt(countResult.rows[0].count);
+
+      return {
+        users: result.rows,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit)
+        }
+      };
+    } catch (error) {
+      throw new Error('Failed to find users by organization');
+    }
+  }
+
+  // Search users
+  async search(organizationId, searchTerm, options = {}) {
+    const { page = 1, limit = 10, role } = options;
+    const offset = (page - 1) * limit;
+
+    try {
+      const result = await this.db.query(queries.user.searchUsers, [
+        organizationId,
+        searchTerm,
+        role,
+        limit,
+        offset
+      ]);
+
+      const countResult = await this.db.query(queries.user.countSearchUsers, [
+        organizationId,
+        searchTerm,
+        role
+      ]);
+      const total = parseInt(countResult.rows[0].count);
+
+      return {
+        users: result.rows,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit)
+        }
+      };
+    } catch (error) {
+      throw new Error('Failed to search users');
+    }
   }
 
   // Delete user (soft delete)
   async delete(userId, organizationId) {
-    await this.db.query(queries.user.deleteUser, [userId, organizationId]);
+    try {
+      const result = await this.db.query(queries.user.deleteUser, [userId, organizationId]);
+      return result.rowCount > 0;
+    } catch (error) {
+      throw new Error('Failed to delete user');
+    }
   }
 
   // Get user statistics
   async getStatistics(organizationId) {
-    const result = await this.db.query(queries.user.getUserStatistics, [organizationId]);
-    return result.rows[0];
-  }
-
-  // Search users
-  async search(organizationId, searchTerm) {
-    const result = await this.db.query(queries.user.searchUsers, [organizationId, `%${searchTerm}%`]);
-    return result.rows;
-  }
-
-  // Find users by role
-  async findByRole(organizationId, role) {
-    const result = await this.db.query(queries.user.findUsersByRole, [organizationId, role]);
-    return result.rows;
-  }
-
-  // Get user activity
-  async getActivity(organizationId) {
-    const result = await this.db.query(queries.user.getUserActivity, [organizationId]);
-    return result.rows;
-  }
-
-  // Update user permissions
-  async updatePermissions(userId, organizationId, permissions) {
-    const result = await this.db.query(queries.user.updateUserPermissions, [
-      permissions,
-      userId,
-      organizationId
-    ]);
-
-    return result.rows[0];
-  }
-
-  // Update 2FA status
-  async update2FAStatus(userId, organizationId, enabled) {
-    const result = await this.db.query(queries.user.update2FAStatus, [
-      enabled,
-      userId,
-      organizationId
-    ]);
-
-    return result.rows[0];
-  }
-
-  // Get user dashboard data
-  async getDashboardData(userId, organizationId) {
-    const result = await this.db.query(queries.user.getUserDashboardData, [userId, organizationId]);
-    return result.rows[0];
+    try {
+      const result = await this.db.query(queries.user.getUserStatistics, [organizationId]);
+      return result.rows[0] || {};
+    } catch (error) {
+      throw new Error('Failed to get user statistics');
+    }
   }
 }
 
