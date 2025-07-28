@@ -11,7 +11,8 @@ const service = require('./service');
 const email = require('./email');
 const pdf = require('./pdf');
 const analytics = require('./analytics');
-const reports = require('./reports'); // New import
+const reports = require('./reports');
+const docs = require('./docs'); // New import
 
 const queries = {
   auth,
@@ -26,7 +27,8 @@ const queries = {
   email,
   pdf,
   analytics,
-  reports // New export
+  reports,
+  docs // New export
 };
 
 module.exports = { queries };

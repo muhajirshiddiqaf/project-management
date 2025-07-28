@@ -21,7 +21,8 @@ const serviceModule = require('./modules/service');
 const emailModule = require('./modules/email');
 const pdfModule = require('./modules/pdf');
 const analyticsModule = require('./modules/analytics');
-const reportsModule = require('./modules/reports'); // New import
+const reportsModule = require('./modules/reports');
+const docsModule = require('./modules/docs'); // New import
 
 // Import plugins
 const plugins = [
@@ -110,7 +111,8 @@ const createServer = async () => {
       await server.register(emailModule);
     await server.register(pdfModule);
     await server.register(analyticsModule);
-    await server.register(reportsModule); // New registration
+    await server.register(reportsModule);
+    await server.register(docsModule); // New registration
 
   // Health check route
   server.route({
