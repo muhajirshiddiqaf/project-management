@@ -3,6 +3,8 @@ const orderValidator = require('./validator');
 const { tenantIsolation, roleBasedAccess, permissionBasedAccess } = require('../../middleware');
 
 const routes = [
+  // === ORDER CRUD ROUTES ===
+
   // Get all orders
   {
     method: 'GET',
@@ -155,18 +157,174 @@ const routes = [
     }
   },
 
-  // Get order statistics
+  // === ORDER ITEMS ROUTES ===
+
+  // Get order items
   {
     method: 'GET',
-    path: '/orders/statistics',
-    handler: orderHandler.getOrderStatistics,
+    path: '/orders/items',
+    handler: orderHandler.getOrderItems,
     options: {
       auth: 'jwt',
       pre: [
         { method: tenantIsolation },
-        { method: roleBasedAccess(['admin', 'manager']) }
+        { method: roleBasedAccess(['admin', 'manager', 'user']) }
       ],
-      tags: ['orders']
+      validate: {
+        query: orderValidator.getOrderItems
+      },
+      tags: ['order-items']
+    }
+  },
+
+  // Get order item by ID
+  {
+    method: 'GET',
+    path: '/orders/items/{id}',
+    handler: orderHandler.getOrderItemById,
+    options: {
+      auth: 'jwt',
+      pre: [
+        { method: tenantIsolation },
+        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+      ],
+      validate: {
+        params: orderValidator.getOrderItemById
+      },
+      tags: ['order-items']
+    }
+  },
+
+  // Create order item
+  {
+    method: 'POST',
+    path: '/orders/items',
+    handler: orderHandler.createOrderItem,
+    options: {
+      auth: 'jwt',
+      pre: [
+        { method: tenantIsolation },
+        { method: roleBasedAccess(['admin', 'manager']) },
+        { method: permissionBasedAccess(['order:create_item']) }
+      ],
+      validate: {
+        payload: orderValidator.createOrderItem
+      },
+      tags: ['order-items']
+    }
+  },
+
+  // Update order item
+  {
+    method: 'PUT',
+    path: '/orders/items/{id}',
+    handler: orderHandler.updateOrderItem,
+    options: {
+      auth: 'jwt',
+      pre: [
+        { method: tenantIsolation },
+        { method: roleBasedAccess(['admin', 'manager']) },
+        { method: permissionBasedAccess(['order:update_item']) }
+      ],
+      validate: {
+        params: orderValidator.getOrderItemById,
+        payload: orderValidator.updateOrderItem
+      },
+      tags: ['order-items']
+    }
+  },
+
+  // Delete order item
+  {
+    method: 'DELETE',
+    path: '/orders/items/{id}',
+    handler: orderHandler.deleteOrderItem,
+    options: {
+      auth: 'jwt',
+      pre: [
+        { method: tenantIsolation },
+        { method: roleBasedAccess(['admin', 'manager']) },
+        { method: permissionBasedAccess(['order:delete_item']) }
+      ],
+      validate: {
+        params: orderValidator.deleteOrderItem
+      },
+      tags: ['order-items']
+    }
+  },
+
+  // Calculate order totals
+  {
+    method: 'GET',
+    path: '/orders/totals',
+    handler: orderHandler.calculateOrderTotals,
+    options: {
+      auth: 'jwt',
+      pre: [
+        { method: tenantIsolation },
+        { method: roleBasedAccess(['admin', 'manager', 'user']) }
+      ],
+      validate: {
+        query: orderValidator.calculateOrderTotals
+      },
+      tags: ['order-items']
+    }
+  },
+
+  // Bulk create order items
+  {
+    method: 'POST',
+    path: '/orders/items/bulk',
+    handler: orderHandler.bulkCreateOrderItems,
+    options: {
+      auth: 'jwt',
+      pre: [
+        { method: tenantIsolation },
+        { method: roleBasedAccess(['admin', 'manager']) },
+        { method: permissionBasedAccess(['order:create_item']) }
+      ],
+      validate: {
+        payload: orderValidator.bulkCreateOrderItems
+      },
+      tags: ['order-items']
+    }
+  },
+
+  // Import order items
+  {
+    method: 'POST',
+    path: '/orders/items/import',
+    handler: orderHandler.importOrderItems,
+    options: {
+      auth: 'jwt',
+      pre: [
+        { method: tenantIsolation },
+        { method: roleBasedAccess(['admin', 'manager']) },
+        { method: permissionBasedAccess(['order:import_items']) }
+      ],
+      validate: {
+        payload: orderValidator.importOrderItems
+      },
+      tags: ['order-items']
+    }
+  },
+
+  // Export order items
+  {
+    method: 'GET',
+    path: '/orders/items/export',
+    handler: orderHandler.exportOrderItems,
+    options: {
+      auth: 'jwt',
+      pre: [
+        { method: tenantIsolation },
+        { method: roleBasedAccess(['admin', 'manager', 'user']) },
+        { method: permissionBasedAccess(['order:export_items']) }
+      ],
+      validate: {
+        query: orderValidator.exportOrderItems
+      },
+      tags: ['order-items']
     }
   }
 ];

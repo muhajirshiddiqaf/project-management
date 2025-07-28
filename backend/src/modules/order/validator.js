@@ -8,13 +8,11 @@ const orderSchemas = {
     description: Joi.string().optional().max(1000),
     client_id: Joi.string().required().uuid(),
     project_id: Joi.string().optional().uuid(),
-    order_date: Joi.date().default(() => new Date()),
-    due_date: Joi.date().optional(),
-    total_amount: Joi.number().positive().required(),
-    currency: Joi.string().default('IDR'),
     status: Joi.string().valid('draft', 'pending', 'approved', 'in_progress', 'completed', 'cancelled').default('draft'),
     priority: Joi.string().valid('low', 'medium', 'high', 'urgent').default('medium'),
+    due_date: Joi.date().optional(),
     assigned_to: Joi.string().optional().uuid(),
+    tags: Joi.array().items(Joi.string()).optional(),
     notes: Joi.string().optional().max(1000)
   }),
 
@@ -24,13 +22,11 @@ const orderSchemas = {
     description: Joi.string().optional().max(1000),
     client_id: Joi.string().optional().uuid(),
     project_id: Joi.string().optional().uuid(),
-    order_date: Joi.date().optional(),
-    due_date: Joi.date().optional(),
-    total_amount: Joi.number().positive().optional(),
-    currency: Joi.string().optional(),
     status: Joi.string().valid('draft', 'pending', 'approved', 'in_progress', 'completed', 'cancelled').optional(),
     priority: Joi.string().valid('low', 'medium', 'high', 'urgent').optional(),
+    due_date: Joi.date().optional(),
     assigned_to: Joi.string().optional().uuid(),
+    tags: Joi.array().items(Joi.string()).optional(),
     notes: Joi.string().optional().max(1000)
   }),
 
@@ -43,23 +39,13 @@ const orderSchemas = {
   getOrders: Joi.object({
     page: Joi.number().integer().min(1).default(1),
     limit: Joi.number().integer().min(1).max(100).default(10),
+    sortBy: Joi.string().valid('created_at', 'updated_at', 'title', 'status', 'priority', 'due_date').default('created_at'),
+    sortOrder: Joi.string().valid('asc', 'desc').default('desc'),
     status: Joi.string().valid('draft', 'pending', 'approved', 'in_progress', 'completed', 'cancelled').optional(),
     priority: Joi.string().valid('low', 'medium', 'high', 'urgent').optional(),
     client_id: Joi.string().optional().uuid(),
-    assigned_to: Joi.string().optional().uuid(),
-    sortBy: Joi.string().valid('created_at', 'order_date', 'due_date', 'total_amount', 'priority').default('created_at'),
-    sortOrder: Joi.string().valid('asc', 'desc').default('desc')
-  }),
-
-  // Search orders schema
-  searchOrders: Joi.object({
-    q: Joi.string().optional().max(100),
-    page: Joi.number().integer().min(1).default(1),
-    limit: Joi.number().integer().min(1).max(100).default(10),
-    status: Joi.string().valid('draft', 'pending', 'approved', 'in_progress', 'completed', 'cancelled').optional(),
-    priority: Joi.string().valid('low', 'medium', 'high', 'urgent').optional(),
-    sortBy: Joi.string().valid('created_at', 'order_date', 'due_date', 'total_amount', 'priority').default('created_at'),
-    sortOrder: Joi.string().valid('asc', 'desc').default('desc')
+    project_id: Joi.string().optional().uuid(),
+    assigned_to: Joi.string().optional().uuid()
   }),
 
   // Delete order schema
@@ -67,17 +53,111 @@ const orderSchemas = {
     id: Joi.string().required().uuid()
   }),
 
+  // Search orders schema
+  searchOrders: Joi.object({
+    q: Joi.string().optional().max(100),
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(10),
+    sortBy: Joi.string().valid('created_at', 'updated_at', 'title', 'status', 'priority', 'due_date').default('created_at'),
+    sortOrder: Joi.string().valid('asc', 'desc').default('desc')
+  }),
+
   // Update order status schema
   updateOrderStatus: Joi.object({
-    id: Joi.string().required().uuid(),
     status: Joi.string().valid('draft', 'pending', 'approved', 'in_progress', 'completed', 'cancelled').required(),
-    notes: Joi.string().optional().max(500)
+    notes: Joi.string().optional().max(1000)
   }),
 
   // Assign order schema
   assignOrder: Joi.object({
-    id: Joi.string().required().uuid(),
     assigned_to: Joi.string().required().uuid()
+  }),
+
+  // === ORDER ITEMS SCHEMAS ===
+
+  // Create order item schema
+  createOrderItem: Joi.object({
+    order_id: Joi.string().required().uuid(),
+    name: Joi.string().required().min(2).max(200),
+    description: Joi.string().optional().max(500),
+    quantity: Joi.number().positive().required(),
+    unit_price: Joi.number().positive().required(),
+    unit_type: Joi.string().valid('hour', 'day', 'piece', 'service', 'material').required(),
+    category: Joi.string().valid('service', 'material', 'labor', 'overhead', 'other').required(),
+    tax_rate: Joi.number().min(0).max(100).default(0),
+    discount_percentage: Joi.number().min(0).max(100).default(0),
+    notes: Joi.string().optional().max(500)
+  }),
+
+  // Update order item schema
+  updateOrderItem: Joi.object({
+    name: Joi.string().optional().min(2).max(200),
+    description: Joi.string().optional().max(500),
+    quantity: Joi.number().positive().optional(),
+    unit_price: Joi.number().positive().optional(),
+    unit_type: Joi.string().valid('hour', 'day', 'piece', 'service', 'material').optional(),
+    category: Joi.string().valid('service', 'material', 'labor', 'overhead', 'other').optional(),
+    tax_rate: Joi.number().min(0).max(100).optional(),
+    discount_percentage: Joi.number().min(0).max(100).optional(),
+    notes: Joi.string().optional().max(500)
+  }),
+
+  // Get order item by ID schema
+  getOrderItemById: Joi.object({
+    id: Joi.string().required().uuid()
+  }),
+
+  // Get order items schema
+  getOrderItems: Joi.object({
+    order_id: Joi.string().required().uuid(),
+    category: Joi.string().valid('service', 'material', 'labor', 'overhead', 'other').optional(),
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(50).default(10)
+  }),
+
+  // Delete order item schema
+  deleteOrderItem: Joi.object({
+    id: Joi.string().required().uuid()
+  }),
+
+  // Calculate order totals schema
+  calculateOrderTotals: Joi.object({
+    order_id: Joi.string().required().uuid()
+  }),
+
+  // Bulk create order items schema
+  bulkCreateOrderItems: Joi.object({
+    order_id: Joi.string().required().uuid(),
+    items: Joi.array().items(
+      Joi.object({
+        name: Joi.string().required().min(2).max(200),
+        description: Joi.string().optional().max(500),
+        quantity: Joi.number().positive().required(),
+        unit_price: Joi.number().positive().required(),
+        unit_type: Joi.string().valid('hour', 'day', 'piece', 'service', 'material').required(),
+        category: Joi.string().valid('service', 'material', 'labor', 'overhead', 'other').required(),
+        tax_rate: Joi.number().min(0).max(100).default(0),
+        discount_percentage: Joi.number().min(0).max(100).default(0),
+        notes: Joi.string().optional().max(500)
+      })
+    ).min(1).max(100).required()
+  }),
+
+  // Import order items schema
+  importOrderItems: Joi.object({
+    order_id: Joi.string().required().uuid(),
+    file: Joi.object({
+      hapi: Joi.object({
+        filename: Joi.string().required(),
+        headers: Joi.object().required()
+      }).required()
+    }).required()
+  }),
+
+  // Export order items schema
+  exportOrderItems: Joi.object({
+    order_id: Joi.string().required().uuid(),
+    format: Joi.string().valid('csv', 'xlsx', 'json').default('csv')
   })
 };
 
