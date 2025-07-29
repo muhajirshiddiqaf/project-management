@@ -38,7 +38,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ant-design/icons@npm:6.0.0":
+"@ant-design/icons@npm:^6.0.0":
   version: 6.0.0
   resolution: "@ant-design/icons@npm:6.0.0"
   dependencies:
@@ -3728,7 +3728,7 @@ __metadata:
   resolution: "mantis-material-free-react@workspace:."
   dependencies:
     "@ant-design/colors": "npm:8.0.0"
-    "@ant-design/icons": "npm:6.0.0"
+    "@ant-design/icons": "npm:^6.0.0"
     "@emotion/cache": "npm:11.14.0"
     "@emotion/react": "npm:11.14.0"
     "@emotion/styled": "npm:11.14.1"

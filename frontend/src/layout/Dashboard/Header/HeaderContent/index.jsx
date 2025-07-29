@@ -1,17 +1,17 @@
 // material-ui
-import useMediaQuery from '@mui/material/useMediaQuery';
+import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
-import Box from '@mui/material/Box';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 // project imports
-import Search from './Search';
-import Profile from './Profile';
-import Notification from './Notification';
 import MobileSection from './MobileSection';
+import Notification from './Notification';
+import Profile from './Profile';
+import Search from './Search';
 
 // project import
-import { GithubOutlined } from '@ant-design/icons';
+import GithubOutlined from '@ant-design/icons/GithubOutlined';
 
 // ==============================|| HEADER - CONTENT ||============================== //
 

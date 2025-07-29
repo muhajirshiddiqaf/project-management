@@ -5,39 +5,34 @@ class AuthAPI {
     this.baseURL = API_BASE_URL;
   }
 
-  // Helper method for API calls
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
+    const token = localStorage.getItem('access_token');
+
     const config = {
       headers: {
         'Content-Type': 'application/json',
-        ...options.headers,
+        ...(token && { Authorization: `Bearer ${token}` })
       },
-      ...options,
+      ...options
     };
-
-    // Add auth token if available
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
 
     try {
       const response = await fetch(url, config);
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'API request failed');
+        throw new Error(data.message || `HTTP error! status: ${response.status}`);
       }
 
       return data;
     } catch (error) {
-      console.error('API Error:', error);
+      console.error('API request failed:', error);
       throw error;
     }
   }
 
-  // Register user
+  // Register new user
   async register(userData) {
     return this.request('/auth/register', {
       method: 'POST',
@@ -52,10 +47,9 @@ class AuthAPI {
       body: JSON.stringify(credentials),
     });
 
-    // Store tokens
-    if (response.data?.tokens) {
-      localStorage.setItem('accessToken', response.data.tokens.accessToken);
-      localStorage.setItem('refreshToken', response.data.tokens.refreshToken);
+    if (response.data?.access_token) {
+      localStorage.setItem('access_token', response.data.access_token);
+      localStorage.setItem('refresh_token', response.data.refresh_token);
     }
 
     return response;
@@ -70,9 +64,9 @@ class AuthAPI {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      // Clear tokens regardless of API call success
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
     }
   }
 
@@ -99,20 +93,18 @@ class AuthAPI {
 
   // Refresh token
   async refreshToken() {
-    const refreshToken = localStorage.getItem('refreshToken');
+    const refreshToken = localStorage.getItem('refresh_token');
     if (!refreshToken) {
       throw new Error('No refresh token available');
     }
 
     const response = await this.request('/auth/refresh-token', {
       method: 'POST',
-      body: JSON.stringify({ refreshToken }),
+      body: JSON.stringify({ refresh_token: refreshToken }),
     });
 
-    // Update tokens
-    if (response.data?.tokens) {
-      localStorage.setItem('accessToken', response.data.tokens.accessToken);
-      localStorage.setItem('refreshToken', response.data.tokens.refreshToken);
+    if (response.data?.access_token) {
+      localStorage.setItem('access_token', response.data.access_token);
     }
 
     return response;
@@ -120,35 +112,13 @@ class AuthAPI {
 
   // Check if user is authenticated
   isAuthenticated() {
-    const token = localStorage.getItem('accessToken');
-    if (!token) return false;
-
-    try {
-      // Basic token validation (you might want to add more validation)
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const now = Date.now() / 1000;
-      return payload.exp > now;
-    } catch (error) {
-      return false;
-    }
+    return !!localStorage.getItem('access_token');
   }
 
-  // Get current user info from token
+  // Get current user from localStorage
   getCurrentUser() {
-    const token = localStorage.getItem('accessToken');
-    if (!token) return null;
-
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return {
-        userId: payload.userId,
-        email: payload.email,
-        role: payload.role,
-        organizationId: payload.organizationId,
-      };
-    } catch (error) {
-      return null;
-    }
+    const userStr = localStorage.getItem('user');
+    return userStr ? JSON.parse(userStr) : null;
   }
 }
 

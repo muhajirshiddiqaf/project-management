@@ -15,28 +15,30 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Load user data on mount
   useEffect(() => {
     const loadUser = async () => {
       try {
+        // Check if user is authenticated
         if (authAPI.isAuthenticated()) {
-          // Try to get user from token first
-          const tokenUser = authAPI.getCurrentUser();
-          if (tokenUser) {
-            setUser(tokenUser);
+          // Try to get user from localStorage first
+          const storedUser = authAPI.getCurrentUser();
+          if (storedUser) {
+            setUser(storedUser);
           } else {
-            // If token is invalid, try to get profile from API
-            const profile = await authAPI.getProfile();
-            if (profile.data?.user) {
-              setUser(profile.data.user);
+            // If no stored user, fetch from API
+            const response = await authAPI.getProfile();
+            if (response.data?.user) {
+              setUser(response.data.user);
+              localStorage.setItem('user', JSON.stringify(response.data.user));
             }
           }
         }
       } catch (error) {
-        console.error('Error loading user:', error);
+        console.error('Failed to load user:', error);
         // Clear invalid tokens
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('user');
       } finally {
         setLoading(false);
       }
@@ -45,43 +47,43 @@ export const AuthProvider = ({ children }) => {
     loadUser();
   }, []);
 
-  // Login function
   const login = async (credentials) => {
     try {
       const response = await authAPI.login(credentials);
       if (response.data?.user) {
         setUser(response.data.user);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
       }
       return response;
     } catch (error) {
+      console.error('Login failed:', error);
       throw error;
     }
   };
 
-  // Logout function
   const logout = async () => {
     try {
       await authAPI.logout();
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('Logout failed:', error);
     } finally {
       setUser(null);
     }
   };
 
-  // Register function
   const register = async (userData) => {
     try {
       const response = await authAPI.register(userData);
       return response;
     } catch (error) {
+      console.error('Registration failed:', error);
       throw error;
     }
   };
 
-  // Update user data
   const updateUser = (userData) => {
     setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
   };
 
   const value = {
