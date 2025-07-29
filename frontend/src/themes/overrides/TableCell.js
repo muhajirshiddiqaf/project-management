@@ -4,9 +4,6 @@ export default function TableCell(theme) {
   const commonCell = {
     '&:not(:last-of-type)': {
       position: 'relative',
-      '&.MuiTableCell-stickyHeader': {
-        position: 'sticky'
-      },
       '&:after': {
         position: 'absolute',
         content: '""',
@@ -25,26 +22,7 @@ export default function TableCell(theme) {
         root: {
           fontSize: '0.875rem',
           padding: 12,
-          borderColor: theme.palette.divider,
-          '&.cell-right': {
-            justifyContent: 'flex-end',
-            textAlign: 'right',
-            '& > *': {
-              justifyContent: 'flex-end',
-              margin: '0 0 0 auto'
-            },
-            '& .MuiOutlinedInput-input': {
-              textAlign: 'right'
-            }
-          },
-          '&.cell-center': {
-            justifyContent: 'center',
-            textAlign: 'center',
-            '& > *': {
-              justifyContent: 'center',
-              margin: '0 auto'
-            }
-          }
+          borderColor: theme.palette.divider
         },
         sizeSmall: {
           padding: 8

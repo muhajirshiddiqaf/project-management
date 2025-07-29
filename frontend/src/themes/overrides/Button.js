@@ -1,13 +1,15 @@
 // material-ui
 import { alpha } from '@mui/material/styles';
 
-// project imports
+// project import
 import getColors from 'utils/getColors';
 import getShadow from 'utils/getShadow';
 
+// ==============================|| BUTTON - COLORS ||============================== //
+
 function getColorStyle({ variant, color, theme }) {
   const colors = getColors(theme, color);
-  const { lighter, main, dark, darker, contrastText } = colors;
+  const { lighter, main, dark, contrastText } = colors;
 
   const buttonShadow = `${color}Button`;
   const shadows = getShadow(theme, buttonShadow);
@@ -68,9 +70,8 @@ function getColorStyle({ variant, color, theme }) {
     case 'text':
     default:
       return {
-        color: dark,
         '&:hover': {
-          color: darker,
+          color: dark,
           backgroundColor: lighter
         },
         ...commonShadow
@@ -85,8 +86,7 @@ export default function Button(theme) {
   const primaryShadow = getColorStyle({ variant: 'shadow', color: 'primary', theme });
 
   const disabledStyle = {
-    backgroundColor: theme.palette.grey[200],
-    '&:hover': {
+    '&.Mui-disabled': {
       backgroundColor: theme.palette.grey[200]
     }
   };
@@ -127,19 +127,10 @@ export default function Button(theme) {
           }
         },
         contained: {
-          '&.Mui-disabled': {
-            ...disabledStyle
-          }
+          ...disabledStyle
         },
         outlined: {
-          '&.Mui-disabled': {
-            ...disabledStyle,
-            '&:hover': {
-              backgroundColor: theme.palette.grey[200],
-              color: `${theme.palette.grey[300]} !important`,
-              borderColor: 'inherit'
-            }
-          }
+          ...disabledStyle
         },
         text: {
           boxShadow: 'none',
@@ -204,16 +195,6 @@ export default function Button(theme) {
           minWidth: 56,
           fontSize: '0.625rem',
           padding: '2px 8px'
-        },
-        loading: {
-          pointerEvents: 'none !important',
-          '& svg': {
-            width: 'inherit',
-            height: 'inherit'
-          },
-          '&.MuiButton-loadingPositionCenter': {
-            color: 'transparent !important'
-          }
         }
       }
     }

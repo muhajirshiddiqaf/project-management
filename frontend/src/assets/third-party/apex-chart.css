@@ -1,8 +1,3 @@
-.apexcharts-legend-series {
-  gap: 8px;
-}
-
-.apexcharts-tooltip-series-group.apexcharts-active,
-.apexcharts-tooltip-series-group:last-child {
-  padding-bottom: 0 !important;
+.apexcharts-legend-series .apexcharts-legend-marker {
+  left: -4px !important;
 }

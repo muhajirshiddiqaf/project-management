@@ -8,7 +8,7 @@ const clientSchemas = {
     email: Joi.string().email().required(),
     phone: Joi.string().optional().max(20),
     address: Joi.string().optional().max(500),
-    company: Joi.string().optional().max(100),
+    company_name: Joi.string().optional().max(100),
     website: Joi.string().uri().optional(),
     notes: Joi.string().optional().max(1000)
   }),
@@ -19,7 +19,7 @@ const clientSchemas = {
     email: Joi.string().email().optional(),
     phone: Joi.string().optional().max(20),
     address: Joi.string().optional().max(500),
-    company: Joi.string().optional().max(100),
+    company_name: Joi.string().optional().max(100),
     website: Joi.string().uri().optional(),
     notes: Joi.string().optional().max(1000)
   }),
@@ -34,7 +34,7 @@ const clientSchemas = {
     q: Joi.string().optional().max(100),
     page: Joi.number().integer().min(1).default(1),
     limit: Joi.number().integer().min(1).max(100).default(10),
-    sortBy: Joi.string().valid('created_at', 'updated_at', 'name', 'company').default('created_at'),
+    sortBy: Joi.string().valid('created_at', 'updated_at', 'name', 'company_name').default('created_at'),
     sortOrder: Joi.string().valid('asc', 'desc').default('desc')
   }),
 
@@ -140,7 +140,7 @@ const clientSchemas = {
     format: Joi.string().valid('csv', 'xlsx', 'json').default('csv'),
     filters: Joi.object({
       search: Joi.string().optional(),
-      company: Joi.string().optional(),
+      company_name: Joi.string().optional(),
       created_after: Joi.date().optional(),
       created_before: Joi.date().optional()
     }).optional()
