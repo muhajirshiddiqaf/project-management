@@ -1,5 +1,4 @@
 // third-party
-import { FormattedMessage } from 'react-intl';
 
 // assets
 import { DashboardOutlined, GoldOutlined, HomeOutlined } from '@ant-design/icons';
@@ -19,20 +18,20 @@ const dashboard = {
   children: [
     {
       id: 'dashboard',
-      title: <FormattedMessage id="dashboard" />,
+      title: 'Dashboard',
       type: 'collapse',
       icon: icons.DashboardOutlined,
       children: [
         {
           id: 'default',
-          title: <FormattedMessage id="default" />,
+          title: 'Default',
           type: 'item',
           url: '/dashboard/default',
           breadcrumbs: false
         },
         {
           id: 'analytics',
-          title: <FormattedMessage id="analytics" />,
+          title: 'Analytics',
           type: 'item',
           url: '/dashboard/analytics'
         }
@@ -40,7 +39,7 @@ const dashboard = {
     },
     {
       id: 'components',
-      title: <FormattedMessage id="components" />,
+      title: 'Components',
       type: 'item',
       url: '/components-overview/buttons',
       icon: icons.GoldOutlined,

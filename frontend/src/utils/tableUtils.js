@@ -4,6 +4,9 @@ import { Chip, IconButton, Stack } from '@mui/material';
 // assets
 import { MoreOutlined } from '@ant-design/icons';
 
+// project import
+import { highlightText } from './highlightText';
+
 // ==============================|| TABLE UTILITIES ||============================== //
 
 // Generate action column with menu
@@ -32,11 +35,17 @@ export const generateActionColumn = (onMenuClick, options = {}) => {
   };
 };
 
-// Generate basic text column
+// Generate basic text column with optional highlighting
 export const generateTextColumn = (header, accessor, options = {}) => {
   const {
     className,
-    Cell = ({ value }) => value || 'N/A'
+    searchTerm,
+    Cell = ({ value }) => {
+      if (searchTerm && value) {
+        return highlightText(value, searchTerm);
+      }
+      return value || 'N/A';
+    }
   } = options;
 
   return {
@@ -47,20 +56,29 @@ export const generateTextColumn = (header, accessor, options = {}) => {
   };
 };
 
-// Generate link column
+// Generate link column with optional highlighting
 export const generateLinkColumn = (header, accessor, options = {}) => {
   const {
     className,
     target = '_blank',
-    rel = 'noopener noreferrer'
+    rel = 'noopener noreferrer',
+    searchTerm
   } = options;
 
   return {
     Header: header,
     accessor: accessor,
-    Cell: ({ value }) => value ? (
-      <a href={value} target={target} rel={rel}>{value}</a>
-    ) : 'N/A',
+    Cell: ({ value }) => {
+      if (!value) return 'N/A';
+
+      const displayText = searchTerm ? highlightText(value, searchTerm) : value;
+
+      return (
+        <a href={value} target={target} rel={rel}>
+          {displayText}
+        </a>
+      );
+    },
     ...(className && { className })
   };
 };

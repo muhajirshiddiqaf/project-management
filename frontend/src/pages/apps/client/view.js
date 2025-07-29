@@ -1,237 +1,117 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-
-// material-ui
-import {
-    Alert,
-    Box,
-    Button,
-    Card,
-    CardContent,
-    Chip,
-    CircularProgress,
-    Divider,
-    Grid,
-    Paper,
-    Stack,
-    Typography
-} from '@mui/material';
-
-// project import
-import clientAPI from '_api/client';
+import { EnvironmentOutlined, GlobalOutlined, MailOutlined, PhoneOutlined, UserOutlined } from '@ant-design/icons';
+import { Avatar, Box, Card, CardContent, Chip, Grid, Typography } from '@mui/material';
 import MainCard from 'components/MainCard';
 
-// assets
-import { ArrowLeftOutlined, EditOutlined, EnvironmentOutlined, MailOutlined, PhoneOutlined, UserOutlined } from '@ant-design/icons';
+// ==============================|| CLIENT VIEW PAGE ||============================== //
 
-// ================================|| VIEW CLIENT ||================================ //
-
-const ViewClient = () => {
-  const navigate = useNavigate();
-  const { id } = useParams();
-  const [client, setClient] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    loadClient();
-  }, [id]);
-
-  const loadClient = async () => {
-    try {
-      setLoading(true);
-      setError('');
-
-      const response = await clientAPI.getClientById(id);
-
-      if (response.success) {
-        setClient(response.data.client);
-      } else {
-        setError(response.message || 'Failed to load client');
-      }
-    } catch (err) {
-      console.error('Error loading client:', err);
-      setError(err.message || 'Failed to load client');
-    } finally {
-      setLoading(false);
-    }
+const ClientView = () => {
+  // Mock client data - in real app this would come from API
+  const client = {
+    id: 1,
+    name: 'John Doe',
+    email: 'john.doe@example.com',
+    phone: '+1 (555) 123-4567',
+    company_name: 'Tech Solutions Inc.',
+    website: 'https://techsolutions.com',
+    address: '123 Business St, New York, NY 10001',
+    notes: 'Premium client with high priority projects',
+    status: 'active',
+    created_at: '2024-01-15'
   };
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString();
-  };
-
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (!client) {
-    return (
-      <MainCard title="View Client">
-        <Alert severity="error">
-          Client not found or failed to load.
-        </Alert>
-      </MainCard>
-    );
-  }
 
   return (
-    <MainCard title="Client Details">
-      <Grid container spacing={3}>
-        <Grid item xs={12}>
-          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-            <Typography variant="h3">Client Details</Typography>
-            <Stack direction="row" spacing={2}>
-              <Button
-                variant="outlined"
-                startIcon={<ArrowLeftOutlined />}
-                onClick={() => navigate('/apps/client/list')}
-              >
-                Back to List
-              </Button>
-              <Button
-                variant="contained"
-                startIcon={<EditOutlined />}
-                onClick={() => navigate(`/apps/client/edit/${id}`)}
-              >
-                Edit Client
-              </Button>
-            </Stack>
-          </Stack>
-        </Grid>
-
-        {error && (
-          <Grid item xs={12}>
-            <Alert severity="error" onClose={() => setError('')}>
-              {error}
-            </Alert>
-          </Grid>
-        )}
-
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Grid container spacing={3}>
-                {/* Header with Company Name and Status */}
-                <Grid item xs={12}>
-                  <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-                    <Box>
-                      <Typography variant="h4" fontWeight="600" sx={{ mb: 1 }}>
-                        {client.company_name}
-                      </Typography>
-                      <Typography variant="body1" color="text.secondary">
-                        Client ID: {client.id}
-                      </Typography>
-                    </Box>
+    <Grid container spacing={3}>
+      <Grid item xs={12}>
+        <MainCard title="Client Details">
+          <Box sx={{ p: 2 }}>
+            <Grid container spacing={3}>
+              {/* Client Header */}
+              <Grid item xs={12}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                  <Avatar sx={{ width: 80, height: 80, bgcolor: 'primary.main' }}>
+                    <UserOutlined style={{ fontSize: 40 }} />
+                  </Avatar>
+                  <Box>
+                    <Typography variant="h4" gutterBottom>
+                      {client.name}
+                    </Typography>
+                    <Typography variant="h6" color="textSecondary" gutterBottom>
+                      {client.company_name}
+                    </Typography>
                     <Chip
-                      label={client.status || 'Active'}
-                      color={client.status === 'Active' ? 'success' : 'default'}
-                      size="large"
+                      label={client.status}
+                      color={client.status === 'active' ? 'success' : 'default'}
+                      size="small"
                     />
-                  </Stack>
-                </Grid>
+                  </Box>
+                </Box>
+              </Grid>
 
-                <Grid item xs={12}>
-                  <Divider sx={{ mb: 3 }} />
-                </Grid>
-
-                {/* Contact Information */}
-                <Grid item xs={12} md={6}>
-                  <Paper sx={{ p: 3 }}>
-                    <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <UserOutlined />
+              {/* Contact Information */}
+              <Grid item xs={12} md={6}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
                       Contact Information
                     </Typography>
-                    <Stack spacing={2}>
-                      <Box>
-                        <Typography variant="subtitle2" color="text.secondary">
-                          Contact Person
-                        </Typography>
-                        <Typography variant="body1" fontWeight="500">
-                          {client.contact_person}
-                        </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <MailOutlined />
+                        <Typography variant="body2">{client.email}</Typography>
                       </Box>
-                      <Box>
-                        <Typography variant="subtitle2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <MailOutlined />
-                          Email
-                        </Typography>
-                        <Typography variant="body1" fontWeight="500">
-                          {client.email}
-                        </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <PhoneOutlined />
+                        <Typography variant="body2">{client.phone}</Typography>
                       </Box>
-                      <Box>
-                        <Typography variant="subtitle2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <PhoneOutlined />
-                          Phone
-                        </Typography>
-                        <Typography variant="body1" fontWeight="500">
-                          {client.phone || 'Not provided'}
-                        </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <GlobalOutlined />
+                        <Typography variant="body2">{client.website}</Typography>
                       </Box>
-                    </Stack>
-                  </Paper>
-                </Grid>
-
-                {/* Address Information */}
-                <Grid item xs={12} md={6}>
-                  <Paper sx={{ p: 3 }}>
-                    <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <EnvironmentOutlined />
-                      Address Information
-                    </Typography>
-                    <Box>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Address
-                      </Typography>
-                      <Typography variant="body1" fontWeight="500">
-                        {client.address || 'No address provided'}
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <EnvironmentOutlined />
+                        <Typography variant="body2">{client.address}</Typography>
+                      </Box>
                     </Box>
-                  </Paper>
-                </Grid>
+                  </CardContent>
+                </Card>
+              </Grid>
 
-                {/* Additional Information */}
-                <Grid item xs={12}>
-                  <Paper sx={{ p: 3 }}>
-                    <Typography variant="h6" sx={{ mb: 2 }}>
+              {/* Additional Information */}
+              <Grid item xs={12} md={6}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
                       Additional Information
                     </Typography>
-                    <Grid container spacing={3}>
-                      <Grid item xs={12} sm={6}>
-                        <Box>
-                          <Typography variant="subtitle2" color="text.secondary">
-                            Created Date
-                          </Typography>
-                          <Typography variant="body1" fontWeight="500">
-                            {formatDate(client.created_at)}
-                          </Typography>
-                        </Box>
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <Box>
-                          <Typography variant="subtitle2" color="text.secondary">
-                            Last Updated
-                          </Typography>
-                          <Typography variant="body1" fontWeight="500">
-                            {formatDate(client.updated_at)}
-                          </Typography>
-                        </Box>
-                      </Grid>
-                    </Grid>
-                  </Paper>
-                </Grid>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <Box>
+                        <Typography variant="subtitle2" color="textSecondary">
+                          Client ID
+                        </Typography>
+                        <Typography variant="body2">{client.id}</Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="subtitle2" color="textSecondary">
+                          Created Date
+                        </Typography>
+                        <Typography variant="body2">{client.created_at}</Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="subtitle2" color="textSecondary">
+                          Notes
+                        </Typography>
+                        <Typography variant="body2">{client.notes}</Typography>
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
               </Grid>
-            </CardContent>
-          </Card>
-        </Grid>
+            </Grid>
+          </Box>
+        </MainCard>
       </Grid>
-    </MainCard>
+    </Grid>
   );
 };
 
-export default ViewClient;
+export default ClientView;

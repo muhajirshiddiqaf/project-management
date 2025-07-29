@@ -1,15 +1,14 @@
 // third-party
-import { FormattedMessage } from 'react-intl';
 
 // assets
 import {
-  CloudUploadOutlined,
-  FileDoneOutlined,
-  FormOutlined,
-  PieChartOutlined,
-  StepForwardOutlined,
-  TableOutlined,
-  InsertRowAboveOutlined
+    CloudUploadOutlined,
+    FileDoneOutlined,
+    FormOutlined,
+    InsertRowAboveOutlined,
+    PieChartOutlined,
+    StepForwardOutlined,
+    TableOutlined
 } from '@ant-design/icons';
 
 // icons
@@ -27,50 +26,50 @@ const icons = {
 
 const formsTables = {
   id: 'group-forms-tables',
-  title: <FormattedMessage id="forms-tables" />,
+  title: 'Forms & Tables',
   type: 'group',
   children: [
     {
       id: 'validation',
-      title: <FormattedMessage id="forms-validation" />,
+      title: 'Forms Validation',
       type: 'item',
       url: '/forms/validation',
       icon: icons.FileDoneOutlined
     },
     {
       id: 'wizard',
-      title: <FormattedMessage id="forms-wizard" />,
+      title: 'Forms Wizard',
       type: 'item',
       url: '/forms/wizard',
       icon: icons.StepForwardOutlined
     },
     {
       id: 'forms-layout',
-      title: <FormattedMessage id="layout" />,
+      title: 'Layout',
       type: 'collapse',
       icon: icons.FormOutlined,
       children: [
         {
           id: 'basic',
-          title: <FormattedMessage id="basic" />,
+          title: 'Basic',
           type: 'item',
           url: '/forms/layout/basic'
         },
         {
           id: 'multi-column',
-          title: <FormattedMessage id="multi-column" />,
+          title: 'Multi Column',
           type: 'item',
           url: '/forms/layout/multi-column'
         },
         {
           id: 'action-bar',
-          title: <FormattedMessage id="action-bar" />,
+          title: 'Action Bar',
           type: 'item',
           url: '/forms/layout/action-bar'
         },
         {
           id: 'sticky-bar',
-          title: <FormattedMessage id="sticky-bar" />,
+          title: 'Sticky Bar',
           type: 'item',
           url: '/forms/layout/sticky-bar'
         }
@@ -78,163 +77,171 @@ const formsTables = {
     },
     {
       id: 'forms-plugins',
-      title: <FormattedMessage id="plugins" />,
+      title: 'Plugins',
       type: 'collapse',
       icon: icons.CloudUploadOutlined,
       children: [
         {
           id: 'mask',
-          title: <FormattedMessage id="mask" />,
+          title: 'Mask',
           type: 'item',
           url: '/forms/plugins/mask'
         },
         {
           id: 'clipboard',
-          title: <FormattedMessage id="clipboard" />,
+          title: 'Clipboard',
           type: 'item',
           url: '/forms/plugins/clipboard'
         },
         {
           id: 're-captcha',
-          title: <FormattedMessage id="re-captcha" />,
+          title: 'Re-captcha',
           type: 'item',
           url: '/forms/plugins/re-captcha'
         },
         {
           id: 'editor',
-          title: <FormattedMessage id="editor" />,
+          title: 'Editor',
           type: 'item',
           url: '/forms/plugins/editor'
         },
         {
           id: 'dropzone',
-          title: <FormattedMessage id="dropzone" />,
+          title: 'Dropzone',
           type: 'item',
           url: '/forms/plugins/dropzone'
         }
       ]
     },
     {
-      id: 'react-tables',
-      title: <FormattedMessage id="react-table" />,
-      type: 'collapse',
-      icon: icons.InsertRowAboveOutlined,
-      children: [
-        {
-          id: 'rt-table',
-          title: <FormattedMessage id="basic" />,
-          type: 'item',
-          url: '/tables/react-table/basic'
-        },
-        {
-          id: 'rt-sorting',
-          title: <FormattedMessage id="sorting" />,
-          type: 'item',
-          url: '/tables/react-table/sorting'
-        },
-        {
-          id: 'rt-filtering',
-          title: <FormattedMessage id="filtering" />,
-          type: 'item',
-          url: '/tables/react-table/filtering'
-        },
-        {
-          id: 'rt-grouping',
-          title: <FormattedMessage id="grouping" />,
-          type: 'item',
-          url: '/tables/react-table/grouping'
-        },
-        {
-          id: 'rt-pagination',
-          title: <FormattedMessage id="pagination" />,
-          type: 'item',
-          url: '/tables/react-table/pagination'
-        },
-        {
-          id: 'rt-row-selection',
-          title: <FormattedMessage id="row-selection" />,
-          type: 'item',
-          url: '/tables/react-table/row-selection'
-        },
-        {
-          id: 'rt-expanding',
-          title: <FormattedMessage id="expanding" />,
-          type: 'item',
-          url: '/tables/react-table/expanding'
-        },
-        {
-          id: 'rt-editable',
-          title: <FormattedMessage id="editable" />,
-          type: 'item',
-          url: '/tables/react-table/editable'
-        },
-        {
-          id: 'rt-drag-drop',
-          title: <FormattedMessage id="drag-drop" />,
-          type: 'item',
-          url: '/tables/react-table/drag-drop'
-        },
-        {
-          id: 'rt-column-hiding',
-          title: <FormattedMessage id="column-hiding" />,
-          type: 'item',
-          url: '/tables/react-table/column-hiding'
-        },
-        {
-          id: 'rt-umbrella',
-          title: <FormattedMessage id="umbrella" />,
-          type: 'item',
-          url: '/tables/react-table/umbrella'
-        }
-      ]
-    },
-    {
-      id: 'mui-tables',
-      title: <FormattedMessage id="mui-table" />,
+      id: 'tables',
+      title: 'Tables',
       type: 'collapse',
       icon: icons.TableOutlined,
       children: [
         {
           id: 'mui-table',
-          title: <FormattedMessage id="basic" />,
-          type: 'item',
-          url: '/tables/mui-table/basic'
+          title: 'MUI Table',
+          type: 'collapse',
+          icon: icons.InsertRowAboveOutlined,
+          children: [
+            {
+              id: 'basic',
+              title: 'Basic',
+              type: 'item',
+              url: '/tables/mui-table/basic'
+            },
+            {
+              id: 'dense',
+              title: 'Dense',
+              type: 'item',
+              url: '/tables/mui-table/dense'
+            },
+            {
+              id: 'enhanced',
+              title: 'Enhanced',
+              type: 'item',
+              url: '/tables/mui-table/enhanced'
+            },
+            {
+              id: 'datatable',
+              title: 'Data Table',
+              type: 'item',
+              url: '/tables/mui-table/datatable'
+            },
+            {
+              id: 'custom',
+              title: 'Custom',
+              type: 'item',
+              url: '/tables/mui-table/custom'
+            },
+            {
+              id: 'fixed-header',
+              title: 'Fixed Header',
+              type: 'item',
+              url: '/tables/mui-table/fixed-header'
+            },
+            {
+              id: 'collapse',
+              title: 'Collapse',
+              type: 'item',
+              url: '/tables/mui-table/collapse'
+            }
+          ]
         },
         {
-          id: 'mui-dense',
-          title: <FormattedMessage id="dense" />,
-          type: 'item',
-          url: '/tables/mui-table/dense'
-        },
-        {
-          id: 'mui-enhanced',
-          title: <FormattedMessage id="enhanced" />,
-          type: 'item',
-          url: '/tables/mui-table/enhanced'
-        },
-        {
-          id: 'mui-data-table',
-          title: <FormattedMessage id="datatable" />,
-          type: 'item',
-          url: '/tables/mui-table/datatable'
-        },
-        {
-          id: 'mui-custom',
-          title: <FormattedMessage id="custom" />,
-          type: 'item',
-          url: '/tables/mui-table/custom'
-        },
-        {
-          id: 'mui-fixed-header',
-          title: <FormattedMessage id="fixed-header" />,
-          type: 'item',
-          url: '/tables/mui-table/fixed-header'
-        },
-        {
-          id: 'mui-collapse',
-          title: <FormattedMessage id="collapse" />,
-          type: 'item',
-          url: '/tables/mui-table/collapse'
+          id: 'react-table',
+          title: 'React Table',
+          type: 'collapse',
+          icon: icons.PieChartOutlined,
+          children: [
+            {
+              id: 'basic',
+              title: 'Basic',
+              type: 'item',
+              url: '/tables/react-table/basic'
+            },
+            {
+              id: 'sorting',
+              title: 'Sorting',
+              type: 'item',
+              url: '/tables/react-table/sorting'
+            },
+            {
+              id: 'filtering',
+              title: 'Filtering',
+              type: 'item',
+              url: '/tables/react-table/filtering'
+            },
+            {
+              id: 'grouping',
+              title: 'Grouping',
+              type: 'item',
+              url: '/tables/react-table/grouping'
+            },
+            {
+              id: 'pagination',
+              title: 'Pagination',
+              type: 'item',
+              url: '/tables/react-table/pagination'
+            },
+            {
+              id: 'row-selection',
+              title: 'Row Selection',
+              type: 'item',
+              url: '/tables/react-table/row-selection'
+            },
+            {
+              id: 'expanding',
+              title: 'Expanding',
+              type: 'item',
+              url: '/tables/react-table/expanding'
+            },
+            {
+              id: 'editable',
+              title: 'Editable',
+              type: 'item',
+              url: '/tables/react-table/editable'
+            },
+            {
+              id: 'drag-drop',
+              title: 'Drag & Drop',
+              type: 'item',
+              url: '/tables/react-table/drag-drop'
+            },
+            {
+              id: 'column-hiding',
+              title: 'Column Hiding',
+              type: 'item',
+              url: '/tables/react-table/column-hiding'
+            },
+            {
+              id: 'umbrella',
+              title: 'Umbrella',
+              type: 'item',
+              url: '/tables/react-table/umbrella'
+            }
+          ]
         }
       ]
     }

@@ -25,6 +25,8 @@ const ClientList = Loadable(lazy(() => import('pages/apps/client/list')));
 const ClientAdd = Loadable(lazy(() => import('pages/apps/client/add')));
 const ClientEdit = Loadable(lazy(() => import('pages/apps/client/edit')));
 const ClientView = Loadable(lazy(() => import('pages/apps/client/view')));
+const ClientManage = Loadable(lazy(() => import('pages/apps/client/manage')));
+const ClientViewGeneral = Loadable(lazy(() => import('pages/apps/client/view')));
 
 const UserProfile = Loadable(lazy(() => import('pages/apps/profiles/user')));
 const UserTabPersonal = Loadable(lazy(() => import('sections/apps/profiles/user/TabPersonal')));
@@ -152,7 +154,7 @@ const MainRoutes = {
             {
               path: 'chart',
               element: <WidgetChart />
-            }
+            },
           ]
         },
         {
@@ -193,6 +195,14 @@ const MainRoutes = {
                 {
                   path: 'view/:id',
                   element: <ClientView />
+                },
+                {
+                  path: 'manage',
+                  element: <ClientManage />
+                },
+                {
+                  path: 'view',
+                  element: <ClientViewGeneral />
                 }
               ]
             },

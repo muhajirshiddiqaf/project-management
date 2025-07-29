@@ -11,7 +11,7 @@ import { TablePagination } from 'components/third-party/ReactTable';
 
 // ==============================|| ACTION TABLE ||============================== //
 
-function ActionTable({ columns, data, top }) {
+function ActionTable({ columns, data }) {
   const {
     getTableProps,
     getTableBodyProps,
@@ -34,14 +34,8 @@ function ActionTable({ columns, data, top }) {
 
   return (
     <Stack>
-      {top && (
-        <Box sx={{ p: 2 }}>
-          <TablePagination gotoPage={gotoPage} rows={rows} setPageSize={setPageSize} pageIndex={pageIndex} pageSize={pageSize} />
-        </Box>
-      )}
-
       <Table {...getTableProps()}>
-        <TableHead sx={{ borderTopWidth: top ? 2 : 1 }}>
+        <TableHead sx={{ borderTopWidth: 1 }}>
           {headerGroups.map((headerGroup, index) => (
             <TableRow key={index} {...headerGroup.getHeaderGroupProps()}>
               {headerGroup.headers.map((column, i) => (
@@ -65,24 +59,20 @@ function ActionTable({ columns, data, top }) {
               </TableRow>
             );
           })}
-
-          {!top && (
-            <TableRow>
-              <TableCell sx={{ p: 2 }} colSpan={7}>
-                <TablePagination gotoPage={gotoPage} rows={rows} setPageSize={setPageSize} pageIndex={pageIndex} pageSize={pageSize} />
-              </TableCell>
-            </TableRow>
-          )}
         </TableBody>
       </Table>
+
+      {/* Pagination at the bottom */}
+      <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
+        <TablePagination gotoPage={gotoPage} rows={rows} setPageSize={setPageSize} pageIndex={pageIndex} pageSize={pageSize} />
+      </Box>
     </Stack>
   );
 }
 
 ActionTable.propTypes = {
   columns: PropTypes.array,
-  data: PropTypes.array,
-  top: PropTypes.bool
+  data: PropTypes.array
 };
 
 export default ActionTable;

@@ -16,23 +16,17 @@ const client = {
   type: 'group',
   children: [
     {
-      id: 'client',
-      title: <FormattedMessage id="client" />,
+      id: 'Client',
+      title: <FormattedMessage id="Client" />,
       type: 'collapse',
       icon: icons.TeamOutlined,
       children: [
         {
           id: 'client-list',
-          title: <FormattedMessage id="client-list" />,
+          title: <FormattedMessage id="List" />,
           type: 'item',
           url: '/apps/client/list',
           breadcrumbs: false
-        },
-        {
-          id: 'client-add',
-          title: <FormattedMessage id="client-add" />,
-          type: 'item',
-          url: '/apps/client/add'
         }
       ]
     }
