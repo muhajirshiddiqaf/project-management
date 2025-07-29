@@ -52,7 +52,7 @@ const config = {
     bcryptRounds: parseInt(process.env.BCRYPT_ROUNDS, 10) || 12,
     rateLimitWindowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || 15 * 60 * 1000, // 15 minutes
     rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX, 10) || 100,
-    corsOrigin: process.env.CORS_ORIGIN || '*',
+    corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:3001,http://localhost:3002,http://localhost:5173',
     corsMethods: process.env.CORS_METHODS || 'GET,POST,PUT,DELETE,PATCH',
     corsHeaders: process.env.CORS_HEADERS || 'Content-Type,Authorization',
   },

@@ -444,11 +444,14 @@ class AuthHandler {
         success: true,
         message: 'Profile updated successfully',
         data: {
-          id: user.id,
-          email: user.email,
-          firstName: user.first_name,
-          lastName: user.last_name,
-          role: user.role
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.first_name,
+            lastName: user.last_name,
+            role: user.role,
+            organizationId: user.organization_id
+          }
         }
       });
     } catch (error) {
@@ -470,7 +473,7 @@ class AuthHandler {
       }
 
       // Verify current password
-      const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+      const isValidPassword = await bcrypt.compare(currentPassword, user.password_hash);
       if (!isValidPassword) {
         throw Boom.unauthorized('Current password is incorrect');
       }
@@ -480,7 +483,7 @@ class AuthHandler {
 
       // Update password
       await this._service.updateUser(userId, {
-        password: hashedPassword
+        password_hash: hashedPassword
       });
 
       return h.response({

@@ -6,9 +6,11 @@
   "scripts": {
     "start": "cd backend && npm start",
     "start:dev": "cd backend && npm run start:dev",
-    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
-    "dev": "concurrently \"cd backend && npm run start:dev\" \"cd frontend && npm start\"",
-    "build": "cd frontend && npm run build",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && yarn install",
+    "dev": "concurrently \"cd backend && npm run start:dev\" \"cd frontend && yarn start\"",
+    "dev:frontend": "cd frontend && yarn start",
+    "dev:backend": "cd backend && npm run start:dev",
+    "build": "cd frontend && yarn build",
     "test": "cd backend && npm test"
   },
   "keywords": [

@@ -89,9 +89,10 @@ const createServer = async () => {
     host: '0.0.0.0',
     routes: {
       cors: {
-        origin: [config.security.corsOrigin],
+        origin: ['http://localhost:3001', 'http://localhost:3002', 'http://localhost:5173'],
         credentials: true,
-        additionalHeaders: ['x-organization-id']
+        additionalHeaders: ['x-organization-id'],
+        additionalExposedHeaders: ['x-organization-id']
       },
       validate: {
         failAction: (request, h, err) => {
@@ -197,6 +198,23 @@ const createServer = async () => {
 
   // Set default auth strategy
   server.auth.default('jwt');
+
+  // Add CORS preflight handler
+  server.route({
+    method: 'OPTIONS',
+    path: '/{p*}',
+    handler: (request, h) => {
+      const response = h.response('success');
+      response.header('Access-Control-Allow-Origin', request.headers.origin);
+      response.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+      response.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-organization-id');
+      response.header('Access-Control-Allow-Credentials', 'true');
+      return response;
+    },
+    options: {
+      auth: false
+    }
+  });
 
         // Register modules with /api prefix
   await server.register({
