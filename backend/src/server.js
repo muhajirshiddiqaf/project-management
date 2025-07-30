@@ -316,10 +316,19 @@ const createServer = async () => {
     },
     routes: { prefix: '/api' }
   });
+  // Create analytics service with all required repositories
+  const analyticsService = new (require('./modules/analytics/service'))(
+    clientRepository,
+    projectRepository,
+    orderRepository,
+    invoiceRepository,
+    ticketRepository
+  );
+
   await server.register({
     plugin: analyticsModule,
     options: {
-      service: analyticsRepository,
+      service: analyticsService,
       validator: analyticsValidator,
       auth: 'jwt'
     },

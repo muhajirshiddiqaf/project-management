@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 
 // material-ui
-import { Box, Stack, Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
+import { Box, CircularProgress, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
 
 // third-party
 import { useFilters, usePagination, useTable } from 'react-table';
@@ -11,7 +11,7 @@ import { TablePagination } from 'components/third-party/ReactTable';
 
 // ==============================|| ACTION TABLE ||============================== //
 
-function ActionTable({ columns, data }) {
+function ActionTable({ columns, data, loading = false, emptyMessage = 'No data found' }) {
   const {
     getTableProps,
     getTableBodyProps,
@@ -31,6 +31,24 @@ function ActionTable({ columns, data }) {
     useFilters,
     usePagination
   );
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+        <Typography variant="body1" color="textSecondary">
+          {emptyMessage}
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Stack>
@@ -72,7 +90,9 @@ function ActionTable({ columns, data }) {
 
 ActionTable.propTypes = {
   columns: PropTypes.array,
-  data: PropTypes.array
+  data: PropTypes.array,
+  loading: PropTypes.bool,
+  emptyMessage: PropTypes.string
 };
 
 export default ActionTable;

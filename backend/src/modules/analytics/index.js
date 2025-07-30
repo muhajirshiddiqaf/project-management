@@ -1,9 +1,11 @@
 const AnalyticsHandler = require('./handler');
-const routes = require('./routes');
+const AnalyticsService = require('./service');
+const AnalyticsValidator = require('./validator');
+const AnalyticsRoutes = require('./routes');
 
 const analytics = async (server, { service, validator, auth }) => {
   const analyticsHandler = new AnalyticsHandler(service, validator);
-  server.route(routes(analyticsHandler, auth));
+  server.route(AnalyticsRoutes(analyticsHandler, auth));
 };
 
 module.exports = {

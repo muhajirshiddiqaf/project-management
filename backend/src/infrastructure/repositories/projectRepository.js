@@ -14,6 +14,7 @@ class ProjectRepository {
       limit = 10,
       status,
       priority,
+      category,
       client_id,
       assigned_to
     } = options;
@@ -25,6 +26,7 @@ class ProjectRepository {
         organizationId,
         status,
         priority,
+        category,
         client_id,
         assigned_to,
         limit,
@@ -35,6 +37,7 @@ class ProjectRepository {
         organizationId,
         status,
         priority,
+        category,
         client_id,
         assigned_to
       ]);
@@ -66,16 +69,25 @@ class ProjectRepository {
   // Create project
   async create(projectData) {
     try {
+      // Handle empty assigned_to field
+      const assignedTo = projectData.assigned_to && projectData.assigned_to.trim() !== ''
+        ? projectData.assigned_to
+        : null;
+
       const result = await this.db.query(queries.project.createProject, [
         projectData.name,
         projectData.description,
         projectData.client_id,
         projectData.status,
         projectData.priority,
+        projectData.category,
         projectData.start_date,
         projectData.end_date,
         projectData.budget,
-        projectData.assigned_to,
+        projectData.currency,
+        assignedTo,
+        projectData.tags,
+        projectData.notes,
         projectData.organization_id
       ]);
 
@@ -88,32 +100,29 @@ class ProjectRepository {
   // Update project
   async update(id, organizationId, updateData) {
     try {
-      const setClause = [];
-      const values = [];
-      let paramIndex = 1;
+      // Handle empty assigned_to field
+      const assignedTo = updateData.assigned_to && updateData.assigned_to.trim() !== ''
+        ? updateData.assigned_to
+        : null;
 
-      // Build dynamic update query
-      Object.keys(updateData).forEach(key => {
-        if (updateData[key] !== undefined) {
-          setClause.push(`${key} = $${paramIndex}`);
-          values.push(updateData[key]);
-          paramIndex++;
-        }
-      });
+      const result = await this.db.query(queries.project.updateProject, [
+        id,
+        organizationId,
+        updateData.name,
+        updateData.description,
+        updateData.client_id,
+        updateData.status,
+        updateData.priority,
+        updateData.category,
+        updateData.start_date,
+        updateData.end_date,
+        updateData.budget,
+        updateData.currency,
+        assignedTo,
+        updateData.tags,
+        updateData.notes
+      ]);
 
-      if (setClause.length === 0) {
-        return null;
-      }
-
-      values.push(new Date(), organizationId, id);
-      const query = `
-        UPDATE projects
-        SET ${setClause.join(', ')}, updated_at = $${paramIndex}
-        WHERE organization_id = $${paramIndex + 1} AND id = $${paramIndex + 2}
-        RETURNING *
-      `;
-
-      const result = await this.db.query(query, values);
       return result.rows[0] || null;
     } catch (error) {
       throw error;

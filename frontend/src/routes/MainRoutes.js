@@ -28,6 +28,11 @@ const ClientView = Loadable(lazy(() => import('pages/apps/client/view')));
 const ClientManage = Loadable(lazy(() => import('pages/apps/client/manage')));
 const ClientViewGeneral = Loadable(lazy(() => import('pages/apps/client/view')));
 
+// render - project pages
+const ProjectList = Loadable(lazy(() => import('pages/apps/project/list')));
+const ProjectView = Loadable(lazy(() => import('pages/apps/project/view')));
+const ProjectEdit = Loadable(lazy(() => import('pages/apps/project/edit')));
+
 const UserProfile = Loadable(lazy(() => import('pages/apps/profiles/user')));
 const UserTabPersonal = Loadable(lazy(() => import('sections/apps/profiles/user/TabPersonal')));
 const UserTabPayment = Loadable(lazy(() => import('sections/apps/profiles/user/TabPayment')));
@@ -203,6 +208,23 @@ const MainRoutes = {
                 {
                   path: 'view',
                   element: <ClientViewGeneral />
+                }
+              ]
+            },
+            {
+              path: 'project',
+              children: [
+                {
+                  path: 'list',
+                  element: <ProjectList />
+                },
+                {
+                  path: 'view/:id',
+                  element: <ProjectView />
+                },
+                {
+                  path: 'edit/:id',
+                  element: <ProjectEdit />
                 }
               ]
             },

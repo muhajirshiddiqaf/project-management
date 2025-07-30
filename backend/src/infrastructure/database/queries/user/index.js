@@ -28,32 +28,42 @@ const countUsers = `
 `;
 
 const findUserById = `
-  SELECT
-    u.*,
-    COALESCE(COUNT(ur.role_id), 0) as role_count
-  FROM users u
-  LEFT JOIN user_roles ur ON u.id = ur.user_id
-  WHERE u.id = $1 AND u.organization_id = $2
-  GROUP BY u.id
+  SELECT * FROM users
+  WHERE id = $1 AND organization_id = $2
+`;
+
+const findUserByIdWithOrganization = `
+  SELECT * FROM users
+  WHERE id = $1 AND organization_id = $2
 `;
 
 const updateUser = `
   UPDATE users
-  SET column = $1, updated_at = NOW()
-  WHERE id = $2 AND organization_id = $3
+  SET
+    email = COALESCE($3, email),
+    first_name = COALESCE($4, first_name),
+    last_name = COALESCE($5, last_name),
+    avatar_url = COALESCE($6, avatar_url),
+    role = COALESCE($7, role),
+    permissions = COALESCE($8, permissions),
+    two_factor_enabled = COALESCE($9, two_factor_enabled),
+    two_factor_secret = COALESCE($10, two_factor_secret),
+    is_active = COALESCE($11, is_active),
+    updated_at = NOW()
+  WHERE id = $1 AND organization_id = $2
   RETURNING *
 `;
 
 const deleteUser = `
   UPDATE users
-  SET deleted_at = NOW(), is_active = false
+  SET is_active = false, updated_at = NOW()
   WHERE id = $1 AND organization_id = $2
   RETURNING *
 `;
 
 const findUserByEmail = `
   SELECT * FROM users
-  WHERE email = $1 AND organization_id = $2 AND deleted_at IS NULL
+  WHERE email = $1 AND organization_id = $2
 `;
 
 const findUserByResetToken = `
@@ -64,9 +74,8 @@ const findUserByResetToken = `
 const findUsersByOrganization = `
   SELECT * FROM users
   WHERE organization_id = $1
-    AND ($2::text IS NULL OR role = $2)
-    AND is_active = $3
-    AND deleted_at IS NULL
+  AND ($2::varchar IS NULL OR role = $2)
+  AND ($3::boolean IS NULL OR is_active = $3)
   ORDER BY created_at DESC
   LIMIT $4 OFFSET $5
 `;
@@ -75,21 +84,20 @@ const countUsersByOrganization = `
   SELECT COUNT(*) as count
   FROM users
   WHERE organization_id = $1
-    AND ($2::text IS NULL OR role = $2)
-    AND is_active = $3
-    AND deleted_at IS NULL
+  AND ($2::varchar IS NULL OR role = $2)
+  AND ($3::boolean IS NULL OR is_active = $3)
 `;
 
 const searchUsers = `
   SELECT * FROM users
   WHERE organization_id = $1
-    AND (
-      name ILIKE $2 OR
-      email ILIKE $2 OR
-      department ILIKE $2
-    )
-    AND ($3::text IS NULL OR role = $3)
-    AND deleted_at IS NULL
+  AND (
+    email ILIKE $2 OR
+    first_name ILIKE $2 OR
+    last_name ILIKE $2 OR
+    CONCAT(first_name, ' ', last_name) ILIKE $2
+  )
+  AND ($3::varchar IS NULL OR role = $3)
   ORDER BY created_at DESC
   LIMIT $4 OFFSET $5
 `;
@@ -98,13 +106,13 @@ const countSearchUsers = `
   SELECT COUNT(*) as count
   FROM users
   WHERE organization_id = $1
-    AND (
-      name ILIKE $2 OR
-      email ILIKE $2 OR
-      department ILIKE $2
-    )
-    AND ($3::text IS NULL OR role = $3)
-    AND deleted_at IS NULL
+  AND (
+    email ILIKE $2 OR
+    first_name ILIKE $2 OR
+    last_name ILIKE $2 OR
+    CONCAT(first_name, ' ', last_name) ILIKE $2
+  )
+  AND ($3::varchar IS NULL OR role = $3)
 `;
 
 const getUserStatistics = `
@@ -115,15 +123,21 @@ const getUserStatistics = `
     COUNT(CASE WHEN role = 'manager' THEN 1 END) as manager_count,
     COUNT(CASE WHEN role = 'user' THEN 1 END) as user_count
   FROM users
-  WHERE organization_id = $1 AND deleted_at IS NULL
+  WHERE organization_id = $1
 `;
 
 const getUsersForExport = `
   SELECT
-    id, name, email, role, phone, department, position,
-    is_active, created_at, updated_at
+    id,
+    email,
+    first_name,
+    last_name,
+    role,
+    is_active,
+    created_at,
+    last_login_at
   FROM users
-  WHERE organization_id = $1 AND deleted_at IS NULL
+  WHERE organization_id = $1
   ORDER BY created_at DESC
 `;
 
@@ -339,31 +353,20 @@ const markNotificationAsRead = `
 const markAllNotificationsAsRead = `
   UPDATE user_notifications
   SET is_read = true, read_at = NOW()
-  WHERE user_id = $1 AND organization_id = $2 AND is_read = false
-  RETURNING COUNT(*) as count
+  WHERE user_id = $1 AND organization_id = $2
+  RETURNING *
 `;
 
-// === USER PREFERENCES ===
-
-const findUserPreferences = `
-  SELECT * FROM user_preferences
+const getUserPreferences = `
+  SELECT preferences FROM user_preferences
   WHERE user_id = $1 AND organization_id = $2
 `;
 
-const upsertUserPreferences = `
-  INSERT INTO user_preferences (
-    user_id, organization_id, theme, language, timezone, notifications, dashboard
-  ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7
-  )
+const updateUserPreferences = `
+  INSERT INTO user_preferences (user_id, organization_id, preferences)
+  VALUES ($1, $2, $3)
   ON CONFLICT (user_id, organization_id)
-  DO UPDATE SET
-    theme = EXCLUDED.theme,
-    language = EXCLUDED.language,
-    timezone = EXCLUDED.timezone,
-    notifications = EXCLUDED.notifications,
-    dashboard = EXCLUDED.dashboard,
-    updated_at = NOW()
+  DO UPDATE SET preferences = $3, updated_at = NOW()
   RETURNING *
 `;
 
@@ -373,6 +376,7 @@ module.exports = {
   getUsers,
   countUsers,
   findUserById,
+  findUserByIdWithOrganization,
   updateUser,
   deleteUser,
   findUserByEmail,
@@ -422,6 +426,6 @@ module.exports = {
   markAllNotificationsAsRead,
 
   // User Preferences
-  findUserPreferences,
-  upsertUserPreferences
+  getUserPreferences,
+  updateUserPreferences
 };

@@ -4,17 +4,17 @@ const Joi = require('@hapi/joi');
 const projectSchemas = {
   // Create project schema
   createProject: Joi.object({
-    title: Joi.string().required().min(3).max(200),
+    name: Joi.string().required().min(3).max(200),
     description: Joi.string().optional().max(2000),
     client_id: Joi.string().required().uuid(),
     status: Joi.string().valid('draft', 'active', 'completed', 'cancelled', 'on_hold').default('draft'),
     priority: Joi.string().valid('low', 'medium', 'high', 'urgent').default('medium'),
-    category: Joi.string().valid('web_development', 'mobile_development', 'design', 'consulting', 'maintenance', 'other').required(),
+    category: Joi.string().valid('web_development', 'mobile_development', 'design', 'consulting', 'maintenance', 'other').optional(),
     start_date: Joi.date().optional(),
     end_date: Joi.date().optional(),
     budget: Joi.number().positive().optional(),
     currency: Joi.string().default('IDR'),
-    assigned_to: Joi.string().optional().uuid(),
+    assigned_to: Joi.string().optional().uuid().allow('', null),
     tags: Joi.array().items(Joi.string()).optional(),
     attachments: Joi.array().items(Joi.string()).optional(),
     notes: Joi.string().optional().max(1000)
@@ -22,7 +22,7 @@ const projectSchemas = {
 
   // Update project schema
   updateProject: Joi.object({
-    title: Joi.string().optional().min(3).max(200),
+    name: Joi.string().optional().min(3).max(200),
     description: Joi.string().optional().max(2000),
     client_id: Joi.string().optional().uuid(),
     status: Joi.string().valid('draft', 'active', 'completed', 'cancelled', 'on_hold').optional(),
@@ -32,7 +32,7 @@ const projectSchemas = {
     end_date: Joi.date().optional(),
     budget: Joi.number().positive().optional(),
     currency: Joi.string().optional(),
-    assigned_to: Joi.string().optional().uuid(),
+    assigned_to: Joi.string().optional().uuid().allow('', null),
     tags: Joi.array().items(Joi.string()).optional(),
     attachments: Joi.array().items(Joi.string()).optional(),
     notes: Joi.string().optional().max(1000)
@@ -47,7 +47,7 @@ const projectSchemas = {
   getProjects: Joi.object({
     page: Joi.number().integer().min(1).default(1),
     limit: Joi.number().integer().min(1).max(100).default(10),
-    sortBy: Joi.string().valid('created_at', 'updated_at', 'title', 'status', 'priority', 'start_date', 'end_date').default('created_at'),
+    sortBy: Joi.string().valid('created_at', 'updated_at', 'name', 'status', 'priority', 'start_date', 'end_date').default('created_at'),
     sortOrder: Joi.string().valid('asc', 'desc').default('desc'),
     status: Joi.string().valid('draft', 'active', 'completed', 'cancelled', 'on_hold').optional(),
     priority: Joi.string().valid('low', 'medium', 'high', 'urgent').optional(),
@@ -62,7 +62,7 @@ const projectSchemas = {
     q: Joi.string().optional().max(100),
     page: Joi.number().integer().min(1).default(1),
     limit: Joi.number().integer().min(1).max(100).default(10),
-    sortBy: Joi.string().valid('created_at', 'updated_at', 'title', 'status', 'priority', 'start_date', 'end_date').default('created_at'),
+    sortBy: Joi.string().valid('created_at', 'updated_at', 'name', 'status', 'priority', 'start_date', 'end_date').default('created_at'),
     sortOrder: Joi.string().valid('asc', 'desc').default('desc')
   }),
 
@@ -103,10 +103,15 @@ const projectSchemas = {
         unit_type: Joi.string().valid('piece', 'meter', 'kg', 'liter').required()
       })
     ).optional(),
-    overhead_percentage: Joi.number().min(0).max(100).default(10),
-    profit_margin_percentage: Joi.number().min(0).max(100).default(20),
-    tax_rate: Joi.number().min(0).max(100).default(11),
-    discount_percentage: Joi.number().min(0).max(100).default(0)
+    labor_costs: Joi.array().items(
+      Joi.object({
+        role: Joi.string().required().min(2).max(100),
+        hours: Joi.number().positive().required(),
+        rate_per_hour: Joi.number().positive().required()
+      })
+    ).optional(),
+    overhead_costs: Joi.number().positive().optional(),
+    profit_margin: Joi.number().positive().optional()
   }),
 
   // Get project cost breakdown schema
@@ -114,127 +119,71 @@ const projectSchemas = {
     project_id: Joi.string().required().uuid()
   }),
 
-  // Update project cost calculation schema
-  updateProjectCostCalculation: Joi.object({
-    calculation_id: Joi.string().required().uuid(),
-    services: Joi.array().items(
-      Joi.object({
-        service_id: Joi.string().required().uuid(),
-        quantity: Joi.number().positive().required(),
-        unit_price: Joi.number().positive().required(),
-        unit_type: Joi.string().valid('hour', 'day', 'piece', 'service').required()
-      })
-    ).optional(),
-    materials: Joi.array().items(
-      Joi.object({
-        name: Joi.string().required().min(2).max(100),
-        quantity: Joi.number().positive().required(),
-        unit_price: Joi.number().positive().required(),
-        unit_type: Joi.string().valid('piece', 'meter', 'kg', 'liter').required()
-      })
-    ).optional(),
-    overhead_percentage: Joi.number().min(0).max(100).optional(),
-    profit_margin_percentage: Joi.number().min(0).max(100).optional(),
-    tax_rate: Joi.number().min(0).max(100).optional(),
-    discount_percentage: Joi.number().min(0).max(100).optional()
+  // Update project cost schema
+  updateProjectCost: Joi.object({
+    project_id: Joi.string().required().uuid(),
+    actual_cost: Joi.number().positive().required(),
+    notes: Joi.string().optional().max(1000)
   }),
 
   // === PROJECT TEAM MANAGEMENT SCHEMAS ===
 
-  // Assign team to project schema
-  assignTeamToProject: Joi.object({
-    project_id: Joi.string().required().uuid(),
-    team_members: Joi.array().items(
-      Joi.object({
-        user_id: Joi.string().required().uuid(),
-        role: Joi.string().valid('project_manager', 'developer', 'designer', 'tester', 'analyst', 'consultant').required(),
-        hourly_rate: Joi.number().positive().optional(),
-        start_date: Joi.date().optional(),
-        end_date: Joi.date().optional()
-      })
-    ).min(1).required()
-  }),
-
-  // Get project team schema
-  getProjectTeam: Joi.object({
-    project_id: Joi.string().required().uuid()
-  }),
-
-  // Update team member role schema
-  updateTeamMemberRole: Joi.object({
-    project_id: Joi.string().required().uuid(),
+  // Add team member schema
+  addTeamMember: Joi.object({
     user_id: Joi.string().required().uuid(),
-    role: Joi.string().valid('project_manager', 'developer', 'designer', 'tester', 'analyst', 'consultant').required(),
-    hourly_rate: Joi.number().positive().optional(),
+    role: Joi.string().required().min(2).max(100),
     start_date: Joi.date().optional(),
-    end_date: Joi.date().optional()
+    end_date: Joi.date().optional(),
+    hourly_rate: Joi.number().positive().optional(),
+    notes: Joi.string().optional().max(1000)
   }),
 
-  // Remove team member schema
-  removeTeamMember: Joi.object({
-    project_id: Joi.string().required().uuid(),
-    user_id: Joi.string().required().uuid()
+  // Update team member schema
+  updateTeamMember: Joi.object({
+    role: Joi.string().optional().min(2).max(100),
+    start_date: Joi.date().optional(),
+    end_date: Joi.date().optional(),
+    hourly_rate: Joi.number().positive().optional(),
+    notes: Joi.string().optional().max(1000)
   }),
 
-  // === PROJECT TIMELINE & MILESTONES SCHEMAS ===
+  // === PROJECT TIMELINE SCHEMAS ===
 
-  // Create milestone schema
-  createMilestone: Joi.object({
-    project_id: Joi.string().required().uuid(),
-    title: Joi.string().required().min(3).max(200),
+  // Add timeline event schema
+  addTimelineEvent: Joi.object({
+    event_type: Joi.string().valid('milestone', 'task', 'meeting', 'delivery', 'other').required(),
+    title: Joi.string().required().min(2).max(200),
     description: Joi.string().optional().max(1000),
-    due_date: Joi.date().required(),
-    status: Joi.string().valid('pending', 'in_progress', 'completed', 'overdue').default('pending'),
-    priority: Joi.string().valid('low', 'medium', 'high', 'urgent').default('medium'),
+    event_date: Joi.date().required(),
     assigned_to: Joi.string().optional().uuid(),
-    dependencies: Joi.array().items(Joi.string().uuid()).optional()
+    status: Joi.string().valid('pending', 'in_progress', 'completed', 'cancelled').default('pending'),
+    priority: Joi.string().valid('low', 'medium', 'high', 'urgent').default('medium')
   }),
 
-  // Update milestone schema
-  updateMilestone: Joi.object({
-    title: Joi.string().optional().min(3).max(200),
+  // Update timeline event schema
+  updateTimelineEvent: Joi.object({
+    event_type: Joi.string().valid('milestone', 'task', 'meeting', 'delivery', 'other').optional(),
+    title: Joi.string().optional().min(2).max(200),
     description: Joi.string().optional().max(1000),
-    due_date: Joi.date().optional(),
-    status: Joi.string().valid('pending', 'in_progress', 'completed', 'overdue').optional(),
-    priority: Joi.string().valid('low', 'medium', 'high', 'urgent').optional(),
+    event_date: Joi.date().optional(),
     assigned_to: Joi.string().optional().uuid(),
-    dependencies: Joi.array().items(Joi.string().uuid()).optional()
+    status: Joi.string().valid('pending', 'in_progress', 'completed', 'cancelled').optional(),
+    priority: Joi.string().valid('low', 'medium', 'high', 'urgent').optional()
   }),
 
-  // Get milestone by ID schema
-  getMilestoneById: Joi.object({
-    id: Joi.string().required().uuid()
+  // === PROJECT FILE MANAGEMENT SCHEMAS ===
+
+  // Upload project file schema
+  uploadProjectFile: Joi.object({
+    file_type: Joi.string().valid('document', 'image', 'video', 'audio', 'other').required(),
+    description: Joi.string().optional().max(500),
+    tags: Joi.array().items(Joi.string()).optional()
   }),
 
-  // Get project milestones schema
-  getProjectMilestones: Joi.object({
-    project_id: Joi.string().required().uuid(),
-    status: Joi.string().valid('pending', 'in_progress', 'completed', 'overdue').optional(),
-    page: Joi.number().integer().min(1).default(1),
-    limit: Joi.number().integer().min(1).max(50).default(10)
-  }),
-
-  // Delete milestone schema
-  deleteMilestone: Joi.object({
-    id: Joi.string().required().uuid()
-  }),
-
-  // Update milestone status schema
-  updateMilestoneStatus: Joi.object({
-    status: Joi.string().valid('pending', 'in_progress', 'completed', 'overdue').required(),
-    completion_notes: Joi.string().optional().max(1000)
-  }),
-
-  // === PROJECT STATISTICS SCHEMAS ===
-
-  // Get project statistics schema
-  getProjectStatistics: Joi.object({
-    organization_id: Joi.string().required().uuid()
-  }),
-
-  // Get project cost statistics schema
-  getProjectCostStatistics: Joi.object({
-    project_id: Joi.string().required().uuid()
+  // Update project file schema
+  updateProjectFile: Joi.object({
+    description: Joi.string().optional().max(500),
+    tags: Joi.array().items(Joi.string()).optional()
   })
 };
 

@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom';
 
 // material-ui
 import {
-    Box,
-    Button,
-    Grid,
-    IconButton,
-    InputAdornment,
-    TextField
+  Box,
+  Button,
+  Grid,
+  IconButton,
+  InputAdornment,
+  TextField
 } from '@mui/material';
 
 // project import
@@ -24,8 +24,8 @@ import useDebounce from 'utils/useDebounce';
 
 // assets
 import {
-    PlusOutlined,
-    SearchOutlined
+  PlusOutlined,
+  SearchOutlined
 } from '@ant-design/icons';
 
 // ==============================|| CLIENT LIST ||============================== //

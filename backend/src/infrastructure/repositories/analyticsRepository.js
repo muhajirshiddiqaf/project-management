@@ -8,11 +8,31 @@ class AnalyticsRepository {
 
   // === DASHBOARD OVERVIEW METHODS ===
   async getDashboardOverview(organizationId, filters = {}) {
-    const query = this.queries.getDashboardOverview;
-    const values = [organizationId];
+    try {
+      // Get basic metrics
+      const overviewQuery = this.queries.getDashboardOverview;
+      const overviewResult = await this.db.query(overviewQuery, [organizationId]);
+      const overview = overviewResult.rows[0] || {};
 
-    const result = await this.db.query(query, values);
-    return result.rows[0] || null;
+      // Get recent data
+      const [recentClients, recentProjects, recentOrders] = await Promise.all([
+        this.db.query(this.queries.getRecentClients, [organizationId]),
+        this.db.query(this.queries.getRecentProjects, [organizationId]),
+        this.db.query(this.queries.getRecentOrders, [organizationId])
+      ]);
+
+      return {
+        ...overview,
+        recentClients: recentClients.rows,
+        recentProjects: recentProjects.rows,
+        recentOrders: recentOrders.rows,
+        revenueData: [], // Will be populated by revenue analytics
+        projectStatusData: [] // Will be populated by project analytics
+      };
+    } catch (error) {
+      console.error('Error getting dashboard overview:', error);
+      throw error;
+    }
   }
 
   // === REVENUE ANALYTICS METHODS ===

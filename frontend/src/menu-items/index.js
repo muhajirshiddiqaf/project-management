@@ -6,12 +6,13 @@ import dashboard from './dashboard';
 import formsTables from './forms-tables';
 import other from './other';
 import pages from './pages';
+import project from './project';
 import widget from './widget';
 
 // ==============================|| MENU ITEMS ||============================== //
 
 const menuItems = {
-  items: [dashboard, widget, applications, client, formsTables, chartsMap, pages, other]
+  items: [dashboard, widget, applications, client, project, formsTables, chartsMap, pages, other]
 };
 
 export default menuItems;

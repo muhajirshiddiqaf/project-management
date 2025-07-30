@@ -958,6 +958,297 @@ class UserRepository {
       }
     };
   }
+
+  // Get users with pagination and filters
+  async getUsers(organizationId, filters = {}, pagination = {}) {
+    const {
+      search, role, department, is_active
+    } = filters;
+    const {
+      page = 1, limit = 10, sort_by = 'created_at', sort_order = 'DESC'
+    } = pagination;
+    const offset = (page - 1) * limit;
+
+    try {
+      let query = queries.user.findUsersByOrganization;
+      let params = [organizationId, role, is_active, limit, offset];
+
+      // If search is provided, use search query
+      if (search) {
+        query = queries.user.searchUsers;
+        params = [organizationId, search, role, limit, offset];
+      }
+
+      const result = await this.db.query(query, params);
+      return result.rows;
+    } catch (error) {
+      console.error('Error in getUsers:', error);
+      throw new Error('Failed to get users');
+    }
+  }
+
+  // Count users with filters
+  async countUsers(organizationId, filters = {}) {
+    const { search, role, department, is_active } = filters;
+
+    try {
+      let query = queries.user.countUsersByOrganization;
+      let params = [organizationId, role, is_active];
+
+      // If search is provided, use search count query
+      if (search) {
+        query = queries.user.countSearchUsers;
+        params = [organizationId, search, role];
+      }
+
+      const result = await this.db.query(query, params);
+      return parseInt(result.rows[0].count, 10);
+    } catch (error) {
+      console.error('Error in countUsers:', error);
+      throw new Error('Failed to count users');
+    }
+  }
+
+  // Get user by ID with organization check
+  async getUserById(id, organizationId) {
+    try {
+      const result = await this.db.query(queries.user.findUserByIdWithOrganization, [id, organizationId]);
+      return result.rows[0] || null;
+    } catch (error) {
+      console.error('Error in getUserById:', error);
+      throw new Error('Failed to get user by ID');
+    }
+  }
+
+  // Update user with organization check
+  async updateUser(id, organizationId, updateData) {
+    try {
+      const fields = [];
+      const values = [];
+      let paramCount = 1;
+
+      // Build dynamic update query
+      Object.keys(updateData).forEach((key) => {
+        if (updateData[key] !== undefined) {
+          fields.push(`${key} = $${paramCount}`);
+          values.push(updateData[key]);
+          paramCount++;
+        }
+      });
+
+      if (fields.length === 0) {
+        throw new Error('No fields to update');
+      }
+
+      // Add updated_at, user ID, and organization ID
+      fields.push('updated_at = NOW()');
+      values.push(id, organizationId);
+
+      const query = `
+        UPDATE users
+        SET ${fields.join(', ')}
+        WHERE id = $${paramCount} AND organization_id = $${paramCount + 1}
+        RETURNING *
+      `;
+
+      const result = await this.db.query(query, values);
+      return result.rows[0] || null;
+    } catch (error) {
+      console.error('Error in updateUser:', error);
+      throw new Error('Failed to update user');
+    }
+  }
+
+  // Delete user with organization check
+  async deleteUser(id, organizationId) {
+    try {
+      const result = await this.db.query(queries.user.deleteUser, [id, organizationId]);
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Error in deleteUser:', error);
+      throw new Error('Failed to delete user');
+    }
+  }
+
+  // Create activity log
+  async createActivityLog(logData) {
+    try {
+      const result = await this.db.query(queries.user.createActivityLog, [
+        logData.organization_id,
+        logData.user_id,
+        logData.action,
+        logData.resource,
+        logData.resource_id,
+        logData.details ? JSON.stringify(logData.details) : null
+      ]);
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error in createActivityLog:', error);
+      throw new Error('Failed to create activity log');
+    }
+  }
+
+  // Get user statistics
+  async getUserStatistics(organizationId, filters = {}) {
+    try {
+      const result = await this.db.query(queries.user.getUserStatistics, [organizationId]);
+      return result.rows[0] || {};
+    } catch (error) {
+      console.error('Error in getUserStatistics:', error);
+      throw new Error('Failed to get user statistics');
+    }
+  }
+
+  // Get users for export
+  async getUsersForExport(organizationId, filters = {}) {
+    try {
+      const result = await this.db.query(queries.user.getUsersForExport, [organizationId]);
+      return result.rows;
+    } catch (error) {
+      console.error('Error in getUsersForExport:', error);
+      throw new Error('Failed to get users for export');
+    }
+  }
+
+  // Get user sessions
+  async getUserSessions(organizationId, filters = {}, pagination = {}) {
+    const { page = 1, limit = 10 } = pagination;
+    const offset = (page - 1) * limit;
+
+    try {
+      let query = queries.user.getUserSessions;
+      let params = [organizationId, limit, offset];
+
+      const result = await this.db.query(query, params);
+      return result.rows;
+    } catch (error) {
+      console.error('Error in getUserSessions:', error);
+      throw new Error('Failed to get user sessions');
+    }
+  }
+
+  // Count user sessions
+  async countUserSessions(organizationId, filters = {}) {
+    try {
+      const result = await this.db.query(queries.user.countUserSessions, [organizationId]);
+      return parseInt(result.rows[0].count, 10);
+    } catch (error) {
+      console.error('Error in countUserSessions:', error);
+      throw new Error('Failed to count user sessions');
+    }
+  }
+
+  // Revoke session
+  async revokeSession(sessionId, organizationId) {
+    try {
+      const result = await this.db.query(queries.user.revokeSession, [sessionId, organizationId]);
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Error in revokeSession:', error);
+      throw new Error('Failed to revoke session');
+    }
+  }
+
+  // Revoke all sessions for user
+  async revokeAllSessions(userId, organizationId) {
+    try {
+      const result = await this.db.query(queries.user.revokeAllSessions, [userId, organizationId]);
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Error in revokeAllSessions:', error);
+      throw new Error('Failed to revoke all sessions');
+    }
+  }
+
+  // Get user notifications
+  async getUserNotifications(userId, organizationId, filters = {}, pagination = {}) {
+    const { page = 1, limit = 10 } = pagination;
+    const offset = (page - 1) * limit;
+
+    try {
+      const result = await this.db.query(queries.user.getUserNotifications, [userId, organizationId, limit, offset]);
+      return result.rows;
+    } catch (error) {
+      console.error('Error in getUserNotifications:', error);
+      throw new Error('Failed to get user notifications');
+    }
+  }
+
+  // Count user notifications
+  async countUserNotifications(userId, organizationId, filters = {}) {
+    try {
+      const result = await this.db.query(queries.user.countUserNotifications, [userId, organizationId]);
+      return parseInt(result.rows[0].count, 10);
+    } catch (error) {
+      console.error('Error in countUserNotifications:', error);
+      throw new Error('Failed to count user notifications');
+    }
+  }
+
+  // Mark notification as read
+  async markNotificationAsRead(notificationId, userId, organizationId) {
+    try {
+      const result = await this.db.query(queries.user.markNotificationAsRead, [notificationId, userId, organizationId]);
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Error in markNotificationAsRead:', error);
+      throw new Error('Failed to mark notification as read');
+    }
+  }
+
+  // Mark all notifications as read
+  async markAllNotificationsAsRead(userId, organizationId) {
+    try {
+      const result = await this.db.query(queries.user.markAllNotificationsAsRead, [userId, organizationId]);
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Error in markAllNotificationsAsRead:', error);
+      throw new Error('Failed to mark all notifications as read');
+    }
+  }
+
+  // Get user preferences
+  async getUserPreferences(userId, organizationId) {
+    try {
+      const result = await this.db.query(queries.user.getUserPreferences, [userId, organizationId]);
+      return result.rows[0] || this.getDefaultUserPreferences();
+    } catch (error) {
+      console.error('Error in getUserPreferences:', error);
+      throw new Error('Failed to get user preferences');
+    }
+  }
+
+  // Update user preferences
+  async updateUserPreferences(userId, organizationId, updateData) {
+    try {
+      const result = await this.db.query(queries.user.updateUserPreferences, [
+        userId,
+        organizationId,
+        JSON.stringify(updateData)
+      ]);
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error in updateUserPreferences:', error);
+      throw new Error('Failed to update user preferences');
+    }
+  }
+
+  // Get default user preferences
+  getDefaultUserPreferences() {
+    return {
+      theme: 'light',
+      language: 'en',
+      notifications: {
+        email: true,
+        push: true,
+        sms: false
+      },
+      privacy: {
+        profile_visibility: 'public',
+        activity_visibility: 'friends'
+      }
+    };
+  }
 }
 
 module.exports = UserRepository;

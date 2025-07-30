@@ -11,10 +11,11 @@ const findAll = `
   WHERE p.organization_id = $1
     AND ($2::text IS NULL OR p.status = $2)
     AND ($3::text IS NULL OR p.priority = $3)
-    AND ($4::uuid IS NULL OR p.client_id = $4)
-    AND ($5::uuid IS NULL OR p.assigned_to = $5)
+    AND ($4::text IS NULL OR p.category = $4)
+    AND ($5::uuid IS NULL OR p.client_id = $5)
+    AND ($6::uuid IS NULL OR p.assigned_to = $6)
   ORDER BY p.created_at DESC
-  LIMIT $6 OFFSET $7
+  LIMIT $7 OFFSET $8
 `;
 
 const countProjects = `
@@ -22,8 +23,9 @@ const countProjects = `
   WHERE organization_id = $1
     AND ($2::text IS NULL OR status = $2)
     AND ($3::text IS NULL OR priority = $3)
-    AND ($4::uuid IS NULL OR client_id = $4)
-    AND ($5::uuid IS NULL OR assigned_to = $5)
+    AND ($4::text IS NULL OR category = $4)
+    AND ($5::uuid IS NULL OR client_id = $5)
+    AND ($6::uuid IS NULL OR assigned_to = $6)
 `;
 
 const findProjectById = `
@@ -39,10 +41,19 @@ const findProjectById = `
 
 const createProject = `
   INSERT INTO projects (
-    name, description, client_id, status, priority,
-    start_date, end_date, budget, assigned_to, organization_id
+    name, description, client_id, status, priority, category,
+    start_date, end_date, budget, currency, assigned_to, tags, notes, organization_id
   )
-  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+  RETURNING *
+`;
+
+const updateProject = `
+  UPDATE projects
+  SET name = $3, description = $4, client_id = $5, status = $6, priority = $7, category = $8,
+      start_date = $9, end_date = $10, budget = $11, currency = $12, assigned_to = $13, tags = $14, notes = $15,
+      updated_at = NOW()
+  WHERE id = $1 AND organization_id = $2
   RETURNING *
 `;
 
@@ -208,6 +219,7 @@ module.exports = {
   countProjects,
   findProjectById,
   createProject,
+  updateProject,
   deleteProject,
   searchProjects,
   countSearchProjects,

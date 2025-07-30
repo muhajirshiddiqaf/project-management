@@ -1,64 +1,78 @@
-import axios from 'axios';
-
-const API_BASE_URL = 'http://localhost:3000/api';
+import api from './common';
 
 class ClientAPI {
   constructor() {
-    this.baseURL = API_BASE_URL;
+    this.endpoint = '/clients';
   }
 
-  async request(endpoint, options = {}) {
-    const url = `${this.baseURL}${endpoint}`;
-    const token = localStorage.getItem('access_token');
-
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` })
-      },
-      ...options
-    };
-
-    try {
-      const response = await axios(url, config);
-      return response.data;
-    } catch (error) {
-      console.error('API request failed:', error);
-      throw error.response?.data || error;
-    }
-  }
-
+  // Get all clients with pagination and filters
   async getAllClients(params = {}) {
-    const queryParams = new URLSearchParams(params).toString();
-    return this.request(`/clients?${queryParams}`);
+    return api.getPaginated(this.endpoint, params.page, params.limit, params);
   }
 
+  // Get client by ID
   async getClientById(id) {
-    return this.request(`/clients/${id}`);
+    return api.get(`${this.endpoint}/${id}`);
   }
 
+  // Create new client
   async createClient(clientData) {
-    return this.request('/clients', {
-      method: 'POST',
-      data: clientData
-    });
+    return api.post(this.endpoint, clientData);
   }
 
+  // Update client
   async updateClient(id, clientData) {
-    return this.request(`/clients/${id}`, {
-      method: 'PUT',
-      data: clientData
-    });
+    return api.put(`${this.endpoint}/${id}`, clientData);
   }
 
+  // Delete client
   async deleteClient(id) {
-    return this.request(`/clients/${id}`, {
-      method: 'DELETE'
-    });
+    return api.delete(`${this.endpoint}/${id}`);
   }
 
-  async searchClients(searchTerm) {
-    return this.request(`/clients/search?q=${encodeURIComponent(searchTerm)}`);
+  // Search clients
+  async searchClients(searchTerm, filters = {}) {
+    return api.search(this.endpoint, searchTerm, filters);
+  }
+
+  // Get client statistics
+  async getClientStats() {
+    return api.get(`${this.endpoint}/stats`);
+  }
+
+  // Export clients
+  async exportClients(format = 'csv', filters = {}) {
+    return api.exportData(this.endpoint, format, filters);
+  }
+
+  // Import clients
+  async importClients(file, onProgress) {
+    return api.upload(`${this.endpoint}/import`, file, onProgress);
+  }
+
+  // Get client activity
+  async getClientActivity(id) {
+    return api.get(`${this.endpoint}/${id}/activity`);
+  }
+
+  // Get client orders
+  async getClientOrders(id, params = {}) {
+    return api.getPaginated(`${this.endpoint}/${id}/orders`, params.page, params.limit, params);
+  }
+
+  // Get client invoices
+  async getClientInvoices(id, params = {}) {
+    return api.getPaginated(`${this.endpoint}/${id}/invoices`, params.page, params.limit, params);
+  }
+
+  // Get client projects
+  async getClientProjects(id, params = {}) {
+    return api.getPaginated(`${this.endpoint}/${id}/projects`, params.page, params.limit, params);
+  }
+
+  // Get client tickets
+  async getClientTickets(id, params = {}) {
+    return api.getPaginated(`${this.endpoint}/${id}/tickets`, params.page, params.limit, params);
   }
 }
 
