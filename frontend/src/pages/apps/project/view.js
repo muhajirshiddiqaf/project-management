@@ -17,11 +17,12 @@ import {
 } from '@mui/material';
 
 // icons
-import { ArrowLeftOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, DeleteOutlined, EditOutlined, FileTextOutlined } from '@ant-design/icons';
 
 // project imports
 import clientAPI from '_api/client';
 import projectAPI from '_api/project';
+import quotationAPI from '_api/quotation';
 import userAPI from '_api/user';
 import MainCard from 'components/MainCard';
 
@@ -95,6 +96,25 @@ const ProjectView = () => {
         console.error('Error deleting project:', error);
         setError('Failed to delete project');
       }
+    }
+  };
+
+  const handleGenerateQuotation = async () => {
+    try {
+      const response = await quotationAPI.generateFromProject({
+        project_id: id,
+        include_materials: true,
+        include_labor: true
+      });
+
+      if (response && response.success) {
+        alert('Quotation generated successfully!');
+        // Optionally navigate to the quotation
+        // navigate(`/apps/quotation/view/${response.data.quotation.id}`);
+      }
+    } catch (error) {
+      console.error('Error generating quotation:', error);
+      setError('Failed to generate quotation');
     }
   };
 
@@ -183,6 +203,11 @@ const ProjectView = () => {
           }
           secondary={
             <Box>
+              <Tooltip title="Generate Quotation">
+                <IconButton onClick={handleGenerateQuotation} color="primary" size="small">
+                  <FileTextOutlined />
+                </IconButton>
+              </Tooltip>
               <Tooltip title="Edit Project">
                 <IconButton onClick={handleEdit} color="primary" size="small">
                   <EditOutlined />

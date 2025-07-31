@@ -33,6 +33,12 @@ const ProjectList = Loadable(lazy(() => import('pages/apps/project/list')));
 const ProjectView = Loadable(lazy(() => import('pages/apps/project/view')));
 const ProjectEdit = Loadable(lazy(() => import('pages/apps/project/edit')));
 
+// render - quotation pages
+const QuotationList = Loadable(lazy(() => import('pages/apps/quotation/list')));
+const QuotationPreview = Loadable(lazy(() => import('pages/apps/quotation/preview')));
+const QuotationAdd = Loadable(lazy(() => import('pages/apps/quotation/add')));
+const QuotationEdit = Loadable(lazy(() => import('pages/apps/quotation/edit')));
+
 const UserProfile = Loadable(lazy(() => import('pages/apps/profiles/user')));
 const UserTabPersonal = Loadable(lazy(() => import('sections/apps/profiles/user/TabPersonal')));
 const UserTabPayment = Loadable(lazy(() => import('sections/apps/profiles/user/TabPayment')));
@@ -225,6 +231,31 @@ const MainRoutes = {
                 {
                   path: 'edit/:id',
                   element: <ProjectEdit />
+                }
+              ]
+            },
+            {
+              path: 'quotation',
+              children: [
+                {
+                  path: 'list',
+                  element: <QuotationList />
+                },
+                {
+                  path: 'add',
+                  element: <QuotationAdd />
+                },
+                {
+                  path: 'edit/:id',
+                  element: <QuotationEdit />
+                },
+                {
+                  path: 'preview/:id',
+                  element: <QuotationPreview />
+                },
+                {
+                  path: 'preview',
+                  element: <QuotationPreview />
                 }
               ]
             },

@@ -41,12 +41,12 @@ const findQuotationById = `
 
 const createQuotation = `
   INSERT INTO quotations (
-    organization_id, project_id, client_id, quotation_number, title,
-    description, status, valid_until, issue_date, subtotal, tax_rate,
-    tax_amount, discount_percentage, discount_amount, total_amount,
+    organization_id, project_id, client_id, quotation_number, subject,
+    description, status, valid_until, subtotal, tax_rate,
+    tax_amount, discount_rate, discount_amount, total_amount,
     currency, notes, terms_conditions, approved_by, approved_at, created_by
   ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20
   ) RETURNING *
 `;
 
@@ -123,11 +123,30 @@ const findQuotationItemById = `
 
 const createQuotationItem = `
   INSERT INTO quotation_items (
-    quotation_id, name, description, quantity, unit_price,
-    unit_type, tax_rate, discount_percentage, total
+    quotation_id, item_name, description, quantity, unit_price,
+    unit_type, total_price, sort_order
   ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9
+    $1, $2, $3, $4, $5, $6, $7, $8
   ) RETURNING *
+`;
+
+const updateQuotationItem = `
+  UPDATE quotation_items qi
+  SET
+    item_name = COALESCE($4, qi.item_name),
+    description = COALESCE($5, qi.description),
+    quantity = COALESCE($6, qi.quantity),
+    unit_price = COALESCE($7, qi.unit_price),
+    unit_type = COALESCE($8, qi.unit_type),
+    total_price = COALESCE($9, qi.total_price),
+    sort_order = COALESCE($10, qi.sort_order),
+    updated_at = NOW()
+  FROM quotations q
+  WHERE qi.quotation_id = q.id
+    AND qi.id = $1
+    AND qi.quotation_id = $2
+    AND q.organization_id = $3
+  RETURNING qi.*
 `;
 
 const deleteQuotationItem = `
@@ -143,10 +162,10 @@ const deleteQuotationItem = `
 // Quotation calculation queries
 const calculateQuotationTotals = `
   SELECT
-    COALESCE(SUM(qi.total), 0) as subtotal,
-    COALESCE(SUM(qi.total * qi.tax_rate / 100), 0) as tax_amount,
-    COALESCE(SUM(qi.total * qi.discount_percentage / 100), 0) as discount_amount,
-    COALESCE(SUM(qi.total * (1 + qi.tax_rate / 100 - qi.discount_percentage / 100)), 0) as total_amount
+    COALESCE(SUM(qi.total_price), 0) as subtotal,
+    COALESCE(SUM(qi.total_price * q.tax_rate / 100), 0) as tax_amount,
+    COALESCE(SUM(qi.total_price * q.discount_rate / 100), 0) as discount_amount,
+    COALESCE(SUM(qi.total_price * (1 + q.tax_rate / 100 - q.discount_rate / 100)), 0) as total_amount
   FROM quotation_items qi
   JOIN quotations q ON qi.quotation_id = q.id
   WHERE qi.quotation_id = $1 AND q.organization_id = $2
@@ -155,7 +174,7 @@ const calculateQuotationTotals = `
 const generateQuotationNumber = `
   SELECT
     'QT-' || TO_CHAR(NOW(), 'YYYYMM') || '-' ||
-    LPAD(COALESCE(MAX(SUBSTRING(quotation_number FROM 'QT-\\d{6}-(\\d+)')::integer), 4) + 1, 4, '0') as quotation_number
+    TO_CHAR(COALESCE(MAX(SUBSTRING(quotation_number FROM 'QT-\\d{6}-(\\d+)')::integer), 0) + 1, 'FM0000') as quotation_number
   FROM quotations
   WHERE organization_id = $1
     AND quotation_number LIKE 'QT-' || TO_CHAR(NOW(), 'YYYYMM') || '-%'
@@ -275,6 +294,7 @@ module.exports = {
   countQuotationItems,
   findQuotationItemById,
   createQuotationItem,
+  updateQuotationItem,
   deleteQuotationItem,
   calculateQuotationTotals,
   generateQuotationNumber,

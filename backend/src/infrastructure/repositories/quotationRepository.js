@@ -41,15 +41,14 @@ class QuotationRepository {
       quotationData.project_id,
       quotationData.client_id,
       quotationData.quotation_number,
-      quotationData.title,
+      quotationData.subject,
       quotationData.description,
       quotationData.status,
       quotationData.valid_until,
-      quotationData.issue_date,
       quotationData.subtotal,
       quotationData.tax_rate,
       quotationData.tax_amount,
-      quotationData.discount_percentage,
+      quotationData.discount_rate,
       quotationData.discount_amount,
       quotationData.total_amount,
       quotationData.currency,
@@ -168,14 +167,13 @@ class QuotationRepository {
     const query = this.queries.createQuotationItem;
     const values = [
       itemData.quotation_id,
-      itemData.name,
+      itemData.item_name,
       itemData.description,
       itemData.quantity,
       itemData.unit_price,
       itemData.unit_type,
-      itemData.tax_rate,
-      itemData.discount_percentage,
-      itemData.total
+      itemData.total_price,
+      itemData.sort_order
     ];
 
     const result = await this.db.query(query, values);
@@ -238,6 +236,115 @@ class QuotationRepository {
 
     const result = await this.db.query(query, values);
     return result.rows[0] || null;
+  }
+
+  async generateQuotationFromProject(projectId, organizationId, quotationData) {
+    try {
+      // Get project details
+      const projectQuery = `
+        SELECT p.*, c.name as client_name, c.email as client_email
+        FROM projects p
+        LEFT JOIN clients c ON p.client_id = c.id
+        WHERE p.id = $1 AND p.organization_id = $2
+      `;
+      const projectResult = await this.db.query(projectQuery, [projectId, organizationId]);
+      const project = projectResult.rows[0];
+
+      if (!project) {
+        throw new Error('Project not found');
+      }
+
+      // Generate quotation number
+      const quotationNumber = await this.generateQuotationNumber(organizationId);
+
+      // Create quotation using the existing create method
+      const newQuotationData = {
+        organization_id: organizationId,
+        project_id: projectId,
+        client_id: project.client_id,
+        quotation_number: quotationNumber.quotation_number,
+        subject: quotationData.subject || `Quotation for ${project.name}`,
+        description: quotationData.description || project.description,
+        status: quotationData.status || 'draft',
+        valid_until: quotationData.valid_until,
+        subtotal: quotationData.subtotal || 0,
+        tax_rate: quotationData.tax_rate || 0,
+        tax_amount: quotationData.tax_amount || 0,
+        discount_rate: quotationData.discount_rate || 0,
+        discount_amount: quotationData.discount_amount || 0,
+        total_amount: quotationData.total_amount || 0,
+        currency: quotationData.currency || project.currency || 'USD',
+        notes: quotationData.notes,
+        terms_conditions: quotationData.terms_conditions,
+        approved_by: quotationData.approved_by,
+        approved_at: quotationData.approved_at,
+        created_by: quotationData.created_by
+      };
+
+      const quotation = await this.create(newQuotationData);
+
+      // Create default quotation items based on project
+      const defaultItems = [
+        {
+          item_name: 'Project Development',
+          description: project.description || 'Project development services',
+          quantity: 1,
+          unit_price: project.budget || 0,
+          unit_type: 'project',
+          total_price: project.budget || 0,
+          sort_order: 1
+        }
+      ];
+
+      // Add custom items if provided
+      if (quotationData.items && Array.isArray(quotationData.items)) {
+        for (let i = 0; i < quotationData.items.length; i++) {
+          const item = quotationData.items[i];
+          defaultItems.push({
+            item_name: item.item_name,
+            description: item.description,
+            quantity: item.quantity || 1,
+            unit_price: item.unit_price || 0,
+            unit_type: item.unit_type || 'piece',
+            total_price: (item.quantity || 1) * (item.unit_price || 0),
+            sort_order: i + 2
+          });
+        }
+      }
+
+      // Create quotation items
+      for (const item of defaultItems) {
+        const itemValues = [
+          quotation.id,
+          item.item_name,
+          item.description,
+          item.quantity,
+          item.unit_price,
+          item.unit_type,
+          item.total_price,
+          item.sort_order
+        ];
+
+        const createItemQuery = `
+          INSERT INTO quotation_items (
+            quotation_id, item_name, description, quantity, unit_price,
+            unit_type, total_price, sort_order
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          RETURNING *
+        `;
+
+        await this.db.query(createItemQuery, itemValues);
+      }
+
+      // Calculate totals
+      await this.calculateQuotationTotals(quotation.id, organizationId);
+
+      return quotation;
+    } catch (error) {
+      console.error('Error generating quotation from project:', error);
+      throw error;
+    }
   }
 
   // === QUOTATION STATISTICS METHODS ===

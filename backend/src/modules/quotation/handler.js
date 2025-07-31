@@ -1,4 +1,5 @@
 const Boom = require('@hapi/boom');
+const { getCredentials, getUserId, getOrganizationId } = require('../../utils/auth');
 
 class QuotationHandler {
   constructor(service, validator) {
@@ -22,7 +23,7 @@ class QuotationHandler {
   async getQuotations(request, h) {
     try {
       const { page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'DESC', status, client_id } = request.query;
-      const organizationId = request.auth.credentials.organization_id;
+      const organizationId = getOrganizationId(request);
 
       const filters = { status, client_id };
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sortBy, sortOrder };
@@ -49,7 +50,7 @@ class QuotationHandler {
   async getQuotationById(request, h) {
     try {
       const { id } = request.params;
-      const organizationId = request.auth.credentials.organization_id;
+      const organizationId = getOrganizationId(request);
 
       const quotation = await this._service.findById(id, organizationId);
       if (!quotation) {
@@ -69,10 +70,11 @@ class QuotationHandler {
 
   async createQuotation(request, h) {
     try {
+      const credentials = getCredentials(request);
       const quotationData = {
         ...request.payload,
-        organization_id: request.auth.credentials.organization_id,
-        created_by: request.auth.credentials.user_id,
+        organization_id: credentials.organizationId,
+        created_by: credentials.userId,
         issue_date: new Date()
       };
 
@@ -434,14 +436,31 @@ class QuotationHandler {
   async generateFromProject(request, h) {
     try {
       const { project_id, template_id, include_materials = true, include_labor = true } = request.payload;
-      const organizationId = request.auth.credentials.organization_id;
-      const userId = request.auth.credentials.user_id;
 
-      // Get project details
+      // Use auth utility to get credentials
+      const credentials = getCredentials(request);
+      let organizationId = credentials.organizationId;
+      const userId = credentials.userId;
+
+      console.log('Debug - project_id:', project_id);
+      console.log('Debug - credentials:', credentials);
+      console.log('Debug - organizationId from auth:', organizationId);
+      console.log('Debug - userId:', userId);
+
+      // Get project details first to get organization_id
       const project = await this.getProjectDetails(project_id, organizationId);
       if (!project) {
         throw Boom.notFound('Project not found');
       }
+
+      // Use organization_id from project if auth organizationId is null
+      if (!organizationId && project.organization_id) {
+        organizationId = project.organization_id;
+        console.log('Debug - using organization_id from project:', organizationId);
+      }
+
+      console.log('Debug - project:', project);
+      console.log('Debug - final organizationId:', organizationId);
 
       // Get quotation template if specified
       let template = null;
@@ -454,6 +473,8 @@ class QuotationHandler {
 
       // Build quotation from project
       const quotationData = await this.buildQuotationFromProject(project, template, organizationId, userId);
+
+      console.log('Debug - quotationData:', quotationData);
 
       // Create quotation
       const quotation = await this._service.create(quotationData);
@@ -687,21 +708,27 @@ class QuotationHandler {
 
   // === HELPER METHODS ===
   async getProjectDetails(projectId, organizationId) {
-    // This would typically call the project repository
-    // For now, we'll return a mock structure
-    return {
-      id: projectId,
-      title: 'Sample Project',
-      description: 'Project description',
-      budget: 10000,
-      currency: 'IDR',
-      cost_breakdown: {
-        services: 5000,
-        materials: 2000,
-        overhead: 1000,
-        profit: 2000
+    try {
+      // Query project from database
+      const query = `
+        SELECT p.*, c.name as client_name, c.email as client_email
+        FROM projects p
+        LEFT JOIN clients c ON p.client_id = c.id
+        WHERE p.id = $1 ${organizationId ? 'AND p.organization_id = $2' : ''}
+      `;
+
+      const values = organizationId ? [projectId, organizationId] : [projectId];
+      const result = await this._service.db.query(query, values);
+
+      if (result.rows.length === 0) {
+        return null;
       }
-    };
+
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error getting project details:', error);
+      return null;
+    }
   }
 
   async getQuotationTemplate(templateId, organizationId) {
@@ -725,18 +752,17 @@ class QuotationHandler {
       project_id: project.id,
       client_id: project.client_id || null,
       quotation_number: numberResult.quotation_number,
-      title: `Quotation for ${project.title}`,
+      subject: `Quotation for ${project.name}`,
       description: project.description,
       status: 'draft',
       valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-      issue_date: new Date(),
-      subtotal: project.cost_breakdown.services + project.cost_breakdown.materials,
+      subtotal: project.budget || 0,
       tax_rate: 11,
-      tax_amount: (project.cost_breakdown.services + project.cost_breakdown.materials) * 0.11,
-      discount_percentage: 0,
+      tax_amount: (project.budget || 0) * 0.11,
+      discount_rate: 0,
       discount_amount: 0,
-      total_amount: project.budget,
-      currency: project.currency,
+      total_amount: project.budget || 0,
+      currency: project.currency || 'USD',
       notes: template ? template.content : '',
       terms_conditions: template ? template.terms_conditions : '',
       created_by: userId
@@ -747,25 +773,13 @@ class QuotationHandler {
     const items = [
       {
         quotation_id: quotationId,
-        name: 'Services',
-        description: 'Professional services',
+        item_name: 'Project Development',
+        description: project.description || 'Project development services',
         quantity: 1,
-        unit_price: project.cost_breakdown.services,
-        unit_type: 'service',
-        tax_rate: 11,
-        discount_percentage: 0,
-        total: project.cost_breakdown.services
-      },
-      {
-        quotation_id: quotationId,
-        name: 'Materials',
-        description: 'Project materials',
-        quantity: 1,
-        unit_price: project.cost_breakdown.materials,
-        unit_type: 'material',
-        tax_rate: 11,
-        discount_percentage: 0,
-        total: project.cost_breakdown.materials
+        unit_price: project.budget || 0,
+        unit_type: 'project',
+        total_price: project.budget || 0,
+        sort_order: 1
       }
     ];
 

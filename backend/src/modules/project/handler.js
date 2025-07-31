@@ -1,4 +1,5 @@
 const Boom = require('@hapi/boom');
+const { getCredentials, getUserId, getOrganizationId } = require('../../utils/auth');
 
 class ProjectHandler {
   constructor(service, validator) {
@@ -36,29 +37,28 @@ class ProjectHandler {
   // Get all projects
   async getProjects(request, h) {
     try {
-      const { organizationId } = request.auth.credentials;
-      const { page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'desc', status, priority, category, client_id, assigned_to, created_by } = request.query;
+      const { page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'DESC', status, client_id } = request.query;
+      const organizationId = getOrganizationId(request);
 
-      const projects = await this._service.findAll(organizationId, {
+      const options = {
         page: parseInt(page, 10),
         limit: parseInt(limit, 10),
         sortBy,
         sortOrder,
         status,
-        priority,
-        category,
-        client_id,
-        assigned_to,
-        created_by
-      });
+        client_id
+      };
+
+      const result = await this._service.findAll(organizationId, options);
 
       return h.response({
         success: true,
-        message: 'Projects retrieved successfully',
-        data: projects
-      });
+        data: result.projects,
+        pagination: result.pagination
+      }).code(200);
     } catch (error) {
-      throw Boom.internal('Failed to retrieve projects');
+      console.error('Error getting projects:', error);
+      throw Boom.internal('Failed to get projects');
     }
   }
 

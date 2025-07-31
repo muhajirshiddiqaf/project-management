@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { ListItemIcon, ListItemText, Menu, MenuItem } from '@mui/material';
 
 // assets
-import { DeleteOutlined, EditOutlined, EyeOutlined } from '@ant-design/icons';
+import { DeleteOutlined, EditOutlined, EyeOutlined, FileTextOutlined } from '@ant-design/icons';
 
 // ==============================|| ACTION MENU ||============================== //
 
@@ -15,12 +15,15 @@ const ActionMenu = ({
   onView,
   onEdit,
   onDelete,
+  onGenerateQuotation,
   viewText = 'View',
   editText = 'Edit',
   deleteText = 'Delete',
+  generateQuotationText = 'Generate Quotation',
   showView = true,
   showEdit = true,
-  showDelete = true
+  showDelete = true,
+  showGenerateQuotation = false
 }) => {
   return (
     <Menu
@@ -52,6 +55,14 @@ const ActionMenu = ({
           <ListItemText>{editText}</ListItemText>
         </MenuItem>
       )}
+      {showGenerateQuotation && onGenerateQuotation && (
+        <MenuItem onClick={onGenerateQuotation}>
+          <ListItemIcon>
+            <FileTextOutlined fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>{generateQuotationText}</ListItemText>
+        </MenuItem>
+      )}
       {showDelete && (
         <MenuItem onClick={onDelete} sx={{ color: 'error.main' }}>
           <ListItemIcon>
@@ -71,12 +82,15 @@ ActionMenu.propTypes = {
   onView: PropTypes.func,
   onEdit: PropTypes.func,
   onDelete: PropTypes.func,
+  onGenerateQuotation: PropTypes.func,
   viewText: PropTypes.string,
   editText: PropTypes.string,
   deleteText: PropTypes.string,
+  generateQuotationText: PropTypes.string,
   showView: PropTypes.bool,
   showEdit: PropTypes.bool,
-  showDelete: PropTypes.bool
+  showDelete: PropTypes.bool,
+  showGenerateQuotation: PropTypes.bool
 };
 
 export default ActionMenu;

@@ -12,6 +12,7 @@ import {
 
 // project import
 import projectAPI from '_api/project';
+import quotationAPI from '_api/quotation';
 import MainCard from 'components/MainCard';
 import ScrollX from 'components/ScrollX';
 import ActionMenu from 'components/common/ActionMenu';
@@ -91,6 +92,26 @@ const ProjectList = () => {
   const handleDelete = () => {
     if (selectedProjectId) {
       setConfirmDialogOpen(true);
+    }
+  };
+
+  const handleGenerateQuotation = async () => {
+    if (selectedProjectId) {
+      try {
+        const response = await quotationAPI.generateFromProject({
+          project_id: selectedProjectId,
+          include_materials: true,
+          include_labor: true
+        });
+
+        if (response && response.success) {
+          alert('Quotation generated successfully!');
+          handleMenuClose();
+        }
+      } catch (error) {
+        console.error('Error generating quotation:', error);
+        alert('Failed to generate quotation');
+      }
     }
   };
 
@@ -298,6 +319,8 @@ const ProjectList = () => {
         onView={handleView}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onGenerateQuotation={handleGenerateQuotation}
+        showGenerateQuotation={true}
       />
 
       {/* Confirm Delete Dialog */}

@@ -1,5 +1,4 @@
 // third-party
-import { FormattedMessage } from 'react-intl';
 
 // assets
 import { AppstoreOutlined } from '@ant-design/icons';
@@ -17,13 +16,13 @@ const project = {
   children: [
     {
       id: 'Project',
-      title: <FormattedMessage id="Project" />,
+      title: 'Project',
       type: 'collapse',
       icon: icons.AppstoreOutlined,
       children: [
         {
           id: 'project-list',
-          title: <FormattedMessage id="List" />,
+          title: 'List',
           type: 'item',
           url: '/apps/project/list',
           breadcrumbs: false

@@ -1,19 +1,21 @@
 // Export all API modules
 import analyticsAPI from './analytics';
 import clientAPI from './client';
-import api, { commonAPI } from './common';
+import { default as api, default as commonAPI } from './common';
 import invoiceAPI from './invoice';
 import orderAPI from './order';
 import projectAPI from './project';
+import quotationAPI from './quotation';
 import userAPI from './user';
 
 // Export individual API classes for testing or advanced usage
 export { default as AnalyticsAPI } from './analytics';
 export { default as ClientAPI } from './client';
-export { default as BaseAPI } from './common';
+export { default as CommonAPI } from './common';
 export { default as InvoiceAPI } from './invoice';
 export { default as OrderAPI } from './order';
 export { default as ProjectAPI } from './project';
+export { default as QuotationAPI } from './quotation';
 export { default as UserAPI } from './user';
 
 // Export API utilities
@@ -57,7 +59,7 @@ export const APIUtils = {
 };
 
 // Export all APIs
-export { analyticsAPI, api, clientAPI, commonAPI, invoiceAPI, orderAPI, projectAPI, userAPI };
+export { analyticsAPI, api, clientAPI, commonAPI, invoiceAPI, orderAPI, projectAPI, quotationAPI, userAPI };
 
 // Default export for convenience
 export default {
@@ -69,5 +71,6 @@ export default {
   invoiceAPI,
   analyticsAPI,
   userAPI,
+  quotationAPI,
   APIUtils
 };
