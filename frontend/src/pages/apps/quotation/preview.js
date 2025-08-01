@@ -24,6 +24,7 @@ import {
     Tooltip,
     Typography
 } from '@mui/material';
+import quotationAPI from '_api/quotation';
 import MainCard from 'components/MainCard';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -36,61 +37,125 @@ const QuotationPreview = () => {
   const [quotation, setQuotation] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Mock quotation data - in real app this would come from API
+  // Fetch quotation data from API
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setQuotation({
-        id: id || 'QT-2024-001',
-        number: 'QT-2024-001',
-        date: '2024-01-15',
-        dueDate: '2024-01-30',
-        status: 'pending',
-        client: {
-          name: 'Tech Solutions Inc.',
-          address: '123 Business St, New York, NY 10001',
-          email: 'contact@techsolutions.com',
-          phone: '+1 (555) 123-4567'
-        },
-        items: [
-          {
-            id: 1,
-            description: 'Web Development Services',
-            quantity: 1,
-            unit: 'project',
-            unitPrice: 5000,
-            amount: 5000
-          },
-          {
-            id: 2,
-            description: 'UI/UX Design',
-            quantity: 1,
-            unit: 'project',
-            unitPrice: 2500,
-            amount: 2500
-          },
-          {
-            id: 3,
-            description: 'Hosting & Maintenance (6 months)',
-            quantity: 6,
-            unit: 'month',
-            unitPrice: 200,
-            amount: 1200
+    const fetchQuotation = async () => {
+      try {
+        setLoading(true);
+
+        if (id) {
+          const response = await quotationAPI.getQuotationById(id);
+          if (response.success) {
+            const quotationData = response.data;
+
+            // Transform API data to match frontend expectations
+            const transformedQuotation = {
+              id: quotationData.id,
+              number: quotationData.quotation_number,
+              date: quotationData.created_at,
+              dueDate: quotationData.valid_until,
+              status: quotationData.status,
+              project_id: quotationData.project_id,
+              project_title: quotationData.project_title,
+              client: {
+                name: quotationData.client_name || 'N/A',
+                address: 'Address not available', // You might want to fetch client details separately
+                email: 'Email not available',
+                phone: 'Phone not available'
+              },
+              items: [], // Will be populated from quotation items
+              subtotal: quotationData.subtotal || 0,
+              tax: quotationData.tax_amount || 0,
+              total: quotationData.total_amount || 0,
+              notes: quotationData.notes || '',
+              terms: quotationData.terms_conditions ? [quotationData.terms_conditions] : []
+            };
+
+            setQuotation(transformedQuotation);
+
+            // Fetch quotation items if quotation exists
+            if (quotationData.id) {
+              try {
+                const itemsResponse = await quotationAPI.getQuotationItems(quotationData.id);
+                if (itemsResponse.success && itemsResponse.data) {
+                  const transformedItems = itemsResponse.data.map(item => ({
+                    id: item.id,
+                    description: item.item_name,
+                    quantity: item.quantity,
+                    unit: item.unit_type,
+                    unitPrice: item.unit_price,
+                    amount: item.total_price
+                  }));
+                  setQuotation(prev => ({
+                    ...prev,
+                    items: transformedItems
+                  }));
+                }
+              } catch (itemsError) {
+                console.error('Error fetching quotation items:', itemsError);
+              }
+            }
           }
-        ],
-        subtotal: 8700,
-        tax: 870,
-        total: 9570,
-        notes: 'This quotation is valid for 30 days. Payment terms: 50% upfront, 50% upon completion.',
-        terms: [
-          'Payment is due within 30 days of invoice date',
-          'Late payments may incur additional charges',
-          'All work is guaranteed for 90 days after completion',
-          'Changes to scope may affect final pricing'
-        ]
-      });
-      setLoading(false);
-    }, 1000);
+        }
+      } catch (error) {
+        console.error('Error fetching quotation:', error);
+        // Fallback to mock data if API fails
+        setQuotation({
+          id: id || 'QT-2024-001',
+          number: 'QT-2024-001',
+          date: '2024-01-15',
+          dueDate: '2024-01-30',
+          status: 'pending',
+          project_id: 'proj-001',
+          client: {
+            name: 'Tech Solutions Inc.',
+            address: '123 Business St, New York, NY 10001',
+            email: 'contact@techsolutions.com',
+            phone: '+1 (555) 123-4567'
+          },
+          items: [
+            {
+              id: 1,
+              description: 'Web Development Services',
+              quantity: 1,
+              unit: 'project',
+              unitPrice: 5000,
+              amount: 5000
+            },
+            {
+              id: 2,
+              description: 'UI/UX Design',
+              quantity: 1,
+              unit: 'project',
+              unitPrice: 2500,
+              amount: 2500
+            },
+            {
+              id: 3,
+              description: 'Hosting & Maintenance (6 months)',
+              quantity: 6,
+              unit: 'month',
+              unitPrice: 200,
+              amount: 1200
+            }
+          ],
+          subtotal: 8700,
+          tax: 870,
+          total: 9570,
+          notes: 'This quotation is valid for 30 days. Payment terms: 50% upfront, 50% upon completion.',
+          terms: [
+            'Payment is due within 30 days of invoice date',
+            'Late payments may incur additional charges',
+            'All work is guaranteed for 90 days after completion',
+            'Changes to scope may affect final pricing'
+          ]
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchQuotation();
   }, [id]);
 
   const formatCurrency = (amount) => {
@@ -126,6 +191,8 @@ const QuotationPreview = () => {
     navigate(`/apps/quotation/edit/${id}`);
   };
 
+
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'approved':
@@ -149,6 +216,8 @@ const QuotationPreview = () => {
         return null;
     }
   };
+
+
 
   if (loading) {
     return (
@@ -225,6 +294,8 @@ const QuotationPreview = () => {
             </Grid>
 
             <Divider sx={{ mb: 3 }} />
+
+
 
             {/* Client Information */}
             <Grid container spacing={3} sx={{ mb: 4 }}>

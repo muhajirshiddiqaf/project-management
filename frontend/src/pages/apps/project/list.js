@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 
 // material-ui
 import {
-  Box,
-  Button,
-  Grid,
-  InputAdornment,
-  TextField
+    Alert,
+    Box,
+    Button,
+    Grid,
+    InputAdornment,
+    Snackbar,
+    TextField
 } from '@mui/material';
 
 // project import
@@ -24,8 +26,8 @@ import useDebounce from 'utils/useDebounce';
 
 // assets
 import {
-  PlusOutlined,
-  SearchOutlined
+    PlusOutlined,
+    SearchOutlined
 } from '@ant-design/icons';
 
 // ==============================|| PROJECT LIST ||============================== //
@@ -39,6 +41,7 @@ const ProjectList = () => {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300); // 300ms delay
+  const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
 
   // Menu state per row
   const [menuAnchor, setMenuAnchor] = useState(null);
@@ -104,13 +107,28 @@ const ProjectList = () => {
           include_labor: true
         });
 
+        console.log('Generate quotation response:', response);
+
         if (response && response.success) {
-          alert('Quotation generated successfully!');
+          setNotification({ open: true, message: 'Quotation generated successfully!', severity: 'success' });
           handleMenuClose();
+
+          // Navigate to the newly created quotation preview page
+          if (response.data && response.data.quotation && response.data.quotation.id) {
+            setTimeout(() => {
+              navigate(`/apps/quotation/preview/${response.data.quotation.id}`);
+            }, 1500); // Wait 1.5 seconds to show the success message first
+          }
+
+          // Optionally refresh the projects list to show updated data
+          // fetchProjects();
+        } else {
+          console.error('Unexpected response format:', response);
+          setNotification({ open: true, message: 'Failed to generate quotation - unexpected response format', severity: 'error' });
         }
       } catch (error) {
         console.error('Error generating quotation:', error);
-        alert('Failed to generate quotation');
+        setNotification({ open: true, message: 'Failed to generate quotation', severity: 'error' });
       }
     }
   };
@@ -205,8 +223,11 @@ const ProjectList = () => {
   const handleCloseEditModal = () => {
     setEditModalOpen(false);
     setSelectedProject(null);
-    // Don't close menu here, let it stay open
-    // handleMenuClose();
+    handleMenuClose();
+  };
+
+  const handleCloseNotification = () => {
+    setNotification({ open: false, message: '', severity: 'success' });
   };
 
   useEffect(() => {
@@ -265,90 +286,107 @@ const ProjectList = () => {
   ], [navigate, debouncedSearchTerm]);
 
   return (
-    <Grid container spacing={3}>
-      <Grid item xs={12}>
-        <MainCard
-          title="Project Management"
-          content={false}
-          secondary={
-            <Button variant="contained" color="primary" startIcon={<PlusOutlined />} onClick={() => setModalOpen(true)}>
-              Add Project
-            </Button>
-          }
-        >
-          {/* Search Bar */}
-          <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-            <TextField
-              size="small"
-              placeholder="Search projects..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchOutlined style={{ fontSize: '16px' }} />
-                  </InputAdornment>
-                )
-              }}
-              sx={{
-                mb: 2,
-                maxWidth: '400px',
-                '& .MuiOutlinedInput-root': {
-                  fontSize: '14px'
-                }
-              }}
-            />
-          </Box>
+    <>
+      <Grid container spacing={3}>
+        <Grid item xs={12}>
+          <MainCard
+            title="Project Management"
+            content={false}
+            secondary={
+              <Button variant="contained" color="primary" startIcon={<PlusOutlined />} onClick={() => setModalOpen(true)}>
+                Add Project
+              </Button>
+            }
+          >
+            {/* Search Bar */}
+            <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+              <TextField
+                size="small"
+                placeholder="Search projects..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchOutlined style={{ fontSize: '16px' }} />
+                    </InputAdornment>
+                  )
+                }}
+                sx={{
+                  mb: 2,
+                  maxWidth: '400px',
+                  '& .MuiOutlinedInput-root': {
+                    fontSize: '14px'
+                  }
+                }}
+              />
+            </Box>
 
-          <ScrollX>
-            <ActionTable
-              columns={columns}
-              data={projects}
-              loading={loading}
-              emptyMessage="No projects found"
-            />
-          </ScrollX>
-        </MainCard>
+            <ScrollX>
+              <ActionTable
+                columns={columns}
+                data={projects}
+                loading={loading}
+                emptyMessage="No projects found"
+              />
+            </ScrollX>
+          </MainCard>
+        </Grid>
+
+        {/* Action Menu */}
+        <ActionMenu
+          anchorEl={menuAnchor}
+          open={Boolean(menuAnchor)}
+          onClose={handleMenuClose}
+          onView={handleView}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onGenerateQuotation={handleGenerateQuotation}
+          showGenerateQuotation={true}
+        />
+
+        {/* Confirm Delete Dialog */}
+        <ConfirmDialog
+          open={confirmDialogOpen}
+          onClose={() => setConfirmDialogOpen(false)}
+          onConfirm={handleConfirmDelete}
+          title="Delete Project"
+          message="Are you sure you want to delete this project? This action cannot be undone."
+        />
+
+        {/* Add Project Modal */}
+        <ProjectFormModal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          onSubmit={handleAddProject}
+          title="Add New Project"
+        />
+
+        {/* Edit Project Modal */}
+        <ProjectFormModal
+          open={editModalOpen}
+          onClose={handleCloseEditModal}
+          onSubmit={handleEditProject}
+          title="Edit Project"
+          initialValues={selectedProject}
+        />
       </Grid>
 
-      {/* Action Menu */}
-      <ActionMenu
-        anchorEl={menuAnchor}
-        open={Boolean(menuAnchor)}
-        onClose={handleMenuClose}
-        onView={handleView}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onGenerateQuotation={handleGenerateQuotation}
-        showGenerateQuotation={true}
-      />
-
-      {/* Confirm Delete Dialog */}
-      <ConfirmDialog
-        open={confirmDialogOpen}
-        onClose={() => setConfirmDialogOpen(false)}
-        onConfirm={handleConfirmDelete}
-        title="Delete Project"
-        message="Are you sure you want to delete this project? This action cannot be undone."
-      />
-
-      {/* Add Project Modal */}
-      <ProjectFormModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSubmit={handleAddProject}
-        title="Add New Project"
-      />
-
-      {/* Edit Project Modal */}
-      <ProjectFormModal
-        open={editModalOpen}
-        onClose={handleCloseEditModal}
-        onSubmit={handleEditProject}
-        title="Edit Project"
-        initialValues={selectedProject}
-      />
-    </Grid>
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={6000}
+        onClose={handleCloseNotification}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={handleCloseNotification}
+          severity={notification.severity}
+          sx={{ width: '100%' }}
+        >
+          {notification.message}
+        </Alert>
+      </Snackbar>
+    </>
   );
 };
 

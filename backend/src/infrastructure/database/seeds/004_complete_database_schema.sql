@@ -158,6 +158,52 @@ CREATE TABLE IF NOT EXISTS quotations (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Quotation items table
+CREATE TABLE IF NOT EXISTS quotation_items (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    quotation_id UUID NOT NULL REFERENCES quotations(id) ON DELETE CASCADE,
+    item_name VARCHAR(255) NOT NULL,
+    description TEXT,
+    quantity DECIMAL(10,2) NOT NULL DEFAULT 1,
+    unit_price DECIMAL(15,2) NOT NULL,
+    unit_type VARCHAR(50) DEFAULT 'piece',
+    total_price DECIMAL(15,2) NOT NULL,
+    sort_order INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Quotation templates table
+CREATE TABLE IF NOT EXISTS quotation_templates (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    content TEXT,
+    header_template TEXT,
+    footer_template TEXT,
+    terms_conditions TEXT,
+    is_default BOOLEAN DEFAULT false,
+    created_by UUID NOT NULL REFERENCES users(id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Quotation approval requests table
+CREATE TABLE IF NOT EXISTS quotation_approval_requests (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    quotation_id UUID NOT NULL REFERENCES quotations(id) ON DELETE CASCADE,
+    requester_id UUID NOT NULL REFERENCES users(id),
+    approver_id UUID NOT NULL REFERENCES users(id),
+    comments TEXT,
+    status VARCHAR(50) DEFAULT 'pending',
+    processed_by UUID REFERENCES users(id),
+    processed_at TIMESTAMP,
+    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- =============================================
 -- ORDER & TICKET MANAGEMENT
 -- =============================================
@@ -544,6 +590,19 @@ CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status);
 CREATE INDEX IF NOT EXISTS idx_quotations_organization_id ON quotations(organization_id);
 CREATE INDEX IF NOT EXISTS idx_quotations_client_id ON quotations(client_id);
 CREATE INDEX IF NOT EXISTS idx_quotations_status ON quotations(status);
+
+-- Quotation items
+CREATE INDEX IF NOT EXISTS idx_quotation_items_quotation_id ON quotation_items(quotation_id);
+CREATE INDEX IF NOT EXISTS idx_quotation_items_sort_order ON quotation_items(sort_order);
+
+-- Quotation templates
+CREATE INDEX IF NOT EXISTS idx_quotation_templates_organization_id ON quotation_templates(organization_id);
+CREATE INDEX IF NOT EXISTS idx_quotation_templates_is_default ON quotation_templates(is_default);
+
+-- Quotation approval requests
+CREATE INDEX IF NOT EXISTS idx_quotation_approval_requests_organization_id ON quotation_approval_requests(organization_id);
+CREATE INDEX IF NOT EXISTS idx_quotation_approval_requests_quotation_id ON quotation_approval_requests(quotation_id);
+CREATE INDEX IF NOT EXISTS idx_quotation_approval_requests_status ON quotation_approval_requests(status);
 
 -- Orders
 CREATE INDEX IF NOT EXISTS idx_orders_organization_id ON orders(organization_id);

@@ -44,6 +44,7 @@ const QuotationList = () => {
           id: 1,
           number: 'QT-2024-001',
           client: 'Tech Solutions Inc.',
+          project: 'E-commerce Website Development',
           date: '2024-01-15',
           dueDate: '2024-01-30',
           status: 'pending',
@@ -54,6 +55,7 @@ const QuotationList = () => {
           id: 2,
           number: 'QT-2024-002',
           client: 'Digital Marketing Pro',
+          project: 'Mobile App Development',
           date: '2024-01-10',
           dueDate: '2024-01-25',
           status: 'approved',
@@ -64,6 +66,7 @@ const QuotationList = () => {
           id: 3,
           number: 'QT-2024-003',
           client: 'StartupXYZ',
+          project: null,
           date: '2024-01-08',
           dueDate: '2024-01-23',
           status: 'rejected',
@@ -77,7 +80,8 @@ const QuotationList = () => {
 
   const filteredQuotations = quotations.filter(quotation =>
     quotation.number.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-    quotation.client.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+    quotation.client.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+    (quotation.project && quotation.project.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
   );
 
   const formatCurrency = (amount, currency) => {
@@ -176,6 +180,23 @@ const QuotationList = () => {
       )
     },
     {
+      Header: 'Project',
+      accessor: 'project',
+      Cell: ({ value }) => (
+        <Box>
+          {value ? (
+            <Typography variant="body2" fontWeight="bold">
+              {value}
+            </Typography>
+          ) : (
+            <Typography variant="body2" color="textSecondary">
+              No Project
+            </Typography>
+          )}
+        </Box>
+      )
+    },
+    {
       Header: 'Date',
       accessor: 'date',
       Cell: ({ value }) => (
@@ -260,7 +281,7 @@ const QuotationList = () => {
             <TextField
               size="small"
               fullWidth
-              placeholder="Search quotations by number or client..."
+              placeholder="Search quotations by number, client, or project..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               InputProps={{

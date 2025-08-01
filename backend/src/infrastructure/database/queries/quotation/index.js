@@ -2,18 +2,18 @@
 const findAll = `
   SELECT
     q.*,
-    p.title as project_title,
+    p.name as project_title,
     c.name as client_name,
-    u.name as created_by_name,
+    CONCAT(u.first_name, ' ', u.last_name) as created_by_name,
     COALESCE(COUNT(qi.id), 0) as item_count,
-    COALESCE(SUM(qi.total), 0) as calculated_total
+    COALESCE(SUM(qi.total_price), 0) as calculated_total
   FROM quotations q
   LEFT JOIN projects p ON q.project_id = p.id
   LEFT JOIN clients c ON q.client_id = c.id
   LEFT JOIN users u ON q.created_by = u.id
   LEFT JOIN quotation_items qi ON q.id = qi.quotation_id
   WHERE q.organization_id = $1
-  GROUP BY q.id, p.title, c.name, u.name
+  GROUP BY q.id, p.name, c.name, u.first_name, u.last_name
   ORDER BY q.created_at DESC
   LIMIT $2 OFFSET $3
 `;
@@ -27,10 +27,10 @@ const countQuotations = `
 const findQuotationById = `
   SELECT
     q.*,
-    p.title as project_title,
+    p.name as project_title,
     c.name as client_name,
-    u.name as created_by_name,
-    approver.name as approved_by_name
+    CONCAT(u.first_name, ' ', u.last_name) as created_by_name,
+    CONCAT(approver.first_name, ' ', approver.last_name) as approved_by_name
   FROM quotations q
   LEFT JOIN projects p ON q.project_id = p.id
   LEFT JOIN clients c ON q.client_id = c.id
@@ -59,19 +59,19 @@ const deleteQuotation = `
 const searchQuotations = `
   SELECT
     q.*,
-    p.title as project_title,
+    p.name as project_title,
     c.name as client_name,
-    u.name as created_by_name,
+    CONCAT(u.first_name, ' ', u.last_name) as created_by_name,
     COALESCE(COUNT(qi.id), 0) as item_count,
-    COALESCE(SUM(qi.total), 0) as calculated_total
+    COALESCE(SUM(qi.total_price), 0) as calculated_total
   FROM quotations q
   LEFT JOIN projects p ON q.project_id = p.id
   LEFT JOIN clients c ON q.client_id = c.id
   LEFT JOIN users u ON q.created_by = u.id
   LEFT JOIN quotation_items qi ON q.id = qi.quotation_id
   WHERE q.organization_id = $1
-    AND (q.quotation_number ILIKE $2 OR q.title ILIKE $2 OR c.name ILIKE $2)
-  GROUP BY q.id, p.title, c.name, u.name
+    AND (q.quotation_number ILIKE $2 OR q.subject ILIKE $2 OR c.name ILIKE $2)
+  GROUP BY q.id, p.name, c.name, u.first_name, u.last_name
   ORDER BY q.created_at DESC
   LIMIT $3 OFFSET $4
 `;
@@ -81,7 +81,7 @@ const countSearchQuotations = `
   FROM quotations q
   LEFT JOIN clients c ON q.client_id = c.id
   WHERE q.organization_id = $1
-    AND (q.quotation_number ILIKE $2 OR q.title ILIKE $2 OR c.name ILIKE $2)
+    AND (q.quotation_number ILIKE $2 OR q.subject ILIKE $2 OR c.name ILIKE $2)
 `;
 
 const updateQuotationStatus = `
@@ -200,7 +200,7 @@ const getQuotationItemsStatistics = `
   SELECT
     COUNT(*) as total_items,
     COALESCE(SUM(quantity), 0) as total_quantity,
-    COALESCE(SUM(total), 0) as total_value,
+    COALESCE(SUM(total_price), 0) as total_value,
     COALESCE(AVG(unit_price), 0) as average_unit_price,
     COUNT(DISTINCT unit_type) as unique_unit_types
   FROM quotation_items qi
@@ -255,9 +255,9 @@ const getApprovalRequests = `
   SELECT
     ar.*,
     q.quotation_number,
-    q.title as quotation_title,
-    requester.name as requester_name,
-    approver.name as approver_name
+    q.subject as quotation_title,
+    CONCAT(requester.first_name, ' ', requester.last_name) as requester_name,
+    CONCAT(approver.first_name, ' ', approver.last_name) as approver_name
   FROM quotation_approval_requests ar
   LEFT JOIN quotations q ON ar.quotation_id = q.id
   LEFT JOIN users requester ON ar.requester_id = requester.id

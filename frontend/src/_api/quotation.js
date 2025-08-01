@@ -34,19 +34,19 @@ class QuotationAPI {
   }
 
   async getQuotationItems(quotationId) {
-    return api.get(`${this.endpoint}/${quotationId}/items`);
+    return api.get(`${this.endpoint}/items`, { quotation_id: quotationId });
   }
 
   async createQuotationItem(quotationId, data) {
-    return api.post(`${this.endpoint}/${quotationId}/items`, data);
+    return api.post(`${this.endpoint}/items`, { ...data, quotation_id: quotationId });
   }
 
   async updateQuotationItem(quotationId, itemId, data) {
-    return api.put(`${this.endpoint}/${quotationId}/items/${itemId}`, data);
+    return api.put(`${this.endpoint}/items/${itemId}`, { ...data, quotation_id: quotationId });
   }
 
   async deleteQuotationItem(quotationId, itemId) {
-    return api.delete(`${this.endpoint}/${quotationId}/items/${itemId}`);
+    return api.delete(`${this.endpoint}/items/${itemId}`, { quotation_id: quotationId });
   }
 
   async calculateTotals(quotationId) {
@@ -87,6 +87,14 @@ class QuotationAPI {
 
   async getQuotationStatistics(params = {}) {
     return api.get(`${this.endpoint}/statistics`, params);
+  }
+
+  async getQuotations(params = {}) {
+    return api.get(this.endpoint, params);
+  }
+
+  async getQuotationsByProject(projectId) {
+    return api.get(this.endpoint, { project_id: projectId });
   }
 }
 
