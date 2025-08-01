@@ -17,6 +17,22 @@ class QuotationHandler {
     this.approveQuotation = this.approveQuotation.bind(this);
     this.rejectQuotation = this.rejectQuotation.bind(this);
     this.generateFromProject = this.generateFromProject.bind(this);
+    this.getQuotationItems = this.getQuotationItems.bind(this);
+    this.getQuotationItemById = this.getQuotationItemById.bind(this);
+    this.createQuotationItem = this.createQuotationItem.bind(this);
+    this.updateQuotationItem = this.updateQuotationItem.bind(this);
+    this.deleteQuotationItem = this.deleteQuotationItem.bind(this);
+    this.calculateQuotationTotals = this.calculateQuotationTotals.bind(this);
+    this.generateQuotationFromProject = this.generateQuotationFromProject.bind(this);
+    this.getQuotationTemplates = this.getQuotationTemplates.bind(this);
+    this.createQuotationTemplate = this.createQuotationTemplate.bind(this);
+    this.updateQuotationTemplate = this.updateQuotationTemplate.bind(this);
+    this.deleteQuotationTemplate = this.deleteQuotationTemplate.bind(this);
+    this.getQuotationTemplateById = this.getQuotationTemplateById.bind(this);
+    this.submitQuotationForApproval = this.submitQuotationForApproval.bind(this);
+    this.getApprovalRequests = this.getApprovalRequests.bind(this);
+    this.getQuotationStatistics = this.getQuotationStatistics.bind(this);
+    this.getQuotationItemsStatistics = this.getQuotationItemsStatistics.bind(this);
   }
 
   // === QUOTATION CRUD METHODS ===
