@@ -2,6 +2,12 @@
 
 Aplikasi web untuk mengelola proyek dan quotation dengan teknologi modern.
 
+[![CI/CD](https://github.com/muhajirshiddiqaf/project-management/workflows/CI%2FCD/badge.svg)](https://github.com/muhajirshiddiqaf/project-management/actions)
+[![Codecov](https://codecov.io/gh/muhajirshiddiqaf/project-management/branch/main/graph/badge.svg)](https://codecov.io/gh/muhajirshiddiqaf/project-management)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://hub.docker.com/)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-13+-blue.svg)](https://www.postgresql.org/)
+
 ## 🚀 Tech Stack
 
 - **Frontend**: React.js dengan SaaS UI Pro
@@ -32,6 +38,7 @@ Final Project/
 ## 🛠️ Quick Start
 
 ### Prerequisites
+
 - Docker
 - Docker Compose
 - Node.js (v18 or higher) - for local development
@@ -39,17 +46,20 @@ Final Project/
 ### Using Docker (Recommended)
 
 1. **Clone repository**
+
 ```bash
 git clone <repository-url>
 cd "Final Project"
 ```
 
 2. **Start all services**
+
 ```bash
 docker-compose up -d
 ```
 
 3. **Access the application**
+
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:3001
 - Database: localhost:5432
@@ -57,6 +67,7 @@ docker-compose up -d
 ### Local Development
 
 1. **Setup Backend**
+
 ```bash
 cd backend
 npm install
@@ -65,6 +76,7 @@ npm run dev
 ```
 
 2. **Setup Frontend**
+
 ```bash
 cd frontend
 npm install
@@ -72,6 +84,7 @@ npm run dev
 ```
 
 3. **Setup Database**
+
 ```sql
 CREATE DATABASE project_management;
 ```
@@ -79,18 +92,29 @@ CREATE DATABASE project_management;
 ## 📋 Features
 
 ### ✅ Completed
+
 - [x] Project structure setup
 - [x] Docker configuration
 - [x] PRD documentation
 - [x] History prompts tracking
+- [x] CI/CD pipeline with GitHub Actions
+- [x] Comprehensive test cases (Auth, Client, Project)
+- [x] Code coverage reporting with Codecov
+- [x] Company configuration module
+- [x] Quotation system with billing information
+- [x] Frontend routing and authentication
 
 ### 🚧 In Progress
-- [ ] Backend API development
-- [ ] Frontend React app setup
-- [ ] Database schema implementation
-- [ ] Authentication system
+
+- [x] Backend API development
+- [x] Frontend React app setup
+- [x] Database schema implementation
+- [x] Authentication system
+- [ ] Advanced quotation features
+- [ ] Reporting and analytics
 
 ### 📝 Planned
+
 - [ ] User management
 - [ ] Project CRUD operations
 - [ ] Quotation management
@@ -102,6 +126,7 @@ CREATE DATABASE project_management;
 ## 🔧 Development
 
 ### Backend Development
+
 ```bash
 cd backend
 npm install
@@ -109,6 +134,7 @@ npm run dev
 ```
 
 ### Frontend Development
+
 ```bash
 cd frontend
 npm install
@@ -116,6 +142,7 @@ npm run dev
 ```
 
 ### Database Migrations
+
 ```bash
 cd backend
 npm run migrate
@@ -150,6 +177,7 @@ docker-compose down -v
 ## 🔐 Environment Variables
 
 ### Backend (.env)
+
 ```
 NODE_ENV=development
 PORT=3001
@@ -159,6 +187,7 @@ JWT_EXPIRES_IN=24h
 ```
 
 ### Frontend (.env)
+
 ```
 VITE_API_URL=http://localhost:3001/api
 VITE_APP_NAME=Project Management System
@@ -178,4 +207,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-For support, email support@projectmanagement.com or create an issue in this repository. 
+For support, email support@projectmanagement.com or create an issue in this repository.
