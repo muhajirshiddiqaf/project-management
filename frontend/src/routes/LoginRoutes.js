@@ -16,7 +16,7 @@ const AuthCodeVerification = Loadable(lazy(() => import('pages/auth/code-verific
 // ==============================|| AUTH ROUTING ||============================== //
 
 const LoginRoutes = {
-  path: '/',
+  path: '/auth',
   children: [
     {
       path: 'login',

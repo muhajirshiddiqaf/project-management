@@ -42,7 +42,15 @@ const AddClient = () => {
     email: '',
     phone: '',
     address: '',
-    status: 'Active'
+    status: 'Active',
+    billing_name: '',
+    billing_address: '',
+    billing_city: '',
+    billing_state: '',
+    billing_postal_code: '',
+    billing_country: '',
+    billing_email: '',
+    billing_phone: ''
   };
 
   const validationSchema = Yup.object().shape({
@@ -51,12 +59,19 @@ const AddClient = () => {
     email: Yup.string().email('Invalid email address').required('Email is required').max(255, 'Email too long'),
     phone: Yup.string().max(20, 'Phone number too long'),
     address: Yup.string().max(500, 'Address too long'),
-    status: Yup.string().required('Status is required')
+    status: Yup.string().required('Status is required'),
+    billing_name: Yup.string().max(255, 'Billing name too long'),
+    billing_address: Yup.string().max(500, 'Billing address too long'),
+    billing_city: Yup.string().max(100, 'Billing city too long'),
+    billing_state: Yup.string().max(100, 'Billing state too long'),
+    billing_postal_code: Yup.string().max(20, 'Billing postal code too long'),
+    billing_country: Yup.string().max(100, 'Billing country too long'),
+    billing_email: Yup.string().email('Invalid billing email address').max(255, 'Billing email too long'),
+    billing_phone: Yup.string().max(50, 'Billing phone too long')
   });
 
   const handleSubmit = async (values, { setSubmitting, setErrors }) => {
     try {
-      setLoading(true);
       setError('');
 
       const response = await clientAPI.createClient(values);
@@ -72,7 +87,6 @@ const AddClient = () => {
       setError(err.message || 'Failed to create client');
       setErrors({ submit: err.message });
     } finally {
-      setLoading(false);
       setSubmitting(false);
     }
   };
@@ -211,6 +225,144 @@ const AddClient = () => {
                               <MenuItem value="Inactive">Inactive</MenuItem>
                             </Select>
                           </FormControl>
+                        </Stack>
+                      </Grid>
+
+                      {/* Billing Information Section */}
+                      <Grid item xs={12}>
+                        <Typography variant="h5" sx={{ mt: 3, mb: 2, color: 'primary.main' }}>
+                          Billing Information
+                        </Typography>
+                      </Grid>
+
+                      <Grid item xs={12} sm={6}>
+                        <Stack spacing={1}>
+                          <TextField
+                            fullWidth
+                            id="billing_name"
+                            name="billing_name"
+                            label="Billing Name"
+                            value={values.billing_name}
+                            onBlur={handleBlur}
+                            onChange={handleChange}
+                            error={Boolean(touched.billing_name && errors.billing_name)}
+                            helperText={touched.billing_name && errors.billing_name}
+                          />
+                        </Stack>
+                      </Grid>
+
+                      <Grid item xs={12} sm={6}>
+                        <Stack spacing={1}>
+                          <TextField
+                            fullWidth
+                            id="billing_email"
+                            name="billing_email"
+                            label="Billing Email"
+                            type="email"
+                            value={values.billing_email}
+                            onBlur={handleBlur}
+                            onChange={handleChange}
+                            error={Boolean(touched.billing_email && errors.billing_email)}
+                            helperText={touched.billing_email && errors.billing_email}
+                          />
+                        </Stack>
+                      </Grid>
+
+                      <Grid item xs={12}>
+                        <Stack spacing={1}>
+                          <TextField
+                            fullWidth
+                            id="billing_address"
+                            name="billing_address"
+                            label="Billing Address"
+                            multiline
+                            rows={3}
+                            value={values.billing_address}
+                            onBlur={handleBlur}
+                            onChange={handleChange}
+                            error={Boolean(touched.billing_address && errors.billing_address)}
+                            helperText={touched.billing_address && errors.billing_address}
+                          />
+                        </Stack>
+                      </Grid>
+
+                      <Grid item xs={12} sm={4}>
+                        <Stack spacing={1}>
+                          <TextField
+                            fullWidth
+                            id="billing_city"
+                            name="billing_city"
+                            label="Billing City"
+                            value={values.billing_city}
+                            onBlur={handleBlur}
+                            onChange={handleChange}
+                            error={Boolean(touched.billing_city && errors.billing_city)}
+                            helperText={touched.billing_city && errors.billing_city}
+                          />
+                        </Stack>
+                      </Grid>
+
+                      <Grid item xs={12} sm={4}>
+                        <Stack spacing={1}>
+                          <TextField
+                            fullWidth
+                            id="billing_state"
+                            name="billing_state"
+                            label="Billing State/Province"
+                            value={values.billing_state}
+                            onBlur={handleBlur}
+                            onChange={handleChange}
+                            error={Boolean(touched.billing_state && errors.billing_state)}
+                            helperText={touched.billing_state && errors.billing_state}
+                          />
+                        </Stack>
+                      </Grid>
+
+                      <Grid item xs={12} sm={4}>
+                        <Stack spacing={1}>
+                          <TextField
+                            fullWidth
+                            id="billing_postal_code"
+                            name="billing_postal_code"
+                            label="Billing Postal Code"
+                            value={values.billing_postal_code}
+                            onBlur={handleBlur}
+                            onChange={handleChange}
+                            error={Boolean(touched.billing_postal_code && errors.billing_postal_code)}
+                            helperText={touched.billing_postal_code && errors.billing_postal_code}
+                          />
+                        </Stack>
+                      </Grid>
+
+                      <Grid item xs={12} sm={6}>
+                        <Stack spacing={1}>
+                          <TextField
+                            fullWidth
+                            id="billing_country"
+                            name="billing_country"
+                            label="Billing Country"
+                            value={values.billing_country}
+                            onBlur={handleBlur}
+                            onChange={handleChange}
+                            error={Boolean(touched.billing_country && errors.billing_country)}
+                            helperText={touched.billing_country && errors.billing_country}
+                          />
+                        </Stack>
+                      </Grid>
+
+                      <Grid item xs={12} sm={6}>
+                        <Stack spacing={1}>
+                          <TextField
+                            fullWidth
+                            id="billing_phone"
+                            name="billing_phone"
+                            label="Billing Phone"
+                            value={values.billing_phone}
+                            onBlur={handleBlur}
+                            onChange={handleChange}
+                            error={Boolean(touched.billing_phone && errors.billing_phone)}
+                            helperText={touched.billing_phone && errors.billing_phone}
+                          />
                         </Stack>
                       </Grid>
                     </Grid>

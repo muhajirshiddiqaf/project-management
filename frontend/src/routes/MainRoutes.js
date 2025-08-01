@@ -127,7 +127,7 @@ const MainRoutes = {
   path: '/',
   children: [
     {
-      path: '/',
+      path: 'dashboard',
       element: (
         <AuthGuard>
           <MainLayout />
@@ -135,21 +135,16 @@ const MainRoutes = {
       ),
       children: [
         {
-          path: '/',
+          path: '',
           element: <DashboardDefault />
         },
         {
-          path: 'dashboard',
-          children: [
-            {
-              path: 'default',
-              element: <DashboardDefault />
-            },
-            {
-              path: 'analytics',
-              element: <DashboardAnalytics />
-            }
-          ]
+          path: 'default',
+          element: <DashboardDefault />
+        },
+        {
+          path: 'analytics',
+          element: <DashboardAnalytics />
         },
         {
           path: 'widget',
@@ -167,361 +162,401 @@ const MainRoutes = {
               element: <WidgetChart />
             },
           ]
+        }
+      ]
+    },
+    {
+      path: 'apps',
+      element: (
+        <AuthGuard>
+          <MainLayout />
+        </AuthGuard>
+      ),
+      children: [
+        {
+          path: 'chat',
+          element: <AppChat />
         },
         {
-          path: 'apps',
+          path: 'calendar',
+          element: <AppCalendar />
+        },
+        {
+          path: 'customer',
           children: [
             {
-              path: 'chat',
-              element: <AppChat />
-            },
-            {
-              path: 'calendar',
-              element: <AppCalendar />
-            },
-            {
-              path: 'customer',
-              children: [
-                {
-                  path: 'list',
-                  element: <AppCustomerList />
-                }
-              ]
-            },
-            {
-              path: 'client',
-              children: [
-                {
-                  path: 'list',
-                  element: <ClientList />
-                },
-                {
-                  path: 'add',
-                  element: <ClientAdd />
-                },
-                {
-                  path: 'edit/:id',
-                  element: <ClientEdit />
-                },
-                {
-                  path: 'view/:id',
-                  element: <ClientView />
-                },
-                {
-                  path: 'manage',
-                  element: <ClientManage />
-                },
-                {
-                  path: 'view',
-                  element: <ClientViewGeneral />
-                }
-              ]
-            },
-            {
-              path: 'project',
-              children: [
-                {
-                  path: 'list',
-                  element: <ProjectList />
-                },
-                {
-                  path: 'view/:id',
-                  element: <ProjectView />
-                },
-                {
-                  path: 'edit/:id',
-                  element: <ProjectEdit />
-                }
-              ]
-            },
-            {
-              path: 'quotation',
-              children: [
-                {
-                  path: 'list',
-                  element: <QuotationList />
-                },
-                {
-                  path: 'add',
-                  element: <QuotationAdd />
-                },
-                {
-                  path: 'edit/:id',
-                  element: <QuotationEdit />
-                },
-                {
-                  path: 'preview/:id',
-                  element: <QuotationPreview />
-                },
-                {
-                  path: 'preview',
-                  element: <QuotationPreview />
-                }
-              ]
-            },
-            {
-              path: 'profiles',
-              children: [
-                {
-                  path: 'account',
-                  element: <AccountProfile />,
-                  children: [
-                    {
-                      path: 'basic',
-                      element: <AccountTabProfile />
-                    },
-                    {
-                      path: 'personal',
-                      element: <AccountTabPersonal />
-                    },
-                    {
-                      path: 'my-account',
-                      element: <AccountTabAccount />
-                    },
-                    {
-                      path: 'password',
-                      element: <AccountTabPassword />
-                    },
-                    {
-                      path: 'role',
-                      element: <AccountTabRole />
-                    },
-                    {
-                      path: 'settings',
-                      element: <AccountTabSettings />
-                    }
-                  ]
-                },
-                {
-                  path: 'user',
-                  element: <UserProfile />,
-                  children: [
-                    {
-                      path: 'personal',
-                      element: <UserTabPersonal />
-                    },
-                    {
-                      path: 'payment',
-                      element: <UserTabPayment />
-                    },
-                    {
-                      path: 'password',
-                      element: <UserTabPassword />
-                    },
-                    {
-                      path: 'settings',
-                      element: <UserTabSettings />
-                    }
-                  ]
-                },
-                {
-                  path: 'user-list',
-                  element: <ProfileUserList />
-                },
-                {
-                  path: 'user-card',
-                  element: <ProfileUserCard />
-                }
-              ]
-            },
-            {
-              path: 'e-commerce',
-              children: [
-                {
-                  path: 'products',
-                  element: <AppECommProducts />
-                },
-                {
-                  path: 'product-details/:id',
-                  element: <AppECommProductDetails />
-                },
-                {
-                  path: 'product-list',
-                  element: <AppECommProductList />
-                },
-                {
-                  path: 'add-new-product',
-                  element: <AppECommAddProduct />
-                },
-                {
-                  path: 'checkout',
-                  element: <AppECommCheckout />
-                }
-              ]
+              path: 'list',
+              element: <AppCustomerList />
             }
           ]
         },
         {
-          path: 'forms',
+          path: 'client',
           children: [
             {
-              path: 'validation',
-              element: <FormsValidation />
+              path: 'list',
+              element: <ClientList />
             },
             {
-              path: 'wizard',
-              element: <FormsWizard />
+              path: 'add',
+              element: <ClientAdd />
             },
             {
-              path: 'layout',
+              path: 'edit/:id',
+              element: <ClientEdit />
+            },
+            {
+              path: 'view/:id',
+              element: <ClientView />
+            },
+            {
+              path: 'manage',
+              element: <ClientManage />
+            },
+            {
+              path: 'view',
+              element: <ClientViewGeneral />
+            }
+          ]
+        },
+        {
+          path: 'project',
+          children: [
+            {
+              path: 'list',
+              element: <ProjectList />
+            },
+            {
+              path: 'view/:id',
+              element: <ProjectView />
+            },
+            {
+              path: 'edit/:id',
+              element: <ProjectEdit />
+            }
+          ]
+        },
+        {
+          path: 'quotation',
+          children: [
+            {
+              path: 'list',
+              element: <QuotationList />
+            },
+            {
+              path: 'add',
+              element: <QuotationAdd />
+            },
+            {
+              path: 'edit/:id',
+              element: <QuotationEdit />
+            },
+            {
+              path: 'preview/:id',
+              element: <QuotationPreview />
+            },
+            {
+              path: 'preview',
+              element: <QuotationPreview />
+            }
+          ]
+        },
+        {
+          path: 'profiles',
+          children: [
+            {
+              path: 'account',
+              element: <AccountProfile />,
               children: [
                 {
                   path: 'basic',
-                  element: <FormsLayoutBasic />
+                  element: <AccountTabProfile />
                 },
                 {
-                  path: 'multi-column',
-                  element: <FormsLayoutMultiColumn />
+                  path: 'personal',
+                  element: <AccountTabPersonal />
                 },
                 {
-                  path: 'action-bar',
-                  element: <FormsLayoutActionBar />
+                  path: 'my-account',
+                  element: <AccountTabAccount />
                 },
                 {
-                  path: 'sticky-bar',
-                  element: <FormsLayoutStickyBar />
+                  path: 'password',
+                  element: <AccountTabPassword />
+                },
+                {
+                  path: 'role',
+                  element: <AccountTabRole />
+                },
+                {
+                  path: 'settings',
+                  element: <AccountTabSettings />
                 }
               ]
             },
             {
-              path: 'plugins',
+              path: 'user',
+              element: <UserProfile />,
               children: [
                 {
-                  path: 'mask',
-                  element: <FormsPluginsMask />
+                  path: 'personal',
+                  element: <UserTabPersonal />
                 },
                 {
-                  path: 'clipboard',
-                  element: <FormsPluginsClipboard />
+                  path: 'payment',
+                  element: <UserTabPayment />
                 },
                 {
-                  path: 're-captcha',
-                  element: <FormsPluginsRecaptcha />
+                  path: 'password',
+                  element: <UserTabPassword />
                 },
                 {
-                  path: 'editor',
-                  element: <FormsPluginsEditor />
-                },
-                {
-                  path: 'dropzone',
-                  element: <FormsPluginsDropzone />
+                  path: 'settings',
+                  element: <UserTabSettings />
                 }
               ]
+            },
+            {
+              path: 'user-list',
+              element: <ProfileUserList />
+            },
+            {
+              path: 'user-card',
+              element: <ProfileUserCard />
             }
           ]
         },
         {
-          path: 'tables',
+          path: 'e-commerce',
           children: [
             {
-              path: 'react-table',
-              children: [
-                {
-                  path: 'basic',
-                  element: <ReactTableBasic />
-                },
-                {
-                  path: 'sorting',
-                  element: <ReactTableSorting />
-                },
-                {
-                  path: 'filtering',
-                  element: <ReactTableFiltering />
-                },
-                {
-                  path: 'grouping',
-                  element: <ReactTableGrouping />
-                },
-                {
-                  path: 'pagination',
-                  element: <ReactTablePagination />
-                },
-                {
-                  path: 'row-selection',
-                  element: <ReactTableRowSelection />
-                },
-                {
-                  path: 'expanding',
-                  element: <ReactTableExpanding />
-                },
-                {
-                  path: 'editable',
-                  element: <ReactTableEditable />
-                },
-                {
-                  path: 'drag-drop',
-                  element: <ReactTableDragDrop />
-                },
-                {
-                  path: 'column-hiding',
-                  element: <ReactTableColumnHiding />
-                },
-                {
-                  path: 'umbrella',
-                  element: <ReactTableUmbrella />
-                }
-              ]
+              path: 'products',
+              element: <AppECommProducts />
             },
             {
-              path: 'mui-table',
-              children: [
-                {
-                  path: 'basic',
-                  element: <MuiTableBasic />
-                },
-                {
-                  path: 'dense',
-                  element: <MuiTableDense />
-                },
-                {
-                  path: 'enhanced',
-                  element: <MuiTableEnhanced />
-                },
-                {
-                  path: 'datatable',
-                  element: <MuiTableDatatable />
-                },
-                {
-                  path: 'custom',
-                  element: <MuiTableCustom />
-                },
-                {
-                  path: 'fixed-header',
-                  element: <MuiTableFixedHeader />
-                },
-                {
-                  path: 'collapse',
-                  element: <MuiTableCollapse />
-                }
-              ]
+              path: 'product-details/:id',
+              element: <AppECommProductDetails />
+            },
+            {
+              path: 'product-list',
+              element: <AppECommProductList />
+            },
+            {
+              path: 'add-new-product',
+              element: <AppECommAddProduct />
+            },
+            {
+              path: 'checkout',
+              element: <AppECommCheckout />
             }
           ]
+        }
+      ]
+    },
+    {
+      path: 'forms',
+      element: (
+        <AuthGuard>
+          <MainLayout />
+        </AuthGuard>
+      ),
+      children: [
+        {
+          path: 'validation',
+          element: <FormsValidation />
         },
         {
-          path: 'charts',
+          path: 'wizard',
+          element: <FormsWizard />
+        },
+        {
+          path: 'layout',
           children: [
             {
-              path: 'apexchart',
-              element: <ChartApexchart />
+              path: 'basic',
+              element: <FormsLayoutBasic />
             },
             {
-              path: 'org-chart',
-              element: <ChartOrganization />
+              path: 'multi-column',
+              element: <FormsLayoutMultiColumn />
+            },
+            {
+              path: 'action-bar',
+              element: <FormsLayoutActionBar />
+            },
+            {
+              path: 'sticky-bar',
+              element: <FormsLayoutStickyBar />
             }
           ]
         },
         {
-          path: 'sample-page',
+          path: 'plugins',
+          children: [
+            {
+              path: 'mask',
+              element: <FormsPluginsMask />
+            },
+            {
+              path: 'clipboard',
+              element: <FormsPluginsClipboard />
+            },
+            {
+              path: 're-captcha',
+              element: <FormsPluginsRecaptcha />
+            },
+            {
+              path: 'editor',
+              element: <FormsPluginsEditor />
+            },
+            {
+              path: 'dropzone',
+              element: <FormsPluginsDropzone />
+            }
+          ]
+        }
+      ]
+    },
+    {
+      path: 'tables',
+      element: (
+        <AuthGuard>
+          <MainLayout />
+        </AuthGuard>
+      ),
+      children: [
+        {
+          path: 'react-table',
+          children: [
+            {
+              path: 'basic',
+              element: <ReactTableBasic />
+            },
+            {
+              path: 'sorting',
+              element: <ReactTableSorting />
+            },
+            {
+              path: 'filtering',
+              element: <ReactTableFiltering />
+            },
+            {
+              path: 'grouping',
+              element: <ReactTableGrouping />
+            },
+            {
+              path: 'pagination',
+              element: <ReactTablePagination />
+            },
+            {
+              path: 'row-selection',
+              element: <ReactTableRowSelection />
+            },
+            {
+              path: 'expanding',
+              element: <ReactTableExpanding />
+            },
+            {
+              path: 'editable',
+              element: <ReactTableEditable />
+            },
+            {
+              path: 'drag-drop',
+              element: <ReactTableDragDrop />
+            },
+            {
+              path: 'column-hiding',
+              element: <ReactTableColumnHiding />
+            },
+            {
+              path: 'umbrella',
+              element: <ReactTableUmbrella />
+            }
+          ]
+        },
+        {
+          path: 'mui-table',
+          children: [
+            {
+              path: 'basic',
+              element: <MuiTableBasic />
+            },
+            {
+              path: 'dense',
+              element: <MuiTableDense />
+            },
+            {
+              path: 'enhanced',
+              element: <MuiTableEnhanced />
+            },
+            {
+              path: 'datatable',
+              element: <MuiTableDatatable />
+            },
+            {
+              path: 'custom',
+              element: <MuiTableCustom />
+            },
+            {
+              path: 'fixed-header',
+              element: <MuiTableFixedHeader />
+            },
+            {
+              path: 'collapse',
+              element: <MuiTableCollapse />
+            }
+          ]
+        }
+      ]
+    },
+    {
+      path: 'charts',
+      element: (
+        <AuthGuard>
+          <MainLayout />
+        </AuthGuard>
+      ),
+      children: [
+        {
+          path: 'apexchart',
+          element: <ChartApexchart />
+        },
+        {
+          path: 'org-chart',
+          element: <ChartOrganization />
+        }
+      ]
+    },
+    {
+      path: 'sample-page',
+      element: (
+        <AuthGuard>
+          <MainLayout />
+        </AuthGuard>
+      ),
+      children: [
+        {
+          path: '',
           element: <SamplePage />
-        },
+        }
+      ]
+    },
+    {
+      path: 'pricing',
+      element: (
+        <AuthGuard>
+          <MainLayout />
+        </AuthGuard>
+      ),
+      children: [
         {
-          path: 'pricing',
+          path: '',
           element: <PricingPage />
         }
       ]
     },
     {
-      path: '/maintenance',
+      path: 'maintenance',
       element: <CommonLayout />,
       children: [
         {
@@ -543,7 +578,7 @@ const MainRoutes = {
       ]
     },
     {
-      path: '/auth',
+      path: 'auth',
       element: <CommonLayout />,
       children: [
         {
@@ -573,11 +608,11 @@ const MainRoutes = {
       ]
     },
     {
-      path: '/',
+      path: 'contact-us',
       element: <CommonLayout layout="simple" />,
       children: [
         {
-          path: 'contact-us',
+          path: '',
           element: <AppContactUS />
         }
       ]

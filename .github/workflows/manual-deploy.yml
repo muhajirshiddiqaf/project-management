@@ -1,0 +1,97 @@
+name: Manual Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+      version:
+        description: 'Version to deploy (optional)'
+        required: false
+        type: string
+
+jobs:
+  manual-deploy:
+    name: Manual Deploy to ${{ github.event.inputs.environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd backend && npm ci
+        cd ../frontend && npm ci
+
+    - name: Run tests
+      run: |
+        npm test
+        cd frontend && npm test -- --watchAll=false
+
+    - name: Build application
+      run: |
+        cd frontend && npm run build
+
+    - name: Deploy to ${{ github.event.inputs.environment }}
+      run: |
+        echo "Deploying to ${{ github.event.inputs.environment }}..."
+        if [[ "${{ github.event.inputs.version }}" != "" ]]; then
+          echo "Deploying version: ${{ github.event.inputs.version }}"
+        fi
+
+        # Add your deployment logic here
+        # Example for staging:
+        if [[ "${{ github.event.inputs.environment }}" == "staging" ]]; then
+          docker-compose -f docker-compose.staging.yml up -d
+        fi
+
+        # Example for production:
+        if [[ "${{ github.event.inputs.environment }}" == "production" ]]; then
+          docker-compose -f docker-compose.prod.yml up -d
+        fi
+
+    - name: Run health checks
+      run: |
+        echo "Running health checks..."
+        sleep 30
+
+        # Health check for backend
+        if curl -f http://localhost:3001/health; then
+          echo "✅ Backend health check passed"
+        else
+          echo "❌ Backend health check failed"
+          exit 1
+        fi
+
+        # Health check for frontend
+        if curl -f http://localhost:3000; then
+          echo "✅ Frontend health check passed"
+        else
+          echo "❌ Frontend health check failed"
+          exit 1
+        fi
+
+    - name: Notify deployment
+      run: |
+        echo "🎉 Manual deployment to ${{ github.event.inputs.environment }} completed successfully!"
+
+        # Send notification to Slack
+        if [[ -n "${{ secrets.SLACK_WEBHOOK_URL }}" ]]; then
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"🚀 Manual deployment to ${{ github.event.inputs.environment }} completed successfully by ${{ github.actor }} at $(date)\"}" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
+        fi

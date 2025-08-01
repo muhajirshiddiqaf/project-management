@@ -1,0 +1,59 @@
+name: Backup
+
+on:
+  schedule:
+    - cron: '0 3 * * *'  # Daily at 3 AM
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  database-backup:
+    name: Database Backup
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install dependencies
+      run: |
+        cd backend && npm ci
+
+    - name: Create database backup
+      run: |
+        cd backend
+        # Add your database backup script here
+        echo "Creating database backup..."
+        # Example: pg_dump $DATABASE_URL > backup_$(date +%Y%m%d_%H%M%S).sql
+
+    - name: Upload backup to cloud storage
+      run: |
+        echo "Uploading backup to cloud storage..."
+        # Add your cloud storage upload script here
+        # Example: aws s3 cp backup_*.sql s3://your-backup-bucket/
+
+  file-backup:
+    name: File Backup
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Create file backup
+      run: |
+        echo "Creating file backup..."
+        tar -czf backup_$(date +%Y%m%d_%H%M%S).tar.gz \
+          --exclude=node_modules \
+          --exclude=.git \
+          --exclude=build \
+          .
+
+    - name: Upload file backup
+      run: |
+        echo "Uploading file backup..."
+        # Add your file upload script here

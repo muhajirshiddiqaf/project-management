@@ -14,7 +14,6 @@ import {
 
 // project import
 import projectAPI from '_api/project';
-import quotationAPI from '_api/quotation';
 import MainCard from 'components/MainCard';
 import ScrollX from 'components/ScrollX';
 import ActionMenu from 'components/common/ActionMenu';
@@ -98,38 +97,11 @@ const ProjectList = () => {
     }
   };
 
-  const handleGenerateQuotation = async () => {
+  const handleCreateQuotation = () => {
     if (selectedProjectId) {
-      try {
-        const response = await quotationAPI.generateFromProject({
-          project_id: selectedProjectId,
-          include_materials: true,
-          include_labor: true
-        });
-
-        console.log('Generate quotation response:', response);
-
-        if (response && response.success) {
-          setNotification({ open: true, message: 'Quotation generated successfully!', severity: 'success' });
-          handleMenuClose();
-
-          // Navigate to the newly created quotation preview page
-          if (response.data && response.data.quotation && response.data.quotation.id) {
-            setTimeout(() => {
-              navigate(`/apps/quotation/preview/${response.data.quotation.id}`);
-            }, 1500); // Wait 1.5 seconds to show the success message first
-          }
-
-          // Optionally refresh the projects list to show updated data
-          // fetchProjects();
-        } else {
-          console.error('Unexpected response format:', response);
-          setNotification({ open: true, message: 'Failed to generate quotation - unexpected response format', severity: 'error' });
-        }
-      } catch (error) {
-        console.error('Error generating quotation:', error);
-        setNotification({ open: true, message: 'Failed to generate quotation', severity: 'error' });
-      }
+      // Navigate to add quotation page with project data
+      navigate(`/apps/quotation/add?project_id=${selectedProjectId}`);
+      handleMenuClose();
     }
   };
 
@@ -341,7 +313,7 @@ const ProjectList = () => {
           onView={handleView}
           onEdit={handleEdit}
           onDelete={handleDelete}
-          onGenerateQuotation={handleGenerateQuotation}
+          onGenerateQuotation={handleCreateQuotation}
           showGenerateQuotation={true}
         />
 

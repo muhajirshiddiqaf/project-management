@@ -27,9 +27,11 @@ const clientQueries = {
     INSERT INTO clients (
       organization_id, name, company_name, email, phone, address,
       city, state, country, postal_code, website, industry,
-      client_type, status, source, notes, tags
+      client_type, status, source, notes, tags,
+      billing_name, billing_address, billing_city, billing_state,
+      billing_postal_code, billing_country, billing_email, billing_phone
     )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
     RETURNING *
   `,
 
@@ -39,6 +41,8 @@ const clientQueries = {
     SET name = $3, company_name = $4, email = $5, phone = $6, address = $7,
         city = $8, state = $9, country = $10, postal_code = $11, website = $12,
         industry = $13, client_type = $14, status = $15, source = $16, notes = $17, tags = $18,
+        billing_name = $19, billing_address = $20, billing_city = $21, billing_state = $22,
+        billing_postal_code = $23, billing_country = $24, billing_email = $25, billing_phone = $26,
         updated_at = NOW()
     WHERE id = $1 AND organization_id = $2
     RETURNING *

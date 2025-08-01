@@ -6,7 +6,6 @@ import { useNavigate } from 'react-router-dom';
 import { Box, CircularProgress } from '@mui/material';
 
 // project import
-import config from 'config';
 import { useAuth } from 'contexts/AuthContext';
 
 // ==============================|| GUEST GUARD ||============================== //
@@ -17,7 +16,7 @@ const GuestGuard = ({ children }) => {
 
   useEffect(() => {
     if (!loading && isAuthenticated) {
-      navigate(config.defaultPath, { replace: true });
+      navigate('/dashboard', { replace: true });
     }
   }, [isAuthenticated, loading, navigate]);
 

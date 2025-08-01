@@ -22,10 +22,10 @@ class QuotationHandler {
   // === QUOTATION CRUD METHODS ===
   async getQuotations(request, h) {
     try {
-      const { page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'DESC', status, client_id } = request.query;
+      const { page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'DESC', status, client_id, project_id } = request.query;
       const organizationId = getOrganizationId(request);
 
-      const filters = { status, client_id };
+      const filters = { status, client_id, project_id };
       const pagination = { page: parseInt(page, 10), limit: parseInt(limit, 10), sortBy, sortOrder };
 
       const quotations = await this._service.findAll(organizationId, filters, pagination);
@@ -75,7 +75,15 @@ class QuotationHandler {
         ...request.payload,
         organization_id: credentials.organizationId,
         created_by: credentials.userId,
-        issue_date: new Date()
+        // Map frontend fields to backend fields
+        subject: request.payload.subject,
+        due_date: request.payload.due_date,
+        reference: request.payload.reference,
+        tax_rate: request.payload.tax_rate || 10,
+        discount_rate: request.payload.discount_rate || 0,
+        currency: request.payload.currency || 'USD',
+        notes: request.payload.notes,
+        terms_conditions: request.payload.terms_conditions || request.payload.terms
       };
 
       // Generate quotation number if not provided
@@ -101,7 +109,18 @@ class QuotationHandler {
     try {
       const { id } = request.params;
       const organizationId = request.auth.credentials.organization_id;
-      const updateData = request.payload;
+      const updateData = {
+        ...request.payload,
+        // Map frontend fields to backend fields
+        subject: request.payload.subject,
+        due_date: request.payload.due_date,
+        reference: request.payload.reference,
+        tax_rate: request.payload.tax_rate,
+        discount_rate: request.payload.discount_rate,
+        currency: request.payload.currency,
+        notes: request.payload.notes,
+        terms_conditions: request.payload.terms_conditions || request.payload.terms
+      };
 
       const quotation = await this._service.update(id, organizationId, updateData);
       if (!quotation) {

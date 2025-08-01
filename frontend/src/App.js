@@ -5,6 +5,7 @@ import RTLLayout from 'components/RTLLayout';
 import ScrollTop from 'components/ScrollTop';
 import Routes from 'routes';
 import ThemeCustomization from 'themes';
+import AuthRedirect from 'components/AuthRedirect';
 
 // auth provider
 import { AuthProvider } from 'contexts/AuthContext';
@@ -17,10 +18,12 @@ const App = () => (
       <Locales>
         <ScrollTop>
           <AuthProvider>
-            <>
-              <Routes />
-              <Snackbar />
-            </>
+            <AuthRedirect>
+              <>
+                <Routes />
+                <Snackbar />
+              </>
+            </AuthRedirect>
           </AuthProvider>
         </ScrollTop>
       </Locales>

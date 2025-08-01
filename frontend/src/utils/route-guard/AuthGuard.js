@@ -16,7 +16,7 @@ const AuthGuard = ({ children }) => {
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
-      navigate('login', { replace: true });
+      navigate('/auth/login', { replace: true });
     }
   }, [isAuthenticated, loading, navigate]);
 

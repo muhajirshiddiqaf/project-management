@@ -13,6 +13,7 @@ const database = require('./config/database');
 
 // Import repositories and validators
 const { UserRepository, ClientRepository, OrderRepository, TicketRepository, ProjectRepository, InvoiceRepository, QuotationRepository, ServiceRepository, OrganizationRepository, SystemRepository, EmailRepository, PDFRepository, AnalyticsRepository, ReportsRepository, DocsRepository, MigrationRepository } = require('./infrastructure/repositories');
+const CompanyConfigurationRepository = require('./infrastructure/repositories/companyConfigurationRepository');
 const authValidator = require('./modules/auth/validator');
 const clientValidator = require('./modules/client/validator');
 const orderValidator = require('./modules/order/validator');
@@ -30,6 +31,7 @@ const analyticsValidator = require('./modules/analytics/validator');
 const reportsValidator = require('./modules/reports/validator');
 const docsValidator = require('./modules/docs/validator');
 const migrationValidator = require('./modules/migration/validator');
+const companyConfigurationValidator = require('./modules/companyConfiguration/validator');
 
 // Import modules
 const authModule = require('./modules/auth');
@@ -50,6 +52,7 @@ const organizationModule = require('./modules/organization'); // New import
 const systemModule = require('./modules/system'); // New import
 const integrationModule = require('./modules/integration'); // New import
 const migrationModule = require('./modules/migration'); // New import
+const companyConfigurationModule = require('./modules/companyConfiguration'); // New import
 
 // Import plugins
 const plugins = [
@@ -144,6 +147,10 @@ const createServer = async () => {
   const reportsRepository = new ReportsRepository(database);
   const docsRepository = new DocsRepository(database);
   const migrationRepository = new MigrationRepository(database);
+  const companyConfigurationRepository = new CompanyConfigurationRepository(database);
+
+  // Add repositories to server.app for access in handlers
+  server.app.companyConfigurationRepository = companyConfigurationRepository;
 
       // Register JWT authentication strategy
   server.auth.strategy('jwt', 'jwt', {
@@ -377,6 +384,15 @@ const createServer = async () => {
       service: migrationRepository,
       validator: migrationValidator,
       auth: 'jwt'
+    },
+    routes: { prefix: '/api' }
+  });
+  await server.register({
+    plugin: companyConfigurationModule,
+    options: {
+      service: companyConfigurationRepository,
+      validator: companyConfigurationValidator,
+      auth: companyConfigurationValidator
     },
     routes: { prefix: '/api' }
   });

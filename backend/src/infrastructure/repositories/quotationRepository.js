@@ -9,18 +9,91 @@ class QuotationRepository {
   // === QUOTATION CRUD METHODS ===
   async findAll(organizationId, filters = {}, pagination = {}) {
     const { page = 1, limit = 10, sortBy = 'created_at', sortOrder = 'DESC' } = pagination;
+    const { status, client_id, project_id } = filters;
     const offset = (page - 1) * limit;
 
-    const query = this.queries.findAll;
-    const values = [organizationId, limit, offset];
+    // Build dynamic query based on filters
+    let query = this.queries.findAll;
+    let values = [organizationId];
+
+    // Add filters if provided
+    if (status || client_id || project_id) {
+      let whereClause = 'WHERE q.organization_id = $1';
+      let paramIndex = 2;
+
+      if (status) {
+        whereClause += ` AND q.status = $${paramIndex}`;
+        values.push(status);
+        paramIndex++;
+      }
+
+      if (client_id) {
+        whereClause += ` AND q.client_id = $${paramIndex}`;
+        values.push(client_id);
+        paramIndex++;
+      }
+
+      if (project_id) {
+        whereClause += ` AND q.project_id = $${paramIndex}`;
+        values.push(project_id);
+        paramIndex++;
+      }
+
+      // Add limit and offset at the end
+      values.push(limit, offset);
+
+      // Replace the WHERE clause in the original query
+      query = query.replace('WHERE q.organization_id = $1', whereClause);
+
+      // Update the LIMIT and OFFSET positions in the query
+      const limitOffsetIndex = paramIndex;
+      query = query.replace('LIMIT $2 OFFSET $3', `LIMIT $${limitOffsetIndex} OFFSET $${limitOffsetIndex + 1}`);
+    } else {
+      // No filters, use original query
+      values.push(limit, offset);
+    }
+
+    console.log('Query:', query);
+    console.log('Values:', values);
 
     const result = await this.db.query(query, values);
     return result.rows;
   }
 
-  async countQuotations(organizationId, filters = {}) {
-    const query = this.queries.countQuotations;
-    const values = [organizationId];
+    async countQuotations(organizationId, filters = {}) {
+    const { status, client_id, project_id } = filters;
+
+    let query = this.queries.countQuotations;
+    let values = [organizationId];
+
+    // Add filters if provided
+    if (status || client_id || project_id) {
+      let whereClause = 'WHERE organization_id = $1';
+      let paramIndex = 2;
+
+      if (status) {
+        whereClause += ` AND status = $${paramIndex}`;
+        values.push(status);
+        paramIndex++;
+      }
+
+      if (client_id) {
+        whereClause += ` AND client_id = $${paramIndex}`;
+        values.push(client_id);
+        paramIndex++;
+      }
+
+      if (project_id) {
+        whereClause += ` AND project_id = $${paramIndex}`;
+        values.push(project_id);
+        paramIndex++;
+      }
+
+      query = query.replace('WHERE organization_id = $1', whereClause);
+    }
+
+    console.log('Count Query:', query);
+    console.log('Count Values:', values);
 
     const result = await this.db.query(query, values);
     return parseInt(result.rows[0].count, 10);
@@ -45,6 +118,8 @@ class QuotationRepository {
       quotationData.description,
       quotationData.status,
       quotationData.valid_until,
+      quotationData.due_date,
+      quotationData.reference,
       quotationData.subtotal,
       quotationData.tax_rate,
       quotationData.tax_amount,

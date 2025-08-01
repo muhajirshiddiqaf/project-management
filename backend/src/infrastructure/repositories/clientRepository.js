@@ -46,7 +46,8 @@ class ClientRepository {
 
   async create(clientData) {
     try {
-      const result = await this.db.query(queries.client.createClient, [
+      console.log('Creating client with data:', clientData);
+      const params = [
         clientData.organization_id,
         clientData.name,
         clientData.company_name,
@@ -63,10 +64,23 @@ class ClientRepository {
         clientData.status,
         clientData.source,
         clientData.notes,
-        clientData.tags
-      ]);
+        clientData.tags,
+        clientData.billing_name || null,
+        clientData.billing_address || null,
+        clientData.billing_city || null,
+        clientData.billing_state || null,
+        clientData.billing_postal_code || null,
+        clientData.billing_country || null,
+        clientData.billing_email || null,
+        clientData.billing_phone || null
+      ];
+      console.log('Parameters count:', params.length);
+      console.log('Parameters:', params);
+
+      const result = await this.db.query(queries.client.createClient, params);
       return result.rows[0];
     } catch (error) {
+      console.error('Error creating client:', error);
       throw new Error('Failed to create client');
     }
   }
@@ -91,7 +105,15 @@ class ClientRepository {
         updateData.status,
         updateData.source,
         updateData.notes,
-        updateData.tags
+        updateData.tags,
+        updateData.billing_name || null,
+        updateData.billing_address || null,
+        updateData.billing_city || null,
+        updateData.billing_state || null,
+        updateData.billing_postal_code || null,
+        updateData.billing_country || null,
+        updateData.billing_email || null,
+        updateData.billing_phone || null
       ]);
       return result.rows[0] || null;
     } catch (error) {

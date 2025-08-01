@@ -86,6 +86,7 @@ const ProjectView = () => {
           // Fetch related quotations
           try {
             setQuotationsLoading(true);
+            console.log('Fetching quotations for project:', id);
             const quotationsResponse = await quotationAPI.getQuotationsByProject(id);
             console.log('Quotations response:', quotationsResponse);
 
@@ -99,6 +100,7 @@ const ProjectView = () => {
               quotationsData = quotationsResponse;
             }
 
+            console.log('Processed quotations data:', quotationsData);
             setQuotations(quotationsData);
             console.log('Set quotations:', quotationsData);
           } catch (quotationError) {
@@ -137,55 +139,9 @@ const ProjectView = () => {
     }
   };
 
-  const handleGenerateQuotation = async () => {
-    try {
-      const response = await quotationAPI.generateFromProject({
-        project_id: id,
-        include_materials: true,
-        include_labor: true
-      });
-
-      console.log('Generate quotation response:', response);
-
-      if (response && response.success) {
-        // Show success message
-        setNotification({ open: true, message: 'Quotation generated successfully!', severity: 'success' });
-
-        // Refresh quotations list
-        try {
-          const quotationsResponse = await quotationAPI.getQuotationsByProject(id);
-          console.log('Refresh quotations response:', quotationsResponse);
-
-          // Handle different response formats
-          let quotationsData = [];
-          if (quotationsResponse && quotationsResponse.success && quotationsResponse.data) {
-            quotationsData = Array.isArray(quotationsResponse.data) ? quotationsResponse.data : [];
-          } else if (quotationsResponse && quotationsResponse.data) {
-            quotationsData = Array.isArray(quotationsResponse.data) ? quotationsResponse.data : [];
-          } else if (Array.isArray(quotationsResponse)) {
-            quotationsData = quotationsResponse;
-          }
-
-          setQuotations(quotationsData);
-          console.log('Refreshed quotations:', quotationsData);
-        } catch (refreshError) {
-          console.error('Error refreshing quotations:', refreshError);
-        }
-
-        // Navigate to the newly created quotation preview page
-        if (response.data && response.data.quotation && response.data.quotation.id) {
-          setTimeout(() => {
-            navigate(`/apps/quotation/preview/${response.data.quotation.id}`);
-          }, 1500); // Wait 1.5 seconds to show the success message first
-        }
-      } else {
-        console.error('Unexpected response format:', response);
-        setNotification({ open: true, message: 'Failed to generate quotation - unexpected response format', severity: 'error' });
-      }
-    } catch (error) {
-      console.error('Error generating quotation:', error);
-      setNotification({ open: true, message: 'Failed to generate quotation', severity: 'error' });
-    }
+  const handleCreateQuotation = () => {
+    // Navigate to add quotation page with project data
+    navigate(`/apps/quotation/add?project_id=${id}`);
   };
 
   const handleViewQuotation = (quotationId) => {
@@ -301,12 +257,12 @@ const ProjectView = () => {
               </Box>
             }
             secondary={
-              <Box>
-                <Tooltip title="Generate Quotation">
-                  <IconButton onClick={handleGenerateQuotation} color="primary" size="small">
-                    <FileTextOutlined />
-                  </IconButton>
-                </Tooltip>
+                              <Box>
+                  <Tooltip title="Create Quotation">
+                    <IconButton onClick={handleCreateQuotation} color="primary" size="small">
+                      <FileTextOutlined />
+                    </IconButton>
+                  </Tooltip>
                 <Tooltip title="Edit Project">
                   <IconButton onClick={handleEdit} color="primary" size="small">
                     <EditOutlined />
@@ -493,10 +449,10 @@ const ProjectView = () => {
                     <Button
                       variant="contained"
                       startIcon={<PlusOutlined />}
-                      onClick={handleGenerateQuotation}
+                      onClick={handleCreateQuotation}
                       size="small"
                     >
-                      Generate Quotation
+                      Create Quotation
                     </Button>
                   }
                 >
@@ -560,10 +516,10 @@ const ProjectView = () => {
                       <Button
                         variant="outlined"
                         startIcon={<PlusOutlined />}
-                        onClick={handleGenerateQuotation}
+                        onClick={handleCreateQuotation}
                         sx={{ mt: 2 }}
                       >
-                        Generate First Quotation
+                        Create First Quotation
                       </Button>
                     </Box>
                   )}
