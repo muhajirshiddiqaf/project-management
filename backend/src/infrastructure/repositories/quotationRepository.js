@@ -135,7 +135,37 @@ class QuotationRepository {
     ];
 
     const result = await this.db.query(query, values);
-    return result.rows[0];
+    const quotation = result.rows[0];
+
+    // Create quotation items if provided
+    if (quotationData.items && Array.isArray(quotationData.items)) {
+      for (let i = 0; i < quotationData.items.length; i++) {
+        const item = quotationData.items[i];
+        const itemValues = [
+          quotation.id,
+          item.item_name || item.name || `Item ${i + 1}`,
+          item.description || '',
+          item.quantity || 1,
+          item.unit_price || 0,
+          item.unit_type || 'piece',
+          (item.quantity || 1) * (item.unit_price || 0),
+          i + 1
+        ];
+
+        const createItemQuery = `
+          INSERT INTO quotation_items (
+            quotation_id, item_name, description, quantity, unit_price,
+            unit_type, total_price, sort_order
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          RETURNING *
+        `;
+
+        await this.db.query(createItemQuery, itemValues);
+      }
+    }
+
+    return quotation;
   }
 
   async update(id, organizationId, updateData) {
@@ -215,16 +245,46 @@ class QuotationRepository {
 
   // === QUOTATION ITEMS METHODS ===
   async getQuotationItems(quotationId, organizationId) {
-    const query = this.queries.getQuotationItems;
-    const values = [quotationId, organizationId];
+    let query, values;
+
+    if (organizationId) {
+      query = this.queries.getQuotationItems;
+      values = [quotationId, organizationId];
+    } else {
+      // Fallback query without organization_id check
+      query = `
+        SELECT qi.*
+        FROM quotation_items qi
+        WHERE qi.quotation_id = $1
+        ORDER BY qi.created_at ASC
+      `;
+      values = [quotationId];
+    }
+
+    console.log('Debug - getQuotationItems query:', query);
+    console.log('Debug - getQuotationItems values:', values);
 
     const result = await this.db.query(query, values);
+    console.log('Debug - getQuotationItems result rows:', result.rows.length);
+
     return result.rows;
   }
 
   async countQuotationItems(quotationId, organizationId) {
-    const query = this.queries.countQuotationItems;
-    const values = [quotationId, organizationId];
+    let query, values;
+
+    if (organizationId) {
+      query = this.queries.countQuotationItems;
+      values = [quotationId, organizationId];
+    } else {
+      // Fallback query without organization_id check
+      query = `
+        SELECT COUNT(*) as count
+        FROM quotation_items qi
+        WHERE qi.quotation_id = $1
+      `;
+      values = [quotationId];
+    }
 
     const result = await this.db.query(query, values);
     return parseInt(result.rows[0].count, 10);

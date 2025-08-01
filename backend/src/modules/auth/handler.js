@@ -41,7 +41,7 @@ class AuthHandler {
   // Register user
   async register(request, h) {
     try {
-      const { email, password, firstName, lastName, organizationName, organizationSlug } = request.payload;
+      const { email, password, firstName, lastName, companyName, organizationSlug } = request.payload;
 
       if (!this._service) {
         throw Boom.internal('User repository not initialized');
@@ -53,10 +53,13 @@ class AuthHandler {
         throw Boom.conflict('User already exists');
       }
 
+      // Create organization slug from company name
+      const slug = organizationSlug || companyName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+
       // Create organization
       const organization = await this._service.createOrganization({
-        name: organizationName,
-        slug: organizationSlug
+        name: companyName,
+        slug: slug
       });
 
       // Hash password

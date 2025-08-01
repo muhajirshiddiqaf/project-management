@@ -269,9 +269,10 @@ const AddQuotation = () => {
         discount_amount: calculateDiscount(),
         total_amount: calculateTotal(),
         items: items.map(item => ({
+          item_name: item.description,
           description: item.description,
           quantity: item.quantity,
-          unit: item.unit,
+          unit_type: item.unit,
           unit_price: item.unitPrice,
           total_price: item.amount
         }))

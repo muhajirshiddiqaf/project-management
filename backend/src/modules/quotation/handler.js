@@ -286,7 +286,11 @@ class QuotationHandler {
   async getQuotationItems(request, h) {
     try {
       const { quotation_id } = request.query;
-      const organizationId = request.auth.credentials.organization_id;
+      const organizationId = request.auth?.credentials?.organization_id;
+
+      console.log('Debug - quotation_id:', quotation_id);
+      console.log('Debug - organizationId:', organizationId);
+      console.log('Debug - request.auth:', request.auth);
 
       if (!quotation_id) {
         throw Boom.badRequest('Quotation ID is required');
@@ -294,6 +298,9 @@ class QuotationHandler {
 
       const items = await this._service.getQuotationItems(quotation_id, organizationId);
       const total = await this._service.countQuotationItems(quotation_id, organizationId);
+
+      console.log('Debug - items found:', items.length);
+      console.log('Debug - total:', total);
 
       return h.response({
         success: true,
